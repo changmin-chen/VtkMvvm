@@ -1,0 +1,6 @@
+<Project>
+    <ItemGroup>
+        <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="all" Condition="'$(MSBuildProjectExtension)' == '.csproj'"/>
+    </ItemGroup>
+
+</Project>

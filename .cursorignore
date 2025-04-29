@@ -1,0 +1,58 @@
+# Ignore NIfTI files
+*.nii
+*.nii.gz
+
+# Ignore build and output directories
+bin/
+obj/
+build/
+out/
+
+# Ignore IDE and editor specific files
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# Ignore log files
+*.log
+logs/
+
+# Ignore package directories
+packages/
+node_modules/
+
+# Ignore test coverage reports
+coverage/
+*.coverage
+*.coveragexml
+
+# Ignore large data files
+*.dcm
+*.dicom
+*.nrrd
+*.mhd
+*.raw
+*.raw.gz
+
+# Ignore environment and configuration files
+.env
+.env.local
+*.config
+*.settings
+
+# Ignore documentation
+docs/_build/
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx 
