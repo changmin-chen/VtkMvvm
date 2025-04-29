@@ -3,13 +3,18 @@ using VtkMvvm.Extensions;
 
 namespace VtkMvvm.Features.BrushPainter;
 
-public sealed unsafe class CachedPainter
+public sealed unsafe class CachedPainter : IDisposable
 {
     // Cache last-used labelMap to avoid repeated reflection & bounds look-ups
     private vtkImageData? _cachedVolume;
     private byte* _dataPtr;
     private int _dimX, _dimY, _dimZ, _voxPerSlice;
     private vtkMatrix4x4? _worldToIjk;
+
+    public void Dispose()
+    {
+        _worldToIjk?.Dispose();
+    }
 
     /// <summary>
     /// Paint the supplied <paramref name="brush"/> into <paramref name="labelMap"/>.

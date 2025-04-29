@@ -66,7 +66,7 @@ public sealed record VoxelCylinderBrush : VoxelBrush
         int resolution = 32)
     {
         // ── 1. Build a cylinder in *mm* (VTK default = axis || ẑ) ──────────
-        var cyl = vtkCylinderSource.New();
+        using vtkCylinderSource? cyl = vtkCylinderSource.New();
         cyl.SetRadius(diameterMm / 2.0); // mm
         cyl.SetHeight(heightMm); // mm
         cyl.SetResolution(resolution);
@@ -74,7 +74,7 @@ public sealed record VoxelCylinderBrush : VoxelBrush
         cyl.Update();
 
         // ── 2. Orientation transform ──────────────────────────────────────
-        var orient = vtkTransform.New();
+        using vtkTransform? orient = vtkTransform.New();
         orient.PreMultiply();
 
         // a) Scale mm → voxel index (non-uniform)
@@ -90,28 +90,25 @@ public sealed record VoxelCylinderBrush : VoxelBrush
         }
 
         // ── 3. Apply transform & voxelise at *unit* spacing ───────────────
-        var cylVox = vtkTransformPolyDataFilter.New();
+        using vtkTransformPolyDataFilter? cylVox = vtkTransformPolyDataFilter.New();
         cylVox.SetTransform(orient);
         cylVox.SetInputConnection(cyl.GetOutputPort());
         cylVox.Update();
 
-        // debug...
-        var bounds = cylVox.GetOutput().GetBounds();
-        Debug.WriteLine($"bounds: {bounds[0]} {bounds[1]} {bounds[2]} {bounds[3]} {bounds[4]} {bounds[5]}");
-
-        var toStencil = vtkPolyDataToImageStencil.New();
+        using vtkPolyDataToImageStencil? toStencil = vtkPolyDataToImageStencil.New();
         toStencil.SetInputConnection(cylVox.GetOutputPort());
         toStencil.SetOutputSpacing(1, 1, 1); // we are **now** in IJK
 
         // tight bbox with a 1-voxel pad
         var b = cylVox.GetOutput().GetBounds();
+        Debug.WriteLine($"Brush bounds: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}");
         toStencil.SetOutputWholeExtent(
             (int)Math.Floor(b[0]) - 1, (int)Math.Ceiling(b[1]) + 1,
             (int)Math.Floor(b[2]) - 1, (int)Math.Ceiling(b[3]) + 1,
             (int)Math.Floor(b[4]) - 1, (int)Math.Ceiling(b[5]) + 1);
         toStencil.Update();
 
-        var maskImg = vtkImageStencilToImage.New();
+        using vtkImageStencilToImage? maskImg = vtkImageStencilToImage.New();
         maskImg.SetInputConnection(toStencil.GetOutputPort());
         maskImg.SetInsideValue(1);
         maskImg.SetOutsideValue(0);
@@ -124,10 +121,14 @@ public sealed record VoxelCylinderBrush : VoxelBrush
         var off = new List<(int, int, int)>();
 
         for (int z = ext[4]; z <= ext[5]; ++z)
-        for (int y = ext[2]; y <= ext[3]; ++y)
-        for (int x = ext[0]; x <= ext[1]; ++x)
-            if (mask.GetScalarComponentAsDouble(x, y, z, 0) > 0.5)
-                off.Add((x, y, z));
+        {
+            for (int y = ext[2]; y <= ext[3]; ++y)
+            {
+                for (int x = ext[0]; x <= ext[1]; ++x)
+                    if (mask.GetScalarComponentAsDouble(x, y, z, 0) > 0.5)
+                        off.Add((x, y, z));
+            }
+        }
 
         return new VoxelCylinderBrush(off);
     }
