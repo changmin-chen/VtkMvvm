@@ -26,7 +26,7 @@ public class ImageSliceViewModel : VtkElementViewModel
         _shiftScale.SetInputConnection(_slicer.GetOutputPort());
         _actor.SetInput(_shiftScale.GetOutput());
 
-        _slicer.SetSliceIndex(0); // TODO: 沒加的話會跳走
+        _slicer.SetSliceIndex(0);
         var (lower, higher) = image.GetPercentileRange();
         _lowerDisplayRange = lower;
         _higherDisplayRange = higher;

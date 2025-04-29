@@ -7,9 +7,9 @@ namespace VtkMvvm.Obsolete;
 /// </summary>
 internal abstract class VtkImageSlicer : IDisposable
 {
+    protected readonly double[] Center;
     protected readonly double[] Origin;
     protected readonly double[] Spacing;
-    protected readonly double[] Center;
     private bool _disposed;
 
     protected VtkImageSlicer(vtkImageData image)
@@ -84,10 +84,6 @@ internal class VtkCoronalSlicer : VtkImageSlicer
         var worldY = Origin[1] + sliceIndex * Spacing[1];
         Reslice.SetResliceAxesOrigin(Center[0], worldY, Center[2]);
         Reslice.Update();
-
-        var tmp = Reslice.GetOutput();
-        var o = tmp.GetOrigin();
-        var s = tmp.GetSpacing();
     }
 }
 
@@ -106,7 +102,7 @@ internal class VtkSagittalSlicer : VtkImageSlicer
     public override void SetSliceIndex(int sliceIndex)
     {
         var worldX = Origin[0] + sliceIndex * Spacing[0];
-        Reslice.SetResliceAxesOrigin(worldX, Center[1], Center[2]); // TODO: should be center
+        Reslice.SetResliceAxesOrigin(worldX, Center[1], Center[2]);
         Reslice.Update();
     }
 }

@@ -12,24 +12,24 @@ public partial class VtkRenderControl : UserControl
         nameof(SceneObjects), typeof(IEnumerable<VtkElementViewModel>), typeof(VtkRenderControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
-    private readonly vtkRenderer _mainRenderer;
-    private readonly RenderWindowControl _renderWindowControl;
+    public vtkRenderer MainRenderer { get; }
+    public RenderWindowControl RenderWindowControl { get; }
 
     public VtkRenderControl()
     {
         InitializeComponent();
         if (DesignerProperties.GetIsInDesignMode(this)) return;
 
-        _renderWindowControl = new RenderWindowControl();
-        _renderWindowControl.Dock = DockStyle.Fill;
-        WFHost.Child = _renderWindowControl;
+        RenderWindowControl = new RenderWindowControl();
+        RenderWindowControl.Dock = DockStyle.Fill;
+        WFHost.Child = RenderWindowControl;
 
-        _mainRenderer = vtkRenderer.New();
+        MainRenderer = vtkRenderer.New();
 
         Loaded += (sender, args) =>
         {
-            _renderWindowControl.RenderWindow.AddRenderer(_mainRenderer);
-            _mainRenderer.SetBackground(0.1, 0.1, 0.1);
+            RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
+            MainRenderer.SetBackground(0.1, 0.1, 0.1);
         };
     }
 
@@ -41,7 +41,7 @@ public partial class VtkRenderControl : UserControl
 
     public vtkRenderWindowInteractor GetInteractor()
     {
-        return _renderWindowControl.RenderWindow.GetInteractor();
+        return RenderWindowControl.RenderWindow.GetInteractor();
     }
 
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -55,20 +55,28 @@ public partial class VtkRenderControl : UserControl
     private void UpdateScene(IEnumerable<VtkElementViewModel>? oldSceneObjects,
         IEnumerable<VtkElementViewModel>? newSceneObjects)
     {
-        if (oldSceneObjects is null && newSceneObjects is not null) // initial bind
+        if (oldSceneObjects != null)
         {
-            foreach (var sceneObject in newSceneObjects)
+            foreach (var sceneObject in oldSceneObjects)
             {
-                _mainRenderer.AddActor(sceneObject.Actor);
+                MainRenderer.AddActor(sceneObject.Actor);
                 sceneObject.Modified += OnSceneObjectModified;
             }
         }
-        // TODO: handle unbind/ collection change
+
+        if (newSceneObjects != null)
+        {
+            foreach (var sceneObject in newSceneObjects)
+            {
+                MainRenderer.AddActor(sceneObject.Actor);
+                sceneObject.Modified += OnSceneObjectModified;
+            }
+        }
     }
 
     private void OnSceneObjectModified(object? sender, EventArgs e)
     {
-        _mainRenderer.ResetCamera(); // 針對顯示在變動但物件不變的情況下需要(e.g. SetDisplayExtent)。但是對物件變動但顯示位置不變就不需要(Reslice)
-        _renderWindowControl.RenderWindow.Render();
+        MainRenderer.ResetCamera(); // 針對顯示在變動但物件不變的情況下需要(e.g. SetDisplayExtent)。但是對物件變動但顯示位置不變就不需要(Reslice)
+        RenderWindowControl.RenderWindow.Render();
     }
 }
