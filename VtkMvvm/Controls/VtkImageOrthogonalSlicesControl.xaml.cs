@@ -86,7 +86,6 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
         // Bail early if we have nothing new
         if (newSceneObjects == null)
         {
-            RenderWindowControl.RenderWindow.Render();
             return;
         }
 
@@ -94,7 +93,6 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
         ImageOrthogonalSliceViewModel[] array = newSceneObjects.ToArray();
         if (array.Length == 0)
         {
-            RenderWindowControl.RenderWindow.Render();
             return;
         }
 

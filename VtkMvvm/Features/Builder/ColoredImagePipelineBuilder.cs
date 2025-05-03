@@ -25,7 +25,7 @@ public class ColoredImagePipelineBuilder
         vtkLookupTable? grayLut = vtkLookupTable.New();
         double[]? range = _image.GetScalarRange();
         grayLut.SetRange(range[0], range[1]);
-        grayLut.SetValueRange(0.2, 1.0);
+        grayLut.SetValueRange(0.0, 1.0);
         grayLut.SetSaturationRange(0.0, 0.0);
         grayLut.Build();
         return grayLut;
