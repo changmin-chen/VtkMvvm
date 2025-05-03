@@ -11,18 +11,19 @@ namespace VtkMvvm.ViewModels;
 public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
     private int _sliceIndex;
+
+    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline) : base(pipeline.Image)
+    {
+        Orientation = orientation;
+        Actor = pipeline.Actor;
+
+        pipeline.Connect();
+        SetSliceIndex(0);
+    }
+
     public SliceOrientation Orientation { get; }
 
     public override vtkImageActor Actor { get; }
-
-    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline p) : base(p.Image)
-    {
-        Orientation = orientation;
-        Actor = p.Actor;
-
-        p.Connect();
-        SetSliceIndex(0);
-    }
 
     public int SliceIndex
     {
