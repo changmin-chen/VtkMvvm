@@ -29,15 +29,26 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl
         };
     }
 
-    public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
-
     public IEnumerable<ImageOrthogonalSliceViewModel> SceneObjects
     {
         get => (IEnumerable<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
         set => SetValue(SceneObjectsProperty, value);
     }
 
+    public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
+    public RenderWindowControl RenderWindowControl { get; } = new();
+
+    public void UpdateInteractStyle(vtkInteractorObserver interactorStyle)
+    {
+        ArgumentNullException.ThrowIfNull(interactorStyle);
+
+        vtkRenderWindowInteractor? iren = RenderWindowControl.RenderWindow.GetInteractor();
+        vtkInteractorObserver? old = iren.GetInteractorStyle();
+
+        iren.SetInteractorStyle(interactorStyle);
+        iren.Initialize();
+        old?.Dispose();
+    }
 
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -54,8 +65,8 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl
         {
             foreach (var sceneObject in oldSceneObjects)
             {
-                MainRenderer.RemoveActor(sceneObject.Actor); // FIX
-                sceneObject.Modified -= OnSceneObjectModified; // FIX
+                MainRenderer.RemoveActor(sceneObject.Actor);
+                sceneObject.Modified -= OnSceneObjectModified;
             }
         }
 
