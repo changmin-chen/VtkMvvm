@@ -13,6 +13,22 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl
         nameof(SceneObjects), typeof(IEnumerable<ImageOrthogonalSliceViewModel>), typeof(VtkImageOrthogonalSlicesControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
+    public VtkImageOrthogonalSlicesControl()
+    {
+        InitializeComponent();
+        if (DesignerProperties.GetIsInDesignMode(this)) return;
+
+        RenderWindowControl.Dock = DockStyle.Fill;
+        WFHost.Child = RenderWindowControl;
+        MainRenderer.GetActiveCamera().ParallelProjectionOn();
+
+        Loaded += (sender, args) =>
+        {
+            RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
+            MainRenderer.SetBackground(0.0, 0.0, 0.0);
+        };
+    }
+
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
 
@@ -33,56 +49,108 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl
         IEnumerable<ImageOrthogonalSliceViewModel>? oldSceneObjects,
         IEnumerable<ImageOrthogonalSliceViewModel>? newSceneObjects)
     {
-        // 1) Unsubscribe/remove old actors
+        // ----- 1. Remove & unsubscribe old stuff -----
         if (oldSceneObjects != null)
         {
             foreach (var sceneObject in oldSceneObjects)
             {
-                MainRenderer.AddActor(sceneObject.Actor);
-                sceneObject.Modified += OnSceneObjectModified;
+                MainRenderer.RemoveActor(sceneObject.Actor); // FIX
+                sceneObject.Modified -= OnSceneObjectModified; // FIX
             }
         }
 
-        // 2) If nothing to add, bail out early
-        if (newSceneObjects == null) return;
-        var sceneList = newSceneObjects.ToList();
-        if (sceneList.Count == 0) return;
+        // Bail early if we have nothing new
+        if (newSceneObjects == null)
+        {
+            RenderWindowControl.RenderWindow.Render();
+            return;
+        }
 
-        // 3) Add actors & subscribe handlers
-        foreach (var sceneObject in sceneList)
+        // ----- 2. Add & subscribe new stuff -----
+        List<ImageOrthogonalSliceViewModel> list = newSceneObjects.ToList();
+        if (list.Count == 0)
+        {
+            RenderWindowControl.RenderWindow.Render();
+            return;
+        }
+
+        foreach (ImageOrthogonalSliceViewModel sceneObject in list)
         {
             MainRenderer.AddActor(sceneObject.Actor);
             sceneObject.Modified += OnSceneObjectModified;
         }
 
-        var first = sceneList[0];
-        var camera = MainRenderer.GetActiveCamera();
-        var center = first.ImageModel.Center;
+        // ----- 3. Camera magic (use the first slice as reference) -----
+        ImageOrthogonalSliceViewModel first = list[0];
+        FitSlice(first.Actor, first.Orientation); // NEW
 
-        MainRenderer.ResetCamera();
-        switch (first.Orientation)
-        {
-            case SliceOrientation.Axial:
-                camera.SetPosition(center[0], center[1], center[2] + 500.0);
-                camera.SetViewUp(0, -1, 0);
-                break;
-            case SliceOrientation.Coronal:
-                camera.SetPosition(center[0], center[1] + 500.0, center[2]);
-                camera.SetViewUp(0, 0, 1);
-                break;
-            case SliceOrientation.Sagittal:
-                camera.SetPosition(center[0] + 500.0, center[1], center[2]);
-                camera.SetViewUp(0, 0, 1);
-                break;
-        }
-
-        camera.SetFocalPoint(center[0], center[1], center[2]);
         MainRenderer.ResetCameraClippingRange();
+        RenderWindowControl.RenderWindow.Render(); // always re-draw
     }
 
     private void OnSceneObjectModified(object? sender, EventArgs e)
     {
         MainRenderer.ResetCameraClippingRange();
         RenderWindowControl.RenderWindow.Render();
+    }
+
+    /// <summary>
+    ///     Fits a single vtkImageActor / vtkImageSlice so it fills the viewport
+    ///     without cropping, for any orthogonal orientation.
+    ///     Works with VTK ≥ 9.0 (tested on 9.4.2).
+    /// </summary>
+    private void FitSlice(vtkProp slice, SliceOrientation orient)
+    {
+        ArgumentNullException.ThrowIfNull(slice);
+
+        const double camDist = 500;
+
+        vtkCamera? cam = MainRenderer.GetActiveCamera();
+        cam.ParallelProjectionOn(); // orthographic, no perspective
+        cam.SetClippingRange(0.1, 5000);
+
+        double[] b = slice.GetBounds(); // xmin xmax ymin ymax zmin zmax
+
+        // Decide which two axes to measure
+        double width, height, cx, cy, cz;
+
+        switch (orient)
+        {
+            case SliceOrientation.Axial: // XY live, Z flat
+                width = b[1] - b[0]; // xmax - xmin
+                height = b[3] - b[2]; // ymax - ymin
+                cx = 0.5 * (b[0] + b[1]);
+                cy = 0.5 * (b[2] + b[3]);
+                cz = b[4]; // zmin == zmax
+                cam.SetPosition(cx, cy, cz + camDist);
+                cam.SetViewUp(0, -1, 0);
+                break;
+
+            case SliceOrientation.Coronal: // XZ live, Y flat
+                width = b[1] - b[0]; // xmax - xmin
+                height = b[5] - b[4]; // zmax - zmin
+                cx = 0.5 * (b[0] + b[1]);
+                cy = b[2]; // ymin == ymax
+                cz = 0.5 * (b[4] + b[5]);
+                cam.SetPosition(cx, cy + camDist, cz);
+                cam.SetViewUp(0, 0, 1);
+                break;
+
+            case SliceOrientation.Sagittal: // YZ live, X flat
+                width = b[3] - b[2]; // ymax - ymin
+                height = b[5] - b[4]; // zmax - zmin
+                cx = b[0]; // xmin == xmax
+                cy = 0.5 * (b[2] + b[3]);
+                cz = 0.5 * (b[4] + b[5]);
+                cam.SetPosition(cx + camDist, cy, cz);
+                cam.SetViewUp(0, 0, 1);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(orient));
+        }
+
+        cam.SetFocalPoint(cx, cy, cz);
+        cam.SetParallelScale(0.5 * Math.Max(width, height)); // <= **key line**
     }
 }
