@@ -18,7 +18,15 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         Actor = pipeline.Actor;
 
         pipeline.Connect();
-        SetSliceIndex(0);
+
+        int centerIndex = orientation switch
+        {
+            SliceOrientation.Axial => ImageModel.Dimensions[2] / 2,
+            SliceOrientation.Coronal => ImageModel.Dimensions[1] / 2,
+            SliceOrientation.Sagittal => ImageModel.Dimensions[0] / 2,
+            _ => throw new ArgumentOutOfRangeException(nameof(orientation), orientation, null)
+        };
+        SetSliceIndex(centerIndex);
     }
 
     public SliceOrientation Orientation { get; }
