@@ -16,22 +16,6 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
 
-    public VtkImageOrthogonalSlicesControl()
-    {
-        InitializeComponent();
-        if (DesignerProperties.GetIsInDesignMode(this)) return;
-
-        RenderWindowControl.Dock = DockStyle.Fill;
-        WFHost.Child = RenderWindowControl;
-        MainRenderer.GetActiveCamera().ParallelProjectionOn();
-
-        Loaded += (sender, args) =>
-        {
-            RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
-            MainRenderer.SetBackground(0.1, 0.1, 0.1);
-        };
-    }
-
     public IEnumerable<ImageOrthogonalSliceViewModel> SceneObjects
     {
         get => (IEnumerable<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
