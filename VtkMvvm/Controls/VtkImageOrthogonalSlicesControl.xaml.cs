@@ -78,27 +78,31 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl
         }
 
         // ----- 2. Add & subscribe new stuff -----
-        List<ImageOrthogonalSliceViewModel> list = newSceneObjects.ToList();
-        if (list.Count == 0)
+        ImageOrthogonalSliceViewModel[] array = newSceneObjects.ToArray();
+        if (array.Length == 0)
         {
             RenderWindowControl.RenderWindow.Render();
             return;
         }
 
-        foreach (ImageOrthogonalSliceViewModel sceneObject in list)
+        foreach (ImageOrthogonalSliceViewModel sceneObject in array)
         {
             MainRenderer.AddActor(sceneObject.Actor);
             sceneObject.Modified += OnSceneObjectModified;
         }
 
         // ----- 3. Camera magic (use the first slice as reference) -----
-        ImageOrthogonalSliceViewModel first = list[0];
+        ImageOrthogonalSliceViewModel first = array[0];
         FitSlice(first.Actor, first.Orientation); // NEW
 
         MainRenderer.ResetCameraClippingRange();
         RenderWindowControl.RenderWindow.Render(); // always re-draw
     }
 
+    /// <summary>
+    ///     Render the scene when the actors are modified.
+    ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
+    /// </summary>
     private void OnSceneObjectModified(object? sender, EventArgs e)
     {
         MainRenderer.ResetCameraClippingRange();
