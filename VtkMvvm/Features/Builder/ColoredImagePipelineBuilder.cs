@@ -3,23 +3,6 @@
 namespace VtkMvvm.Features.Builder;
 
 /// <summary>
-/// DTO for color-mapped image pipeline
-/// </summary>
-public record ColoredImagePipeline(
-    vtkImageData Image,
-    vtkImageMapToColors ColorMap,
-    vtkImageActor Actor
-)
-{
-    public void Connect()
-    {
-        ColorMap.SetInput(Image);
-        Actor.SetInput(ColorMap.GetOutput());
-        Actor.Modified();
-    }
-}
-
-/// <summary>
 /// Builder for Image -> MapToColor -> ImageActor pipeline.
 /// </summary>
 public class ColoredImagePipelineBuilder
@@ -28,24 +11,24 @@ public class ColoredImagePipelineBuilder
 
     // Configuration fields only:
     private bool _isPickable = true;
-    private double _opacity = 1.0;
     private bool _linearInterpolation = true;
+    private double _opacity = 1.0;
     private vtkLookupTable? _rgbaLookupTable; // null means Luminance
+
+    public ColoredImagePipelineBuilder(vtkImageData image)
+    {
+        _image = image;
+    }
 
     private vtkLookupTable CreateDefaultGrayLut()
     {
-        var grayLut = vtkLookupTable.New();
-        var range = _image.GetScalarRange();
+        vtkLookupTable? grayLut = vtkLookupTable.New();
+        double[]? range = _image.GetScalarRange();
         grayLut.SetRange(range[0], range[1]);
         grayLut.SetValueRange(0.0, 1.0);
         grayLut.SetSaturationRange(0.0, 0.0);
         grayLut.Build();
         return grayLut;
-    }
-
-    public ColoredImagePipelineBuilder(vtkImageData image)
-    {
-        _image = image;
     }
 
     public static ColoredImagePipelineBuilder WithImage(vtkImageData image)
