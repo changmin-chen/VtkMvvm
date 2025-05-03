@@ -7,7 +7,7 @@ using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;
 
-public partial class VtkImageOrthogonalSlicesControl : UserControl
+public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects), typeof(IEnumerable<ImageOrthogonalSliceViewModel>), typeof(VtkImageOrthogonalSlicesControl),
@@ -37,6 +37,19 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl
 
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
+
+    public void Dispose()
+    {
+        foreach (ImageOrthogonalSliceViewModel sceneObj in SceneObjects)
+        {
+            sceneObj.Modified -= OnSceneObjectModified;
+        }
+
+        WFHost.Child = null;
+        WFHost?.Dispose();
+        MainRenderer.Dispose();
+        RenderWindowControl.Dispose();
+    }
 
     public void UpdateInteractStyle(vtkInteractorObserver interactorStyle)
     {
