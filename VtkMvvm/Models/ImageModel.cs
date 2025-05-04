@@ -7,7 +7,8 @@ public record ImageModel(
     vtkImageData Value,
     int[] Dimensions,
     Extent Extent,
-    double[] Center
+    double[] Center,
+    double[] ScalarRange
 )
 {
     public static ImageModel Create(vtkImageData image)
@@ -18,7 +19,8 @@ public record ImageModel(
             image,
             image.GetDimensions(),
             new Extent(ext[0], ext[1], ext[2], ext[3], ext[4], ext[5]),
-            image.GetCenter()
+            image.GetCenter(),
+            image.GetScalarRange()
         );
     }
 }

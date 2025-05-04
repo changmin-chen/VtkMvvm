@@ -5,9 +5,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:presentationTest="clr-namespace:PresentationTest"
         xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
-
         mc:Ignorable="d"
-        Title="VtkMvvmTestWindow" Height="500" Width="1200">
+        Title="VtkMvvmTestWindow"
+        Height="1080" Width="1920">
 
     <d:Window.DataContext>
         <presentationTest:VtkMvvmTestWindowViewModel />
@@ -76,19 +76,42 @@
 
             <controls:VtkImageOrthogonalSlicesControl x:Name="SagittalControl" SceneObjects="{Binding SagittalVms}"
                                                       Grid.Row="0" />
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
-                <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
-                <Slider Width="200"
-                        Minimum="0"
-                        Maximum="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}"
-                        Value="{Binding SagittalSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
 
-                <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding SagittalSliceIndex}" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}" Foreground="White"
-                           Margin="0,5,5,0" />
+            <StackPanel Grid.Row="1">
+                <!-- Slice adjust -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5">
+                    <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
+                    <Slider Width="200"
+                            Minimum="0"
+                            Maximum="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}"
+                            Value="{Binding SagittalSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
+
+                    <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="{Binding SagittalSliceIndex}" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}"
+                               Foreground="White"
+                               Margin="0,5,5,0" />
+                </StackPanel>
+                <!-- Adjust window -->
+                <StackPanel Orientation="Horizontal" Background="#80000000" Margin="5">
+                    <TextBlock Text="Level:" Foreground="White" Margin="0,5,5,0" />
+                    <Slider Width="200"
+                            Value="{Binding SagittalVms[0].WindowLevel, Mode=TwoWay}" IsSnapToTickEnabled="True"
+                            Minimum="{Binding SagittalVms[0].ImageModel.ScalarRange[0]}"
+                            Maximum="{Binding SagittalVms[0].ImageModel.ScalarRange[1]}" />
+                    <TextBlock Text="{Binding SagittalVms[0].WindowLevel}" Foreground="White" Margin="0,5,5,0" />
+
+                    <TextBlock Text="Width:" Foreground="White" Margin="0,5,5,0" />
+                    <Slider Width="200"
+                            Value="{Binding SagittalVms[0].WindowWidth, Mode=TwoWay}" IsSnapToTickEnabled="True"
+                            Minimum="100000"
+                            Maximum="500000" />
+                    <TextBlock Text="{Binding SagittalVms[0].WindowWidth}" Foreground="White" Margin="0,5,5,0" />
+
+                </StackPanel>
             </StackPanel>
+
         </Grid>
     </Grid>
 

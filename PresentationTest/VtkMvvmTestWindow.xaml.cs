@@ -40,11 +40,10 @@ public partial class VtkMvvmTestWindow : Window
             props.InitTraversal();
             var first = props.GetNextProp();
 
-            var iren = control.RenderWindowControl.RenderWindow.GetInteractor();
             var renderWindow = control.RenderWindowControl.RenderWindow;
             var drawIren = new FreeHandPickInteractorStyle(renderWindow, control.MainRenderer, first);
-            iren.SetInteractorStyle(drawIren);
-            iren.Initialize();
+
+            control.UpdateInteractStyle(drawIren);
             _irenToControl[drawIren] = control;
 
             drawIren.WorldPositionsCaptured += OnGetWorldCoordinates;

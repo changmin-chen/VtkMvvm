@@ -10,19 +10,25 @@ namespace VtkMvvm.ViewModels;
 /// </summary>
 public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
+    private readonly vtkImageMapToColors _colorMap;
     private int _sliceIndex;
+    private double _windowLevel;
+    private double _windowWidth;
+
+    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline) : base(pipeline.Image)
+    {
+        Orientation = orientation;
+        Actor = pipeline.Actor;
+
+        _colorMap = pipeline.ColorMap;
+        pipeline.Connect();
+
+        SetSliceIndex(0); // necessary. this not only affects which slice it initially displayed, but also the slicing dimension
+    }
+
     public SliceOrientation Orientation { get; }
 
     public override vtkImageActor Actor { get; }
-
-    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline p) : base(p.Image)
-    {
-        Orientation = orientation;
-        Actor = p.Actor;
-
-        p.Connect();
-        SetSliceIndex(0);
-    }
 
     public int SliceIndex
     {
@@ -32,6 +38,32 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
             if (SetField(ref _sliceIndex, value))
             {
                 SetSliceIndex(value);
+                OnModified();
+            }
+        }
+    }
+
+    public double WindowLevel
+    {
+        get => _windowLevel;
+        set
+        {
+            if (SetField(ref _windowLevel, value))
+            {
+                SetWindowBand(value, WindowWidth);
+                OnModified();
+            }
+        }
+    }
+
+    public double WindowWidth
+    {
+        get => _windowWidth;
+        set
+        {
+            if (SetField(ref _windowWidth, value))
+            {
+                SetWindowBand(WindowLevel, value);
                 OnModified();
             }
         }
@@ -55,6 +87,20 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
                 break;
         }
 
+        Actor.Modified();
+    }
+
+    private void SetWindowBand(double level, double width)
+    {
+        double low = level - width * 0.5;
+        double high = level + width * 0.5;
+
+        vtkScalarsToColors? lut = _colorMap.GetLookupTable();
+        lut.SetRange(low, high);
+        lut.Build();
+        _colorMap.SetLookupTable(lut);
+
+        _colorMap.Modified();
         Actor.Modified();
     }
 }

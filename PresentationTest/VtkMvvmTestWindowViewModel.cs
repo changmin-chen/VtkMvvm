@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 using MedXtend;
 using MedXtend.Vtk.ImageData;
 using PresentationTest.TestData;
@@ -7,36 +6,37 @@ using VtkMvvm.Features.BrushPainter;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
+using Image = itk.simple.Image;
 
 namespace PresentationTest;
 
 public class VtkMvvmTestWindowViewModel : BindableBase
 {
+    private const double BrushHeight = 1.0;
+
+    private const double BrushDiameter = 1.5;
+
     // Image data
     private readonly vtkImageData _background;
+    private readonly VoxelCylinderBrush _brushAxial; // cached brush for performance
+    private readonly VoxelCylinderBrush _brushCoronal;
+    private readonly VoxelCylinderBrush _brushSagittal;
     private readonly vtkImageData _labelMap;
-
-    // Axial, Coronal, Sagittal slice view models
-    public ObservableCollection<ImageOrthogonalSliceViewModel> AxialVms { get; } = new();
-    public ObservableCollection<ImageOrthogonalSliceViewModel> CoronalVms { get; } = new();
-    public ObservableCollection<ImageOrthogonalSliceViewModel> SagittalVms { get; } = new();
 
     // Painting labelmap
     private readonly CachedPainter _painter = new();
-    private readonly VoxelCylinderBrush _brushAxial; // cached brush for performance
-    private readonly VoxelCylinderBrush _brushSagittal;
-    private readonly VoxelCylinderBrush _brushCoronal;
 
-    private const double BrushHeight = 1.0;
-    private const double BrushDiameter = 1.5;
+    private int _axialSliceIndex;
+    private int _coronalSliceIndex;
+    private int _sagittalSliceIndex;
 
 
     public VtkMvvmTestWindowViewModel()
     {
-        using var imageItk = TestImageLoader.LoadEmbeddedTestImage("big_dog_mri.nii");
+        using Image imageItk = TestImageLoader.LoadEmbeddedTestImage("big_dog_mri.nii");
         _background = imageItk.ToOrientedVtk();
 
-        var backgroundPipelineBuilder = ColoredImagePipelineBuilder
+        ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
             .WithOpacity(1.0)
             .WithLinearInterpolation(true);
@@ -56,48 +56,48 @@ public class VtkMvvmTestWindowViewModel : BindableBase
 
         labelLut.Build();
 
-        var labelMapPipelineBuilder = ColoredImagePipelineBuilder
+        ColoredImagePipelineBuilder labelMapPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_labelMap)
             .WithPickable(false)
             .WithRgbaLookupTable(labelLut);
 
-        var axialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, backgroundPipelineBuilder.Build());
-        var labelAxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipelineBuilder.Build());
-        AxialVms.AddRange([axialVm, labelAxialVm]);
+        ImageOrthogonalSliceViewModel axialVm = new(SliceOrientation.Axial, backgroundPipelineBuilder.Build());
+        ImageOrthogonalSliceViewModel labelAxialVm = new(SliceOrientation.Axial, labelMapPipelineBuilder.Build());
+        AxialVms = [axialVm, labelAxialVm];
 
-        var coronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, backgroundPipelineBuilder.Build());
-        var labelCoronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, labelMapPipelineBuilder.Build());
-        CoronalVms.AddRange([coronalVm, labelCoronalVm]);
+        ImageOrthogonalSliceViewModel coronalVm = new(SliceOrientation.Coronal, backgroundPipelineBuilder.Build());
+        ImageOrthogonalSliceViewModel labelCoronalVm = new(SliceOrientation.Coronal, labelMapPipelineBuilder.Build());
+        CoronalVms = [coronalVm, labelCoronalVm];
 
-        var sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, backgroundPipelineBuilder.Build());
-        var labelSagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipelineBuilder.Build());
-        SagittalVms.AddRange([sagittalVm, labelSagittalVm]);
+        ImageOrthogonalSliceViewModel sagittalVm = new(SliceOrientation.Sagittal, backgroundPipelineBuilder.Build());
+        ImageOrthogonalSliceViewModel labelSagittalVm = new(SliceOrientation.Sagittal, labelMapPipelineBuilder.Build());
+        SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Instantiate voxel-brush and cached
-        var spacing = _labelMap.GetSpacing();
+        double[]? spacing = _labelMap.GetSpacing();
         _brushAxial = VoxelCylinderBrush.Create(
             (spacing[0], spacing[1], spacing[2]),
-            diameterMm: BrushDiameter,
-            heightMm: BrushHeight,
-            axis: VoxelCylinderBrush.Axis.Z
+            BrushDiameter,
+            BrushHeight
         );
         _brushCoronal = VoxelCylinderBrush.Create(
             (spacing[0], spacing[1], spacing[2]),
-            diameterMm: BrushDiameter,
-            heightMm: BrushHeight,
-            axis: VoxelCylinderBrush.Axis.Y
+            BrushDiameter,
+            BrushHeight,
+            VoxelCylinderBrush.Axis.Y
         );
         _brushSagittal = VoxelCylinderBrush.Create(
             (spacing[0], spacing[1], spacing[2]),
-            diameterMm: BrushDiameter,
-            heightMm: BrushHeight,
-            axis: VoxelCylinderBrush.Axis.X
+            BrushDiameter,
+            BrushHeight,
+            VoxelCylinderBrush.Axis.X
         );
     }
 
-    private int _axialSliceIndex;
-    private int _coronalSliceIndex;
-    private int _sagittalSliceIndex;
+    // Axial, Coronal, Sagittal slice view models
+    public ImageOrthogonalSliceViewModel[] AxialVms { get; }
+    public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
+    public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
 
     public int AxialSliceIndex
     {
