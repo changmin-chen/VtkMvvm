@@ -40,6 +40,12 @@ public sealed partial class VtkImageOrthogonalSlicesControl : UserControl, IDisp
     /// </summary>
     public bool IsLoaded { get; private set; }
 
+    /// <summary>
+    ///     Indicates the orientation of the slices so that the camera can be set up correctly.
+    ///     This orientation is based on the first slice in the SceneObjects collection.
+    /// </summary>
+    public SliceOrientation Orientation { get; private set; }
+
     public void Dispose()
     {
         if (SceneObjects is { } objects)
@@ -118,6 +124,7 @@ public sealed partial class VtkImageOrthogonalSlicesControl : UserControl, IDisp
 
         // ----- 3. Camera magic (use the first slice as reference) -----
         ImageOrthogonalSliceViewModel first = array[0];
+        Orientation = first.Orientation;
         FitSlice(first.Actor, first.Orientation);
 
         // ----- 4. Render the scene to show the new stuff-----
