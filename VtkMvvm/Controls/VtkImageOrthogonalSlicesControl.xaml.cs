@@ -23,12 +23,7 @@ public sealed partial class VtkImageOrthogonalSlicesControl : UserControl, IDisp
         WFHost.Child = RenderWindowControl;
         MainRenderer.GetActiveCamera().ParallelProjectionOn();
 
-        Loaded += (_, _) =>
-        {
-            RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
-            MainRenderer.SetBackground(0.0, 0.0, 0.0);
-            IsLoaded = true;
-        };
+        Loaded += OnLoadedOnce;
     }
 
     public IEnumerable<ImageOrthogonalSliceViewModel>? SceneObjects
@@ -59,6 +54,15 @@ public sealed partial class VtkImageOrthogonalSlicesControl : UserControl, IDisp
         WFHost?.Dispose();
         MainRenderer.Dispose();
         RenderWindowControl.Dispose();
+    }
+
+    private void OnLoadedOnce(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoadedOnce;
+
+        RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
+        MainRenderer.SetBackground(0.0, 0.0, 0.0);
+        IsLoaded = true;
     }
 
     public void UpdateInteractStyle(vtkInteractorObserver interactorStyle)
