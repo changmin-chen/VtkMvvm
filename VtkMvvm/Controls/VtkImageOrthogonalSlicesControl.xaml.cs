@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using System.Windows.Threading;
 using Kitware.VTK;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
@@ -7,7 +8,7 @@ using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;
 
-public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
+public sealed partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects), typeof(IEnumerable<ImageOrthogonalSliceViewModel>), typeof(VtkImageOrthogonalSlicesControl),
@@ -22,14 +23,15 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
         WFHost.Child = RenderWindowControl;
         MainRenderer.GetActiveCamera().ParallelProjectionOn();
 
-        Loaded += (sender, args) =>
+        Loaded += (_, _) =>
         {
             RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
             MainRenderer.SetBackground(0.0, 0.0, 0.0);
+            IsLoaded = true;
         };
     }
 
-    public IEnumerable<ImageOrthogonalSliceViewModel> SceneObjects
+    public IEnumerable<ImageOrthogonalSliceViewModel>? SceneObjects
     {
         get => (IEnumerable<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
         set => SetValue(SceneObjectsProperty, value);
@@ -38,11 +40,19 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
 
+    /// <summary>
+    ///     Indicates whether the control is loaded. Or else the RenderWindowControl.RenderWindow may be null.
+    /// </summary>
+    public bool IsLoaded { get; private set; }
+
     public void Dispose()
     {
-        foreach (ImageOrthogonalSliceViewModel sceneObj in SceneObjects)
+        if (SceneObjects is { } objects)
         {
-            sceneObj.Modified -= OnSceneObjectModified;
+            foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
+            {
+                sceneObj.Modified -= OnSceneObjectsModified;
+            }
         }
 
         WFHost.Child = null;
@@ -79,7 +89,7 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
             foreach (var sceneObject in oldSceneObjects)
             {
                 MainRenderer.RemoveActor(sceneObject.Actor);
-                sceneObject.Modified -= OnSceneObjectModified;
+                sceneObject.Modified -= OnSceneObjectsModified;
             }
         }
 
@@ -99,31 +109,40 @@ public partial class VtkImageOrthogonalSlicesControl : UserControl, IDisposable
         foreach (ImageOrthogonalSliceViewModel sceneObject in array)
         {
             MainRenderer.AddActor(sceneObject.Actor);
-            sceneObject.Modified += OnSceneObjectModified;
+            sceneObject.Modified += OnSceneObjectsModified;
         }
 
         // ----- 3. Camera magic (use the first slice as reference) -----
         ImageOrthogonalSliceViewModel first = array[0];
-        FitSlice(first.Actor, first.Orientation); // NEW
+        FitSlice(first.Actor, first.Orientation);
 
-        MainRenderer.ResetCameraClippingRange();
-        RenderWindowControl.RenderWindow.Render(); // always re-draw
+        // ----- 4. Render the scene to show the new stuff-----
+        if (IsLoaded)
+        {
+            OnSceneObjectsModified(this, EventArgs.Empty);
+        }
+        else
+        {
+            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
+        }
     }
 
     /// <summary>
     ///     Render the scene when the actors are modified.
     ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
     /// </summary>
-    private void OnSceneObjectModified(object? sender, EventArgs e)
+    private void OnSceneObjectsModified(object? sender, EventArgs args)
     {
-        MainRenderer.ResetCameraClippingRange();
-        RenderWindowControl.RenderWindow.Render();
+        if (IsLoaded)
+        {
+            MainRenderer.ResetCameraClippingRange();
+            RenderWindowControl.RenderWindow.Render();
+        }
     }
 
     /// <summary>
     ///     Fits a single vtkImageActor / vtkImageSlice so it fills the viewport
     ///     without cropping, for any orthogonal orientation.
-    ///     Works with VTK ≥ 9.0 (tested on 9.4.2).
     /// </summary>
     private void FitSlice(vtkProp slice, SliceOrientation orient)
     {
