@@ -1,4 +1,5 @@
-﻿using Kitware.VTK;
+﻿using System.Numerics;
+using Kitware.VTK;
 using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels;
@@ -22,13 +23,15 @@ public class BrushViewModel : VtkElementViewModel
     public BrushViewModel()
     {
         // 1. Create brush geometry (here, a sphere for 3D painting)
-        SetBrushDiameter(Diameter);
-        SetBrushHeight(Height);
+        SetCenter(CenterX, CenterY, CenterZ);
+        SetDiameter(Diameter);
+        SetHeight(Height);
+        _brushSource.SetResolution(32);
         _brushSource.Update();
 
         // 2. Transform the brush to world origin and align its normal based on orientation.
         _orient.Identity();
-        SetBrushOrientation(Orientation);
+        SetOrientation(Orientation);
         _orientFilter.SetTransform(_orient);
         _orientFilter.SetInputConnection(_brushSource.GetOutputPort());
         _orientFilter.Update();
@@ -54,6 +57,7 @@ public class BrushViewModel : VtkElementViewModel
     private double _diameter = 5.0;
     private double _height = 2.0;
     private SliceOrientation _orientation = SliceOrientation.Axial;
+    private Vector3 _center = Vector3.Zero;
 
     public double Diameter
     {
@@ -62,7 +66,8 @@ public class BrushViewModel : VtkElementViewModel
         {
             if (SetField(ref _diameter, value))
             {
-                SetBrushDiameter(value);
+                SetDiameter(value);
+                OnModified();
             }
         }
     }
@@ -74,11 +79,11 @@ public class BrushViewModel : VtkElementViewModel
         {
             if (SetField(ref _height, value))
             {
-                SetBrushHeight(value);
+                SetHeight(value);
+                OnModified();
             }
         }
     }
-
 
     public SliceOrientation Orientation
     {
@@ -87,24 +92,55 @@ public class BrushViewModel : VtkElementViewModel
         {
             if (SetField(ref _orientation, value))
             {
-                SetBrushOrientation(value);
+                SetOrientation(value);
+                OnModified();
             }
         }
     }
 
-    private void SetBrushDiameter(double diameter)
+    public float CenterX
+    {
+        get => _center.X;
+    }
+
+    public float CenterY
+    {
+        get => _center.Y;
+    }
+
+    public float CenterZ
+    {
+        get => _center.Z;
+    }
+
+    /// <summary>
+    ///     For center update, we expose method to update x, y, z concurrently
+    /// </summary>
+    public void SetCenter(float x, float y, float z)
+    {
+        _center = new Vector3(x, y, z);
+        _brushSource.SetCenter(x, y, z);
+        _brushSource.Modified();
+        OnModified();
+
+        OnPropertyChanged(nameof(CenterX));
+        OnPropertyChanged(nameof(CenterY));
+        OnPropertyChanged(nameof(CenterZ));
+    }
+
+    private void SetDiameter(double diameter)
     {
         _brushSource.SetRadius(diameter / 2.0);
         _brushSource.Modified();
     }
 
-    private void SetBrushHeight(double value)
+    private void SetHeight(double value)
     {
         _brushSource.SetHeight(value);
         _brushSource.Modified();
     }
 
-    private void SetBrushOrientation(SliceOrientation orientation)
+    private void SetOrientation(SliceOrientation orientation)
     {
         switch (orientation)
         {

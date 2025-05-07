@@ -96,15 +96,22 @@ public class VtkMvvmTestWindowViewModel : BindableBase
         );
 
         // Add brushes that render on top of the image
-        BrushViewModel brushAxial = new();
+        BrushViewModel brushAxial = new() { Orientation = SliceOrientation.Axial };
+        BrushViewModel brushCoronal = new() { Orientation = SliceOrientation.Coronal };
+        BrushViewModel brushSagittal = new() { Orientation = SliceOrientation.Sagittal };
         AxialBrushVms = [brushAxial];
+        CoronalBrushVms = [brushCoronal];
+        SagittalBrushVms = [brushSagittal];
     }
 
     // Axial, Coronal, Sagittal slice view models
     public ImageOrthogonalSliceViewModel[] AxialVms { get; }
-    public VtkElementViewModel[] AxialBrushVms { get; }
     public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
     public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
+
+    public VtkElementViewModel[] AxialBrushVms { get; }
+    public VtkElementViewModel[] CoronalBrushVms { get; }
+    public VtkElementViewModel[] SagittalBrushVms { get; }
 
     public int AxialSliceIndex
     {

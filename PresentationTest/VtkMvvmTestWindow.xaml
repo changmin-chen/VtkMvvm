@@ -51,7 +51,9 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <controls:VtkImageSceneControl x:Name="CoronalControl" SceneObjects="{Binding CoronalVms}"
+            <controls:VtkImageSceneControl x:Name="CoronalControl"
+                                           SceneObjects="{Binding CoronalVms}"
+                                           OverlayObjects="{Binding CoronalBrushVms}"
                                            Grid.Row="0" />
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
                 <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
@@ -75,7 +77,9 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <controls:VtkImageSceneControl x:Name="SagittalControl" SceneObjects="{Binding SagittalVms}"
+            <controls:VtkImageSceneControl x:Name="SagittalControl"
+                                           SceneObjects="{Binding SagittalVms}"
+                                           OverlayObjects="{Binding SagittalBrushVms}"
                                            Grid.Row="0" />
 
             <StackPanel Grid.Row="1">
