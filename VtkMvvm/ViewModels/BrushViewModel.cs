@@ -62,7 +62,7 @@ public class BrushViewModel : VtkElementViewModel
 
     #region Binable properties
 
-    private double _diameter = 5.0;
+    private double _diameter = 2.0;
     private double _height = 2.0;
     private SliceOrientation _orientation = SliceOrientation.Axial;
     private Vector3 _center = Vector3.Zero;

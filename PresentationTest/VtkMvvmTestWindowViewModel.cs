@@ -15,9 +15,6 @@ namespace PresentationTest;
 
 public class VtkMvvmTestWindowViewModel : ReactiveObject
 {
-    private const double BrushHeight = 1.0;
-    private const double BrushDiameter = 1.5;
-
     // Image data
     private readonly vtkImageData _background;
 
@@ -25,7 +22,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly VoxelCylinderBrush _brushAxial; // cached brush for performance
     private readonly VoxelCylinderBrush _brushCoronal;
     private readonly VoxelCylinderBrush _brushSagittal;
-    private readonly BrushViewModel _brushVm = new();
     private readonly vtkImageData _labelMap;
     private readonly CachedPainter _painter = new();
 
@@ -78,28 +74,30 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         ImageOrthogonalSliceViewModel labelSagittalVm = new(SliceOrientation.Sagittal, labelMapPipelineBuilder.Build());
         SagittalVms = [sagittalVm, labelSagittalVm];
 
+        // Add brushes that render on top of the image
+        BrushVm.Diameter = 2.0;
+        BrushVm.Height = 2.0;
+        BrushSharedVms = [BrushVm];
+
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
         _brushAxial = VoxelCylinderBrush.Create(
             (spacing[0], spacing[1], spacing[2]),
-            BrushDiameter,
-            BrushHeight
+            BrushVm.Diameter,
+            BrushVm.Height
         );
         _brushCoronal = VoxelCylinderBrush.Create(
             (spacing[0], spacing[1], spacing[2]),
-            BrushDiameter,
-            BrushHeight,
+            BrushVm.Diameter,
+            BrushVm.Height,
             VoxelCylinderBrush.Axis.Y
         );
         _brushSagittal = VoxelCylinderBrush.Create(
             (spacing[0], spacing[1], spacing[2]),
-            BrushDiameter,
-            BrushHeight,
+            BrushVm.Diameter,
+            BrushVm.Height,
             VoxelCylinderBrush.Axis.X
         );
-
-        // Add brushes that render on top of the image
-        BrushSharedVms = [_brushVm];
     }
 
     // Axial, Coronal, Sagittal slice view models
@@ -107,6 +105,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
     public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
 
+    public BrushViewModel BrushVm { get; } = new();
     public VtkElementViewModel[] BrushSharedVms { get; }
 
     public int AxialSliceIndex
@@ -138,6 +137,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             SetSliceIndex(SagittalVms, value);
         }
     }
+
 
     public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
     {
@@ -178,8 +178,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Vector3 clickWorldPos = _picker.GetPickWorldPosition();
-        _brushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
-        _brushVm.Orientation = sender.Orientation;
+        BrushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
+        BrushVm.Orientation = sender.Orientation;
     }
 
     private static void SetSliceIndex(IEnumerable<ImageOrthogonalSliceViewModel> vms, int sliceIndex)
