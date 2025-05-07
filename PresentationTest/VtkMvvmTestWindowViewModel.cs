@@ -18,6 +18,8 @@ public class VtkMvvmTestWindowViewModel : BindableBase
 
     // Image data
     private readonly vtkImageData _background;
+
+    // Brush
     private readonly VoxelCylinderBrush _brushAxial; // cached brush for performance
     private readonly VoxelCylinderBrush _brushCoronal;
     private readonly VoxelCylinderBrush _brushSagittal;
@@ -92,10 +94,15 @@ public class VtkMvvmTestWindowViewModel : BindableBase
             BrushHeight,
             VoxelCylinderBrush.Axis.X
         );
+
+        // Add brushes that render on top of the image
+        BrushViewModel brushAxial = new();
+        AxialBrushVms = [brushAxial];
     }
 
     // Axial, Coronal, Sagittal slice view models
     public ImageOrthogonalSliceViewModel[] AxialVms { get; }
+    public VtkElementViewModel[] AxialBrushVms { get; }
     public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
     public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
 

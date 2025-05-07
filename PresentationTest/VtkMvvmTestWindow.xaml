@@ -26,8 +26,9 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <controls:VtkImageOrthogonalSlicesControl x:Name="AxialControl" SceneObjects="{Binding AxialVms}"
-                                                      Grid.Row="0" />
+            <controls:VtkImageSceneControl x:Name="AxialControl" Grid.Row="0"
+                                           SceneObjects="{Binding AxialVms}"
+                                           OverlayObjects="{Binding  AxialBrushVms}" />
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
                 <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
                 <Slider Width="200"
@@ -50,8 +51,8 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <controls:VtkImageOrthogonalSlicesControl x:Name="CoronalControl" SceneObjects="{Binding CoronalVms}"
-                                                      Grid.Row="0" />
+            <controls:VtkImageSceneControl x:Name="CoronalControl" SceneObjects="{Binding CoronalVms}"
+                                           Grid.Row="0" />
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
                 <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
                 <Slider Width="200"
@@ -74,8 +75,8 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <controls:VtkImageOrthogonalSlicesControl x:Name="SagittalControl" SceneObjects="{Binding SagittalVms}"
-                                                      Grid.Row="0" />
+            <controls:VtkImageSceneControl x:Name="SagittalControl" SceneObjects="{Binding SagittalVms}"
+                                           Grid.Row="0" />
 
             <StackPanel Grid.Row="1">
                 <!-- Slice adjust -->

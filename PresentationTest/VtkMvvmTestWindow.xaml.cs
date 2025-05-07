@@ -7,7 +7,7 @@ namespace PresentationTest;
 
 public partial class VtkMvvmTestWindow : Window
 {
-    private readonly Dictionary<FreeHandPickInteractorStyle, VtkImageOrthogonalSlicesControl>
+    private readonly Dictionary<FreeHandPickInteractorStyle, VtkImageSceneControl>
         _irenToControl = new();
 
     private VtkMvvmTestWindowViewModel _vm;
@@ -31,7 +31,7 @@ public partial class VtkMvvmTestWindow : Window
     /// <summary>
     /// Each controls has their own instance of freehand interactor
     /// </summary>
-    private void InitializeFreehandInteractor(IEnumerable<VtkImageOrthogonalSlicesControl> controls)
+    private void InitializeFreehandInteractor(IEnumerable<VtkImageSceneControl> controls)
     {
         foreach (var control in controls)
         {
@@ -43,7 +43,7 @@ public partial class VtkMvvmTestWindow : Window
             var renderWindow = control.RenderWindowControl.RenderWindow;
             var drawIren = new FreeHandPickInteractorStyle(renderWindow, control.MainRenderer, first);
 
-            control.UpdateInteractStyle(drawIren);
+            control.SetInteractStyle(drawIren);
             _irenToControl[drawIren] = control;
 
             drawIren.WorldPositionsCaptured += OnGetWorldCoordinates;
