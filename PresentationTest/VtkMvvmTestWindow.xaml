@@ -28,7 +28,7 @@
 
             <controls:VtkImageSceneControl x:Name="AxialControl" Grid.Row="0"
                                            SceneObjects="{Binding AxialVms}"
-                                           OverlayObjects="{Binding  AxialBrushVms}" />
+                                           OverlayObjects="{Binding  BrushSharedVms}" />
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
                 <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
                 <Slider Width="200"
@@ -53,7 +53,7 @@
 
             <controls:VtkImageSceneControl x:Name="CoronalControl"
                                            SceneObjects="{Binding CoronalVms}"
-                                           OverlayObjects="{Binding CoronalBrushVms}"
+                                           OverlayObjects="{Binding BrushSharedVms}"
                                            Grid.Row="0" />
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
                 <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
@@ -79,7 +79,7 @@
 
             <controls:VtkImageSceneControl x:Name="SagittalControl"
                                            SceneObjects="{Binding SagittalVms}"
-                                           OverlayObjects="{Binding SagittalBrushVms}"
+                                           OverlayObjects="{Binding BrushSharedVms}"
                                            Grid.Row="0" />
 
             <StackPanel Grid.Row="1">

@@ -52,18 +52,24 @@ public partial class VtkMvvmTestWindow : Window
 
             // Left mouse: paint and render
             leftBehavior.Moves
-                .Where(_ => leftBehavior.IsPressing)
+                .Subscribe(pos => { _vm.OnControlGetBrushPosition(control, pos.x, pos.y); });
+
+            IObservable<(int x, int y)> leftMouseDrag = leftBehavior.Moves
+                .Where(_ => leftBehavior.IsPressing); // should move + pressing
+
+            IObservable<(int x, int y)> rightMouseDrag = rightBehavior.Moves
+                .Where(_ => rightBehavior.IsPressing);
+
+            leftMouseDrag
                 .Subscribe(pos => { _vm.OnControlGetMousePaintPosition(control, pos.x, pos.y); })
                 .DisposeWith(_disposables);
 
-            leftBehavior.Moves
-                .Where(_ => leftBehavior.IsPressing)
+            leftMouseDrag
                 .Sample(TimeSpan.FromMilliseconds(33), RxApp.MainThreadScheduler)
                 .Subscribe(_ => RenderControls())
                 .DisposeWith(_disposables); // render every 33ms if paint
 
-            rightBehavior.Moves
-                .Where(_ => rightBehavior.IsPressing)
+            rightMouseDrag
                 .Subscribe(pos => { _vm.OnControlGetMouseDisplayPosition(control, pos.x, pos.y); })
                 .DisposeWith(_disposables);
 

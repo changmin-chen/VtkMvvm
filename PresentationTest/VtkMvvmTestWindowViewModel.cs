@@ -25,12 +25,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly VoxelCylinderBrush _brushAxial; // cached brush for performance
     private readonly VoxelCylinderBrush _brushCoronal;
     private readonly VoxelCylinderBrush _brushSagittal;
+    private readonly BrushViewModel _brushVm = new();
     private readonly vtkImageData _labelMap;
     private readonly CachedPainter _painter = new();
 
     // Painting labelmap
     private readonly vtkCellPicker _picker = new();
-
     private int _axialSliceIndex;
     private int _coronalSliceIndex;
     private int _sagittalSliceIndex;
@@ -99,12 +99,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         );
 
         // Add brushes that render on top of the image
-        BrushViewModel brushAxial = new() { Orientation = SliceOrientation.Axial };
-        BrushViewModel brushCoronal = new() { Orientation = SliceOrientation.Coronal };
-        BrushViewModel brushSagittal = new() { Orientation = SliceOrientation.Sagittal };
-        AxialBrushVms = [brushAxial];
-        CoronalBrushVms = [brushCoronal];
-        SagittalBrushVms = [brushSagittal];
+        BrushSharedVms = [_brushVm];
     }
 
     // Axial, Coronal, Sagittal slice view models
@@ -112,9 +107,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
     public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
 
-    public VtkElementViewModel[] AxialBrushVms { get; }
-    public VtkElementViewModel[] CoronalBrushVms { get; }
-    public VtkElementViewModel[] SagittalBrushVms { get; }
+    public VtkElementViewModel[] BrushSharedVms { get; }
 
     public int AxialSliceIndex
     {
@@ -178,6 +171,15 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
                 _painter.Paint(_labelMap, _brushSagittal!, [centre], 1);
                 break;
         }
+    }
+
+    public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)
+    {
+        if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
+
+        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
+        _brushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
+        _brushVm.Orientation = sender.Orientation;
     }
 
     private static void SetSliceIndex(IEnumerable<ImageOrthogonalSliceViewModel> vms, int sliceIndex)
