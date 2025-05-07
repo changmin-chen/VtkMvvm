@@ -52,6 +52,8 @@ public class BrushViewModel : VtkElementViewModel
         vtkActor? actor = vtkActor.New();
         actor.GetProperty().SetColor(1.0, 0.5, 0.3);
         actor.GetProperty().SetOpacity(0.8);
+        actor.GetProperty().SetRepresentationToWireframe();
+        actor.GetProperty().SetLineWidth(2);
         actor.SetMapper(_mapper);
         Actor = actor;
     }

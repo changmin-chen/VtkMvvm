@@ -93,7 +93,6 @@ public sealed class MoveInteractorBehavior(TriggerMouseButton triggerButton)
         PushEventPosition();
     }
 
-
     private void OnButtonRelease(vtkObject sender, vtkObjectEventArgs e)
     {
         if (_style is null) return;
