@@ -28,24 +28,20 @@ public class BrushViewModel : VtkElementViewModel
         SetDiameter(Diameter);
         SetHeight(Height);
         _brushSource.SetResolution(32);
-        _brushSource.Update();
 
         // 2. Transform the brush to world origin and align its normal based on orientation.
         SetOrientation(Orientation);
         _orientFilter.SetTransform(_orient);
         _orientFilter.SetInputConnection(_brushSource.GetOutputPort());
-        _orientFilter.Update();
 
         // 3. Placing the brush to interested world position
         SetCenter(CenterX, CenterY, CenterZ);
         _positionFilter.SetTransform(_position);
         _positionFilter.SetInputConnection(_orientFilter.GetOutputPort());
-        _positionFilter.Update();
 
         // 4. Smooth the brush by compute its normal.
         _brushSmoother.SetInputConnection(_positionFilter.GetOutputPort());
         _brushSmoother.AutoOrientNormalsOn();
-        _brushSmoother.Update();
 
         // For render window
         _mapper.SetInputConnection(_brushSmoother.GetOutputPort());
@@ -59,6 +55,17 @@ public class BrushViewModel : VtkElementViewModel
     }
 
     public override vtkActor Actor { get; }
+
+    /// <summary>
+    ///     Get the port that output the rotated brush <see cref="vtkPolyData" /> but with its center at (0, 0, 0).
+    /// </summary>
+    public vtkAlgorithmOutput GetBrushModelOutputPort() =>
+        // _orientFilter.Update();
+        // var output = _orientFilter.GetOutput();
+        // var b = output.GetBounds();
+        // Debug.WriteLine($"Brush bounds from {GetType().Name}: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}"
+        //     + $"Brush diameter: {Diameter} Height: {Height}");
+        _orientFilter.GetOutputPort();
 
     #region Binable properties
 
@@ -140,12 +147,12 @@ public class BrushViewModel : VtkElementViewModel
     /// </summary>
     public void SetCenter(float x, float y, float z)
     {
-        _center = new Vector3(x, y, z);
         _position.Identity();
         _position.Translate(x, y, z);
         _positionFilter.Modified();
-
         OnModified();
+
+        _center = new Vector3(x, y, z);
         OnPropertyChanged(nameof(CenterX));
         OnPropertyChanged(nameof(CenterY));
         OnPropertyChanged(nameof(CenterZ));

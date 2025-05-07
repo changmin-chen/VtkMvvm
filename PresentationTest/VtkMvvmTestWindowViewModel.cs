@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 using Kitware.VTK;
 using MedXtend;
 using MedXtend.Vtk.ImageData;
@@ -23,7 +24,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly VoxelCylinderBrush _brushCoronal;
     private readonly VoxelCylinderBrush _brushSagittal;
     private readonly vtkImageData _labelMap;
-    private readonly CachedPainter _painter = new();
+    private readonly BrushToActiveOffsetsConvertor _offsetsConverter = new();
+    private readonly VoxelPainter _painter = new();
 
     // Painting labelmap
     private readonly vtkCellPicker _picker = new();
@@ -77,29 +79,32 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Add brushes that render on top of the image
-        BrushVm.Diameter = 2.0;
+        BrushVm.Diameter = 8.0;
         BrushVm.Height = 2.0;
         BrushSharedVms = [BrushVm];
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
-        _brushAxial = VoxelCylinderBrush.Create(
-            (spacing[0], spacing[1], spacing[2]),
-            BrushVm.Diameter,
-            BrushVm.Height
-        );
-        _brushCoronal = VoxelCylinderBrush.Create(
-            (spacing[0], spacing[1], spacing[2]),
-            BrushVm.Diameter,
-            BrushVm.Height,
-            VoxelCylinderBrush.Axis.Y
-        );
-        _brushSagittal = VoxelCylinderBrush.Create(
-            (spacing[0], spacing[1], spacing[2]),
-            BrushVm.Diameter,
-            BrushVm.Height,
-            VoxelCylinderBrush.Axis.X
-        );
+        _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
+        _offsetsConverter.SetBrushModelInputConnection(BrushVm.GetBrushModelOutputPort());
+
+        // _brushAxial = VoxelCylinderBrush.Create(
+        //     (spacing[0], spacing[1], spacing[2]),
+        //     BrushVm.Diameter,
+        //     BrushVm.Height
+        // );
+        // _brushCoronal = VoxelCylinderBrush.Create(
+        //     (spacing[0], spacing[1], spacing[2]),
+        //     BrushVm.Diameter,
+        //     BrushVm.Height,
+        //     VoxelCylinderBrush.Axis.Y
+        // );
+        // _brushSagittal = VoxelCylinderBrush.Create(
+        //     (spacing[0], spacing[1], spacing[2]),
+        //     BrushVm.Diameter,
+        //     BrushVm.Height,
+        //     VoxelCylinderBrush.Axis.X
+        // );
     }
 
     // Axial, Coronal, Sagittal slice view models
@@ -159,20 +164,10 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Vector3 clickWorldPos = _picker.GetPickWorldPosition();
-        double[] centre = [clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z];
+        IReadOnlyList<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
+        Debug.WriteLine($"Get brush active offsets with count {activeOffsets.Count}");
 
-        switch (sender.Orientation)
-        {
-            case SliceOrientation.Axial:
-                _painter.Paint(_labelMap, _brushAxial!, [centre], 1); // TODO: should support 1 centre draw
-                break;
-            case SliceOrientation.Coronal:
-                _painter.Paint(_labelMap, _brushCoronal!, [centre], 1);
-                break;
-            case SliceOrientation.Sagittal:
-                _painter.Paint(_labelMap, _brushSagittal!, [centre], 1);
-                break;
-        }
+        _painter.Paint(_labelMap, activeOffsets, [clickWorldPos], 1);
     }
 
     public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)
