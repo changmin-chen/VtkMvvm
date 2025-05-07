@@ -36,9 +36,9 @@ public class BrushToActiveOffsetsConvertor
     public void SetBrushModelInputConnection(vtkAlgorithmOutput input)
     {
         _millimeterToIjkFilter.SetInputConnection(input);
-        _millimeterToIjkFilter.Update();
 
         // tight bbox with a 1-voxel pad
+        _millimeterToIjkFilter.Update();
         double[]? b = _millimeterToIjkFilter.GetOutput().GetBounds();
         Debug.WriteLine($"Brush bounds: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}");
 
@@ -63,6 +63,7 @@ public class BrushToActiveOffsetsConvertor
 
     public IReadOnlyList<(int dx, int dy, int dz)> GetActiveVoxelOffsets()
     {
+        _toMask.Update();
         vtkImageData? mask = _toMask.GetOutput();
 
         // Debug
