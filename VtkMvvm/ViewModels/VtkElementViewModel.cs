@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Kitware.VTK;
-using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels;
 
-public abstract class VtkElementViewModel(vtkImageData image) : INotifyPropertyChanged, IDisposable
+public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
 {
     public abstract vtkProp Actor { get; }
-    public ImageModel ImageModel { get; } = ImageModel.Create(image);
 
     public void Dispose()
     {

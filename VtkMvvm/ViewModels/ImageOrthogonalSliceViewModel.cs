@@ -15,10 +15,11 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
     private double _windowLevel;
     private double _windowWidth;
 
-    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline) : base(pipeline.Image)
+    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline)
     {
         Orientation = orientation;
         Actor = pipeline.Actor;
+        ImageModel = ImageModel.Create(pipeline.Image);
 
         _colorMap = pipeline.ColorMap;
         pipeline.Connect();
@@ -27,7 +28,7 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
     }
 
     public SliceOrientation Orientation { get; }
-
+    public ImageModel ImageModel { get; }
     public override vtkImageActor Actor { get; }
 
     public int SliceIndex
