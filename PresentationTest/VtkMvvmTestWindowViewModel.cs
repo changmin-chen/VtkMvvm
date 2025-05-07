@@ -39,6 +39,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
         ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
+            .WithLinearInterpolation(false)
             .WithOpacity(1.0)
             .WithLinearInterpolation(true);
 
@@ -52,13 +53,14 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             // simple “rainbow” – HSV -> RGB
             double h = i / 255.0; // hue 0-1
             (double r, double g, double b) = HsvToRgb(h, 1, 1);
-            labelLut.SetTableValue(i, r, g, b, 0.7); // 70 % opacity
+            labelLut.SetTableValue(i, r, g, b, 0.3); // 30 % opacity
         }
 
         labelLut.Build();
 
         ColoredImagePipelineBuilder labelMapPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_labelMap)
+            .WithLinearInterpolation(false)
             .WithPickable(false)
             .WithRgbaLookupTable(labelLut);
 
@@ -178,6 +180,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Vector3 clickWorldPos = _picker.GetPickWorldPosition();
+
         BrushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
         BrushVm.Orientation = sender.Orientation;
     }
