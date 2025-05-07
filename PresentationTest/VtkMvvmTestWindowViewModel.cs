@@ -1,7 +1,10 @@
-﻿using Kitware.VTK;
+﻿using System.Numerics;
+using Kitware.VTK;
 using MedXtend;
 using MedXtend.Vtk.ImageData;
 using PresentationTest.TestData;
+using ReactiveUI;
+using VtkMvvm.Controls;
 using VtkMvvm.Features.BrushPainter;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
@@ -10,10 +13,9 @@ using Image = itk.simple.Image;
 
 namespace PresentationTest;
 
-public class VtkMvvmTestWindowViewModel : BindableBase
+public class VtkMvvmTestWindowViewModel : ReactiveObject
 {
     private const double BrushHeight = 1.0;
-
     private const double BrushDiameter = 1.5;
 
     // Image data
@@ -24,9 +26,10 @@ public class VtkMvvmTestWindowViewModel : BindableBase
     private readonly VoxelCylinderBrush _brushCoronal;
     private readonly VoxelCylinderBrush _brushSagittal;
     private readonly vtkImageData _labelMap;
+    private readonly CachedPainter _painter = new();
 
     // Painting labelmap
-    private readonly CachedPainter _painter = new();
+    private readonly vtkCellPicker _picker = new();
 
     private int _axialSliceIndex;
     private int _coronalSliceIndex;
@@ -118,7 +121,8 @@ public class VtkMvvmTestWindowViewModel : BindableBase
         get => _axialSliceIndex;
         set
         {
-            if (SetProperty(ref _axialSliceIndex, value)) SetSliceIndex(AxialVms, value);
+            this.RaiseAndSetIfChanged(ref _axialSliceIndex, value);
+            SetSliceIndex(AxialVms, value);
         }
     }
 
@@ -127,7 +131,8 @@ public class VtkMvvmTestWindowViewModel : BindableBase
         get => _coronalSliceIndex;
         set
         {
-            if (SetProperty(ref _coronalSliceIndex, value)) SetSliceIndex(CoronalVms, value);
+            this.RaiseAndSetIfChanged(ref _coronalSliceIndex, value);
+            SetSliceIndex(CoronalVms, value);
         }
     }
 
@@ -136,42 +141,49 @@ public class VtkMvvmTestWindowViewModel : BindableBase
         get => _sagittalSliceIndex;
         set
         {
-            if (SetProperty(ref _sagittalSliceIndex, value)) SetSliceIndex(SagittalVms, value);
+            this.RaiseAndSetIfChanged(ref _sagittalSliceIndex, value);
+            SetSliceIndex(SagittalVms, value);
         }
     }
 
-    /// <summary>
-    /// Should be called by View 
-    /// </summary>
-    public void PaintLabelMap(SliceOrientation orientation, IReadOnlyList<double[]> worldCentres)
+    public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
     {
-        // debug...
-        // var o = _labelMap.GetOrigin();
-        // var s = _labelMap.GetSpacing();
-        // Debug.WriteLine($"origin (x, y, z) = ({o[0]}, {o[1]}, {o[2]})");
-        // Debug.WriteLine($"spacing (x, y, z) = ({s[0]}, {s[1]}, {s[2]})");
-        // int idx = 0;
-        // foreach (var wc in worldCentres)
-        // {
-        //     Debug.WriteLine($"point-{idx} (x, y, z) = ({wc[0]}, {wc[1]}, {wc[2]})");
-        //     idx++;
-        // }
+        if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
-        const int activeLabel = 123;
-        switch (orientation)
+        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
+        if (_background.TryComputeStructuredCoordinates(clickWorldPos, out (int i, int j, int k) voxel, out Vector3 bary))
+        {
+            AxialSliceIndex = voxel.k;
+            CoronalSliceIndex = voxel.j;
+            SagittalSliceIndex = voxel.i;
+        }
+    }
+
+    public void OnControlGetMousePaintPosition(VtkImageSceneControl sender, int x, int y)
+    {
+        if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
+
+        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
+        double[] centre = [clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z];
+
+        switch (sender.Orientation)
         {
             case SliceOrientation.Axial:
-                _painter.PaintParallel(_labelMap, _brushAxial, worldCentres, activeLabel);
+                _painter.Paint(_labelMap, _brushAxial!, [centre], 1); // TODO: should support 1 centre draw
                 break;
             case SliceOrientation.Coronal:
-                _painter.PaintParallel(_labelMap, _brushCoronal, worldCentres, activeLabel);
+                _painter.Paint(_labelMap, _brushCoronal!, [centre], 1);
                 break;
             case SliceOrientation.Sagittal:
-                _painter.PaintParallel(_labelMap, _brushSagittal, worldCentres, activeLabel);
+                _painter.Paint(_labelMap, _brushSagittal!, [centre], 1);
                 break;
         }
     }
 
+    private static void SetSliceIndex(IEnumerable<ImageOrthogonalSliceViewModel> vms, int sliceIndex)
+    {
+        foreach (ImageOrthogonalSliceViewModel vm in vms) vm.SliceIndex = sliceIndex;
+    }
 
     private static vtkImageData CreateLabelMap(vtkImageData refImage)
     {
@@ -189,11 +201,6 @@ public class VtkMvvmTestWindowViewModel : BindableBase
         return labelMap;
     }
 
-    private static void SetSliceIndex(IEnumerable<ImageOrthogonalSliceViewModel> vms, int sliceIndex)
-    {
-        foreach (var vm in vms)
-            vm.SliceIndex = sliceIndex;
-    }
 
     /// <summary>
     /// Convert an HSV color (hue, saturation, value) to RGB.
