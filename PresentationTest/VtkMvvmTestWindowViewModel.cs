@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Numerics;
+﻿using System.Numerics;
 using Kitware.VTK;
 using MedXtend;
 using MedXtend.Vtk.ImageData;
@@ -165,7 +164,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
         Vector3 clickWorldPos = _picker.GetPickWorldPosition();
         IReadOnlyList<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
-        Debug.WriteLine($"Get brush active offsets with count {activeOffsets.Count}");
 
         _painter.Paint(_labelMap, activeOffsets, [clickWorldPos], 1);
     }

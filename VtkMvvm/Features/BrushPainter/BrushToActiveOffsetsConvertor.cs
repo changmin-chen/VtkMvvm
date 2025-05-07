@@ -13,6 +13,10 @@ public class BrushToActiveOffsetsConvertor
     private readonly vtkImageStencilToImage _toMask = new();
     private readonly vtkPolyDataToImageStencil _toStencil = new();
 
+    // Cache
+    private ulong _cachedMTime = ulong.MaxValue; // “never seen”
+    private List<(int dx, int dy, int dz)>? _cachedOffsets; // null => no cache yet
+
     public BrushToActiveOffsetsConvertor()
     {
         _millimeterToIjk.Identity();
@@ -63,15 +67,21 @@ public class BrushToActiveOffsetsConvertor
 
     public IReadOnlyList<(int dx, int dy, int dz)> GetActiveVoxelOffsets()
     {
+        _toMask.UpdateInformation();
+
+        // If we have already computed the offsets for exactly this image – reuse them.
+        uint currentMTime = _toMask.GetOutput().GetPipelineMTime();
+        if (currentMTime == _cachedMTime && _cachedOffsets is not null)
+        {
+            return _cachedOffsets!;
+        }
+
+        // Otherwise: (re-)compute.
         _toMask.Update();
         vtkImageData? mask = _toMask.GetOutput();
-
-        // Debug
-        int[]? dim = mask.GetDimensions();
-        Debug.WriteLine($"Mask dimension: {dim[0]} {dim[1]} {dim[2]}");
-
         int[]? ext = mask.GetExtent();
-        List<(int dx, int dy, int dz)> offsets = new();
+        List<(int dx, int dy, int dz)> list = _cachedOffsets ??= new List<(int dx, int dy, int dz)>();
+        list.Clear();
 
         for (int z = ext[4]; z <= ext[5]; ++z)
         {
@@ -80,11 +90,14 @@ public class BrushToActiveOffsetsConvertor
                 for (int x = ext[0]; x <= ext[1]; ++x)
                     if (mask.GetScalarComponentAsDouble(x, y, z, 0) > 0.5)
                     {
-                        offsets.Add((x, y, z));
+                        list.Add((x, y, z));
                     }
             }
         }
 
-        return offsets;
+        // update cache bookkeeping
+        _cachedMTime = currentMTime;
+        Debug.WriteLine($"Recompute offset at time: {_cachedMTime:X16} {DateTime.Now:O}");
+        return list;
     }
 }
