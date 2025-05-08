@@ -1,6 +1,8 @@
-﻿using Kitware.VTK;
+﻿using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using Kitware.VTK;
 
-namespace VtkMvvm.Features.InteractorStyle;
+namespace PresentationTest;
 
 public sealed class WorldPositionsCapturedEventArgs(IReadOnlyList<double[]> positions) : EventArgs
 {
@@ -12,6 +14,9 @@ public sealed class FreeHandPickInteractorStyle : vtkInteractorStyle
     private readonly vtkActor2D _actor2D = vtkActor2D.New();
     private readonly vtkCellArray _cells = vtkCellArray.New();
     private readonly vtkPolyDataMapper2D _mapper2D = vtkPolyDataMapper2D.New();
+
+    // Rx
+    private readonly Subject<double[]> _moveSubject = new();
     private readonly vtkRenderer _overlayRenderer = vtkRenderer.New();
     private readonly vtkCellPicker _picker = vtkCellPicker.New();
     private readonly vtkRenderer _pickRenderer;
@@ -56,6 +61,11 @@ public sealed class FreeHandPickInteractorStyle : vtkInteractorStyle
         _picker.PickFromListOn(); // pick from list of actors
         _picker.InitializePickList();
         _picker.AddPickList(pickerProp); // pick from this actor only
+    }
+
+    public IObservable<double[]> Moves
+    {
+        get => _moveSubject.AsObservable();
     }
 
     /// <summary>
@@ -118,7 +128,9 @@ public sealed class FreeHandPickInteractorStyle : vtkInteractorStyle
         // Capture true 3D position if the picker finds geometry under the cursor
         if (_picker.Pick(pos[0], pos[1], 0, _pickRenderer) != 0)
         {
-            _worldPositions.Add(_picker.GetPickPosition());
+            double[]? worldPos = _picker.GetPickPosition();
+            _moveSubject.OnNext(worldPos);
+            _worldPositions.Add(worldPos);
         }
 
         GetInteractor().GetRenderWindow().Render();

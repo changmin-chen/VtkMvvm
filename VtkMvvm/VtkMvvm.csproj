@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Activiz.NET.x64" />
+    <PackageReference Include="System.Reactive"/>
   </ItemGroup>
 
 </Project>
