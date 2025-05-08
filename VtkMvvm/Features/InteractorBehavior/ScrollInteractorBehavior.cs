@@ -21,7 +21,6 @@ public sealed class ScrollInteractorBehavior : IInteractorBehavior, IDisposable
     {
         ArgumentNullException.ThrowIfNull(style);
         _style = style;
-
         _style.MouseWheelForwardEvt += OnScrollForward;
         _style.MouseWheelBackwardEvt += OnScrollBackward;
     }
@@ -35,8 +34,14 @@ public sealed class ScrollInteractorBehavior : IInteractorBehavior, IDisposable
     }
 
     private void OnScrollBackward(vtkObject sender, vtkObjectEventArgs e)
-        => _scrollSubject.OnNext(false);
+    {
+        _style!.OnMouseWheelBackward();
+        _scrollSubject.OnNext(false);
+    }
 
     private void OnScrollForward(vtkObject sender, vtkObjectEventArgs e)
-        => _scrollSubject.OnNext(true);
+    {
+        _style!.OnMouseWheelForward();
+        _scrollSubject.OnNext(true);
+    }
 }

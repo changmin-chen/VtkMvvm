@@ -41,11 +41,9 @@ public partial class VtkMvvmTestWindow : Window
             vtkInteractorStyleImage style = new(); // 被attach的event會直接覆蓋
             vtkRenderWindowInteractor? iren = control.RenderWindowControl.RenderWindow.GetInteractor();
 
-            MoveInteractorBehavior leftBehavior = new(TriggerMouseButton.Left);
-            MoveInteractorBehavior rightBehavior = new(TriggerMouseButton.Right);
+            MouseInteractorBehavior leftBehavior = new(TriggerMouseButton.Left);
 
             leftBehavior.AttachTo(style);
-            rightBehavior.AttachTo(style);
 
             iren.SetInteractorStyle(style);
             iren.Initialize();
@@ -57,9 +55,6 @@ public partial class VtkMvvmTestWindow : Window
             IObservable<(int x, int y)> leftMouseDrag = leftBehavior.Moves
                 .Where(_ => leftBehavior.IsPressing); // should move + pressing
 
-            IObservable<(int x, int y)> rightMouseDrag = rightBehavior.Moves
-                .Where(_ => rightBehavior.IsPressing);
-
             leftMouseDrag
                 .Subscribe(pos => { _vm.OnControlGetMousePaintPosition(control, pos.x, pos.y); })
                 .DisposeWith(_disposables);
@@ -69,12 +64,7 @@ public partial class VtkMvvmTestWindow : Window
                 .Subscribe(_ => RenderControls())
                 .DisposeWith(_disposables); // render every 33ms if paint
 
-            rightMouseDrag
-                .Subscribe(pos => { _vm.OnControlGetMouseDisplayPosition(control, pos.x, pos.y); })
-                .DisposeWith(_disposables);
-
             _disposables.Add(leftBehavior);
-            _disposables.Add(rightBehavior);
         }
     }
 
