@@ -41,7 +41,7 @@ public partial class VtkMvvmTestWindow : Window
             vtkInteractorStyleImage style = new(); // 被attach的event會直接覆蓋
             vtkRenderWindowInteractor? iren = control.RenderWindowControl.RenderWindow.GetInteractor();
 
-            MoveInteractorBehavior leftBehavior = new(TriggerMouseButton.Left);
+            MouseInteractorBehavior leftBehavior = new(TriggerMouseButton.Left);
 
             leftBehavior.AttachTo(style);
 

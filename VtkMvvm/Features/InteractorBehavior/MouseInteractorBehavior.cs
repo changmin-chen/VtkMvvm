@@ -7,7 +7,7 @@ namespace VtkMvvm.Features.InteractorBehavior;
 /// <summary>
 ///     Represents a behavior that allows interaction with a visual area in response to mouse clicks and movements.
 /// </summary>
-public sealed class MoveInteractorBehavior(TriggerMouseButton triggerButton)
+public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
     : IInteractorBehavior, IDisposable
 {
     private readonly Subject<(int x, int y)> _moveSubject = new();
