@@ -19,9 +19,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly vtkImageData _background;
 
     // Brush
-    private readonly VoxelCylinderBrush _brushAxial; // cached brush for performance
-    private readonly VoxelCylinderBrush _brushCoronal;
-    private readonly VoxelCylinderBrush _brushSagittal;
     private readonly vtkImageData _labelMap;
     private readonly BrushToActiveOffsetsConvertor _offsetsConverter = new();
     private readonly VoxelPainter _painter = new();
@@ -78,32 +75,14 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Add brushes that render on top of the image
-        BrushVm.Diameter = 8.0;
-        BrushVm.Height = 2.0;
+        BrushVm.Diameter = 2.0;
+        BrushVm.Height = 0.000000001;
         BrushSharedVms = [BrushVm];
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
         _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
         _offsetsConverter.SetBrushModelInputConnection(BrushVm.GetBrushModelOutputPort());
-
-        // _brushAxial = VoxelCylinderBrush.Create(
-        //     (spacing[0], spacing[1], spacing[2]),
-        //     BrushVm.Diameter,
-        //     BrushVm.Height
-        // );
-        // _brushCoronal = VoxelCylinderBrush.Create(
-        //     (spacing[0], spacing[1], spacing[2]),
-        //     BrushVm.Diameter,
-        //     BrushVm.Height,
-        //     VoxelCylinderBrush.Axis.Y
-        // );
-        // _brushSagittal = VoxelCylinderBrush.Create(
-        //     (spacing[0], spacing[1], spacing[2]),
-        //     BrushVm.Diameter,
-        //     BrushVm.Height,
-        //     VoxelCylinderBrush.Axis.X
-        // );
     }
 
     // Axial, Coronal, Sagittal slice view models

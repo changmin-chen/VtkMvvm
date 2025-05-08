@@ -65,7 +65,7 @@ public class BrushToActiveOffsetsConvertor
         _millimeterToIjk.Modified();
     }
 
-    public IReadOnlyList<(int dx, int dy, int dz)> GetActiveVoxelOffsets()
+    public IReadOnlyList<(int dx, int dy, int dz)> GetActiveVoxelOffsets(double threshold = 0.5)
     {
         _toMask.UpdateInformation();
 
@@ -88,7 +88,7 @@ public class BrushToActiveOffsetsConvertor
             for (int y = ext[2]; y <= ext[3]; ++y)
             {
                 for (int x = ext[0]; x <= ext[1]; ++x)
-                    if (mask.GetScalarComponentAsDouble(x, y, z, 0) > 0.5)
+                    if (mask.GetScalarComponentAsDouble(x, y, z, 0) > threshold)
                     {
                         list.Add((x, y, z));
                     }
