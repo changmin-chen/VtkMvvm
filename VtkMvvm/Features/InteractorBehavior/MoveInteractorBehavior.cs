@@ -18,10 +18,7 @@ public sealed class MoveInteractorBehavior(TriggerMouseButton triggerButton)
     ///     Exposes the click‐position stream as an IObservable.
     ///     Subscribers will see (x,y) whenever the chosen button is moving.
     /// </summary>
-    public IObservable<(int x, int y)> Moves
-    {
-        get => _moveSubject.AsObservable();
-    }
+    public IObservable<(int x, int y)> Moves => _moveSubject.AsObservable();
 
     /// <summary>
     ///     Exposed bool for filtering Moves observable.
@@ -83,19 +80,45 @@ public sealed class MoveInteractorBehavior(TriggerMouseButton triggerButton)
 
     private void OnButtonDown(vtkObject sender, vtkObjectEventArgs e)
     {
-        if (_style is null) return;
+        switch (triggerButton)
+        {
+            case TriggerMouseButton.Left:
+                _style!.OnLeftButtonDown();
+                break;
+            case TriggerMouseButton.Right:
+                _style!.OnRightButtonDown();
+                break;
+            case TriggerMouseButton.Middle:
+                _style!.OnMiddleButtonDown();
+                break;
+        }
+
         IsPressing = true;
         PushEventPosition();
     }
 
     private void OnMouseMove(vtkObject sender, vtkObjectEventArgs e)
     {
+        _style!.OnMouseMove();
+
         PushEventPosition();
     }
 
     private void OnButtonRelease(vtkObject sender, vtkObjectEventArgs e)
     {
-        if (_style is null) return;
+        switch (triggerButton)
+        {
+            case TriggerMouseButton.Left:
+                _style!.OnLeftButtonUp();
+                break;
+            case TriggerMouseButton.Right:
+                _style!.OnRightButtonUp();
+                break;
+            case TriggerMouseButton.Middle:
+                _style!.OnMiddleButtonUp();
+                break;
+        }
+
         IsPressing = false;
     }
 
