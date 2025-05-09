@@ -8,7 +8,7 @@ using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;
 
-public partial class VtkImageSceneControl : UserControl
+public partial class VtkImageSceneControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects), typeof(IEnumerable<ImageOrthogonalSliceViewModel>), typeof(VtkImageSceneControl),
@@ -57,6 +57,32 @@ public partial class VtkImageSceneControl : UserControl
     /// </summary>
     public SliceOrientation Orientation { get; private set; }
 
+    public void Dispose()
+    {
+        if (SceneObjects is { } objects)
+        {
+            foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
+            {
+                sceneObj.Modified -= OnSceneObjectsModified;
+            }
+        }
+
+        if (OverlayObjects is { } overlays)
+        {
+            foreach (VtkElementViewModel overlayObj in overlays)
+            {
+                overlayObj.Modified -= OnSceneObjectsModified;
+            }
+        }
+
+        WFHost.Child = null;
+        WFHost?.Dispose();
+
+        RenderWindowControl.Dispose();
+        MainRenderer.Dispose();
+        OverlayRenderer.Dispose();
+    }
+
     private void OnLoadedOnce(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoadedOnce;
@@ -82,22 +108,6 @@ public partial class VtkImageSceneControl : UserControl
         vtkRenderWindowInteractor? iren = RenderWindowControl.RenderWindow.GetInteractor();
         iren.SetInteractorStyle(interactorStyle);
         iren.Initialize();
-    }
-
-    public void Dispose()
-    {
-        if (SceneObjects is { } objects)
-        {
-            foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
-            {
-                sceneObj.Modified -= OnSceneObjectsModified;
-            }
-        }
-
-        WFHost.Child = null;
-        WFHost?.Dispose();
-        MainRenderer.Dispose();
-        RenderWindowControl.Dispose();
     }
 
 
