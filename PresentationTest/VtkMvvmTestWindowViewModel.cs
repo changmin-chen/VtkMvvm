@@ -34,9 +34,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
             .WithLinearInterpolation(false)
-            .WithOpacity(1.0)
-            .WithLinearInterpolation(true);
-
+            .WithOpacity(1.0);
         _labelMap = CreateLabelMap(_background);
         vtkLookupTable labelLut = new();
         labelLut.SetNumberOfTableValues(256);
