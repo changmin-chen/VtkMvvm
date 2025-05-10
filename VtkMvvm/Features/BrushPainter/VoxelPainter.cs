@@ -18,7 +18,7 @@ public sealed unsafe class VoxelPainter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Paint(
         vtkImageData labelMap,
-        ReadOnlySpan<(int dx, int dy, int dz)> brushOffsets, // pre-computed, int linear = z * _voxPerSlice + y * _dimX + x
+        ReadOnlySpan<(int dx, int dy, int dz)> brushOffsets,
         Double3 worldCentre,
         byte labelValue = 255)
     {
@@ -47,6 +47,31 @@ public sealed unsafe class VoxelPainter
         labelMap.Modified();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void PaintLinear(
+        vtkImageData labelMap,
+        ReadOnlySpan<int> linearBrushOffsets, // ❶ pre-computed
+        Double3 worldCentre,
+        byte labelValue = 255)
+    {
+        if (!ReferenceEquals(labelMap, _cachedVolume)) InitializeCache(labelMap);
+
+        if (!labelMap.TryComputeStructuredCoordinates(worldCentre, out (int i, int j, int k) centre, out _))
+            return; // outside volume
+
+        int centreIdx = centre.k * _voxPerSlice + centre.j * _dimX + centre.i;
+        int volumeSize = _dimX * _dimY * _dimZ;
+
+        byte* basePtr = _dataPtr;
+        foreach (int offset in linearBrushOffsets)
+        {
+            int idx = centreIdx + offset;
+            if ((uint)idx < (uint)volumeSize) // unsigned trick = 1 branch
+                basePtr[idx] = labelValue;
+        }
+
+        labelMap.Modified();
+    }
 
     private void InitializeCache(vtkImageData labelMap)
     {

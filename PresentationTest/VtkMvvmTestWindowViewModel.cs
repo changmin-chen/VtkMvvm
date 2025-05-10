@@ -17,7 +17,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     // Brush
     private readonly vtkImageData _labelMap;
-    private readonly BrushToActiveOffsetsConvertor _offsetsConverter = new();
+    private readonly BrushLinearOffsetCache _offsetsConverter = new();
     private readonly VoxelPainter _painter = new();
 
     // Painting labelmap
@@ -77,8 +77,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
         BrushVm.Height = spacing.Min();
-        _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
-        _offsetsConverter.SetBrushModelInputConnection(BrushVm.GetBrushModelOutputPort());
+        // _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
+        _offsetsConverter.BindLabelMapInfo(_labelMap);
+        _offsetsConverter.SetBrushGeometry(BrushVm.GetBrushGeometryPort());
 
         // Pick list
         _picker.SetTolerance(0.005);
@@ -144,9 +145,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
-        ReadOnlySpan<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
+        // ReadOnlySpan<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
+        ReadOnlySpan<int> activeOffsets = _offsetsConverter.GetLinearOffsets();
 
-        _painter.Paint(_labelMap, activeOffsets, clickWorldPos, 1);
+        // _painter.Paint(_labelMap, activeOffsets, clickWorldPos, 1);
+        _painter.PaintLinear(_labelMap, activeOffsets, clickWorldPos, 1);
     }
 
     public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)

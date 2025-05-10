@@ -8,8 +8,10 @@ namespace VtkMvvm.Features.BrushPainter;
 ///     Convert the brush into unsigned char ImageData using stencil filter. And then compute its active (> threshold)
 ///     indices.
 /// </summary>
-public class BrushToActiveOffsetsConvertor
+public class BrushVoxelOffsetsCache
 {
+    private const byte ThrByte = 128; // should between stencil inside and outside value
+
     // For painting, we compute the active offset of the brush at (0,0,0)
     // millimeterToIjkFilter -> polyToStencil -> stencilToImage 
     private readonly vtkTransform _millimeterToIjk = new();
@@ -22,7 +24,7 @@ public class BrushToActiveOffsetsConvertor
     private ulong _cachedMTime = ulong.MaxValue; // “never seen”
     private List<(int dx, int dy, int dz)>? _cachedOffsets; // null => no cache yet
 
-    public BrushToActiveOffsetsConvertor()
+    public BrushVoxelOffsetsCache()
     {
         _millimeterToIjk.Identity();
         _millimeterToIjkFilter.SetTransform(_millimeterToIjk);
@@ -42,7 +44,7 @@ public class BrushToActiveOffsetsConvertor
     ///     Set the input connection to the masking polyData output port.
     /// </summary>
     /// <param name="input">The port where its output should be <see cref="vtkPolyData" /> and in world space</param>
-    public void SetBrushModelInputConnection(vtkAlgorithmOutput input)
+    public void SetBrushGeometry(vtkAlgorithmOutput input)
     {
         _millimeterToIjkFilter.SetInputConnection(input);
 
@@ -63,14 +65,14 @@ public class BrushToActiveOffsetsConvertor
     /// <param name="sx">Spacing in millimeter at the first image axis</param>
     /// <param name="sy">Spacing in millimeter at the second image axis</param>
     /// <param name="sz">Spacing in millimeter at the third image axis</param>
-    public void SetVoxelizeSpacing(double sx, double sy, double sz)
+    public void BindVoxelizeSpacing(double sx, double sy, double sz)
     {
         _millimeterToIjk.Identity();
         _millimeterToIjk.Scale(1.0 / sx, 1.0 / sy, 1.0 / sz); // number of the voxels drawn increased for thinner voxel 
         _millimeterToIjk.Modified();
     }
 
-    public ReadOnlySpan<(int dx, int dy, int dz)> GetActiveVoxelOffsets(double threshold = 1)
+    public ReadOnlySpan<(int dx, int dy, int dz)> GetVoxelOffsets()
     {
         // If we have already computed the offsets for exactly this image – reuse them.
         _toMask.UpdateInformation();
@@ -88,7 +90,7 @@ public class BrushToActiveOffsetsConvertor
         for (int z = ext[4]; z <= ext[5]; ++z)
         for (int y = ext[2]; y <= ext[3]; ++y)
         for (int x = ext[0]; x <= ext[1]; ++x)
-            if (mask.GetScalarComponentAsDouble(x, y, z, 0) >= threshold)
+            if (mask.GetScalarComponentAsDouble(x, y, z, 0) >= ThrByte)
                 _cachedOffsets.Add((x, y, z));
 
         // update cache bookkeeping

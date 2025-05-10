@@ -57,7 +57,7 @@ public class BrushViewModel : VtkElementViewModel
     /// <summary>
     ///     Get the port that output the rotated brush <see cref="vtkPolyData" /> but with its center at (0, 0, 0).
     /// </summary>
-    public vtkAlgorithmOutput GetBrushModelOutputPort() => _orientFilter.GetOutputPort();
+    public vtkAlgorithmOutput GetBrushGeometryPort() => _orientFilter.GetOutputPort();
 
     #region Binable properties
 
