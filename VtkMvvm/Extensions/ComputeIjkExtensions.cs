@@ -40,7 +40,7 @@ public static class ComputeIjkExtensions
     }
 
     /// <summary>
-    ///     Returns the last pick position in world coordinates as a <see cref="Vector3" />.
+    ///     Returns the last pick position in world coordinates.
     /// </summary>
     /// <remarks>
     ///     Call this only *after* a successful <c>Pick(..)</c>/<c>Pick3DPoint(..)</c> –

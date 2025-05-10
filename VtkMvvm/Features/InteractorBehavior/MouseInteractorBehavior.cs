@@ -7,12 +7,18 @@ namespace VtkMvvm.Features.InteractorBehavior;
 /// <summary>
 ///     Represents a behavior that allows interaction with a visual area in response to mouse clicks and movements.
 /// </summary>
-public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
+public sealed class MouseInteractorBehavior
     : IInteractorBehavior, IDisposable
 {
+    private readonly TriggerMouseButton _triggerButton;
     private readonly Subject<(int x, int y)> _moveSubject = new();
 
     private vtkInteractorStyle? _style;
+
+    public MouseInteractorBehavior(TriggerMouseButton triggerButton) 
+    {
+        _triggerButton = triggerButton;
+    }
 
     /// <summary>
     ///     Exposes the click‐position stream as an IObservable.
@@ -24,6 +30,12 @@ public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
     ///     Exposed bool for filtering Moves observable.
     /// </summary>
     public bool IsPressing { get; private set; }
+
+    /// <summary>
+    /// If not override, will forward the base event handler
+    /// </summary>
+    public bool OverrideBaseStyle { get; set; } = false;
+    
 
     public void Dispose()
     {
@@ -37,7 +49,7 @@ public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
         _style = style;
 
         _style.MouseMoveEvt += OnMouseMove;
-        switch (triggerButton)
+        switch (_triggerButton)
         {
             case TriggerMouseButton.Left:
                 _style.LeftButtonPressEvt += OnButtonDown;
@@ -59,7 +71,7 @@ public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
         if (_style is null) return;
 
         _style.MouseMoveEvt -= OnMouseMove;
-        switch (triggerButton)
+        switch (_triggerButton)
         {
             case TriggerMouseButton.Left:
                 _style.LeftButtonPressEvt -= OnButtonDown;
@@ -80,7 +92,11 @@ public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
 
     private void OnButtonDown(vtkObject sender, vtkObjectEventArgs e)
     {
-        switch (triggerButton)
+        IsPressing = true;
+        PushEventPosition();
+        if (OverrideBaseStyle) return;  // not forward base style handler
+        
+        switch (_triggerButton)
         {
             case TriggerMouseButton.Left:
                 _style!.OnLeftButtonDown();
@@ -92,21 +108,22 @@ public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
                 _style!.OnMiddleButtonDown();
                 break;
         }
-
-        IsPressing = true;
-        PushEventPosition();
     }
 
     private void OnMouseMove(vtkObject sender, vtkObjectEventArgs e)
     {
-        _style!.OnMouseMove();
-
         PushEventPosition();
+        if (OverrideBaseStyle) return;   // not forward base style handler
+        
+        _style!.OnMouseMove();
     }
 
     private void OnButtonRelease(vtkObject sender, vtkObjectEventArgs e)
     {
-        switch (triggerButton)
+        IsPressing = false;
+        if (OverrideBaseStyle) return;
+        
+        switch (_triggerButton)
         {
             case TriggerMouseButton.Left:
                 _style!.OnLeftButtonUp();
@@ -118,8 +135,6 @@ public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
                 _style!.OnMiddleButtonUp();
                 break;
         }
-
-        IsPressing = false;
     }
 
     private unsafe void PushEventPosition()
@@ -129,7 +144,6 @@ public sealed class MouseInteractorBehavior(TriggerMouseButton triggerButton)
         {
             _style!.GetInteractor().GetEventPosition((IntPtr)p);
         }
-
         _moveSubject.OnNext((pos[0], pos[1]));
     }
 }

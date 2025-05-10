@@ -57,8 +57,7 @@ public class VtkMvvmTestWindowViewModel : BindableBase
     public VtkMvvmTestWindowViewModel()
     {
         // Load and process image data
-        using Image imageItk = TestImageLoader.LoadEmbeddedTestImage("big_dog_mri.nii");
-        _background = imageItk.ToOrientedVtk();
+         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
         
         // Create pipeline builders for background and label map
         var backgroundPipelineBuilder = ColoredImagePipelineBuilder
@@ -143,17 +142,17 @@ public partial class VtkMvvmTestWindow : Window
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         
-        <controls:VtkImageOrthogonalSlicesControl 
+        <controls:VtkImageSceneControl 
             x:Name="AxialControl"
             Grid.Row="0" Grid.Column="0"
             ViewModels="{Binding AxialVms}"/>
             
-        <controls:VtkImageOrthogonalSlicesControl 
+        <controls:VtkImageSceneControl 
             x:Name="CoronalControl"
             Grid.Row="0" Grid.Column="1"
             ViewModels="{Binding CoronalVms}"/>
             
-        <controls:VtkImageOrthogonalSlicesControl 
+        <controls:VtkImageSceneControl 
             x:Name="SagittalControl"
             Grid.Row="1" Grid.Column="0"
             ViewModels="{Binding SagittalVms}"/>
@@ -167,9 +166,6 @@ This example demonstrates:
 - Handling user interaction through custom interactors
 - Managing multiple views with synchronized data
 
-## Version Information
-
-Current Version: 1.0.1.3
 
 ## License
 
