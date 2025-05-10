@@ -1,15 +1,12 @@
-﻿using System.Numerics;
-using Kitware.VTK;
-using MedXtend;
-using MedXtend.Vtk.ImageData;
+﻿using Kitware.VTK;
 using PresentationTest.TestData;
 using ReactiveUI;
 using VtkMvvm.Controls;
+using VtkMvvm.Extensions;
 using VtkMvvm.Features.BrushPainter;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
-using Image = itk.simple.Image;
 
 namespace PresentationTest;
 
@@ -20,7 +17,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     // Brush
     private readonly vtkImageData _labelMap;
-    private readonly BrushToActiveOffsetsConvertor _offsetsConverter = new();
+    private readonly BrushLinearOffsetCache _offsetsConverter = new();
     private readonly VoxelPainter _painter = new();
 
     // Painting labelmap
@@ -32,15 +29,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     public VtkMvvmTestWindowViewModel()
     {
-        using Image imageItk = TestImageLoader.LoadEmbeddedTestImage("big_dog_mri.nii");
-        _background = imageItk.ToOrientedVtk();
+        _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
 
         ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
             .WithLinearInterpolation(false)
-            .WithOpacity(1.0)
-            .WithLinearInterpolation(true);
-
+            .WithOpacity(1.0);
         _labelMap = CreateLabelMap(_background);
         vtkLookupTable labelLut = new();
         labelLut.SetNumberOfTableValues(256);
@@ -75,14 +69,22 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Add brushes that render on top of the image
-        BrushVm.Diameter = 2.0;
-        BrushVm.Height = 0.000000001;
+        BrushVm.Diameter = 3.0;
         BrushSharedVms = [BrushVm];
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
-        _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
-        _offsetsConverter.SetBrushModelInputConnection(BrushVm.GetBrushModelOutputPort());
+        BrushVm.Height = spacing.Min();
+        // _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
+        _offsetsConverter.BindLabelMapInfo(_labelMap);
+        _offsetsConverter.SetBrushGeometry(BrushVm.GetBrushGeometryPort());
+
+        // Pick list
+        _picker.SetTolerance(0.005);
+        _picker.PickFromListOn();
+        _picker.AddPickList(axialVm.Actor);
+        _picker.AddPickList(coronalVm.Actor);
+        _picker.AddPickList(sagittalVm.Actor);
     }
 
     // Axial, Coronal, Sagittal slice view models
@@ -123,13 +125,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         }
     }
 
-
     public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
-        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
-        if (_background.TryComputeStructuredCoordinates(clickWorldPos, out (int i, int j, int k) voxel, out Vector3 bary))
+        Double3 clickWorldPos = _picker.GetPickWorldPosition();
+        if (_background.TryComputeStructuredCoordinates(clickWorldPos, out (int i, int j, int k) voxel, out Double3 _))
         {
             AxialSliceIndex = voxel.k;
             CoronalSliceIndex = voxel.j;
@@ -141,17 +142,19 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
-        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
-        IReadOnlyList<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
+        Double3 clickWorldPos = _picker.GetPickWorldPosition();
+        // ReadOnlySpan<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
+        ReadOnlySpan<int> activeOffsets = _offsetsConverter.GetLinearOffsets();
 
-        _painter.Paint(_labelMap, activeOffsets, [clickWorldPos], 1);
+        // _painter.Paint(_labelMap, activeOffsets, clickWorldPos, 1);
+        _painter.PaintLinear(_labelMap, activeOffsets, clickWorldPos, 1);
     }
 
     public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
-        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
+        Double3 clickWorldPos = _picker.GetPickWorldPosition();
 
         BrushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
         BrushVm.Orientation = sender.Orientation;

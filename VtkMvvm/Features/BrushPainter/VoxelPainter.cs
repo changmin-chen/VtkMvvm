@@ -1,6 +1,7 @@
-﻿using System.Numerics;
+﻿using System.Runtime.CompilerServices;
 using Kitware.VTK;
 using VtkMvvm.Extensions;
+using VtkMvvm.Models;
 
 namespace VtkMvvm.Features.BrushPainter;
 
@@ -11,48 +12,66 @@ public sealed unsafe class VoxelPainter
     private byte* _dataPtr;
     private int _dimX, _dimY, _dimZ, _voxPerSlice;
 
-
     /// <summary>
-    ///     Paint the supplied <paramref name="brushVoxelOffsets" /> into <paramref name="labelMap" />.
+    ///     Paint the supplied <paramref name="brushOffsets" /> into <paramref name="labelMap" />.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Paint(
         vtkImageData labelMap,
-        IReadOnlyCollection<(int dx, int dy, int dz)> brushVoxelOffsets,
-        IEnumerable<Vector3> worldCentres,
+        ReadOnlySpan<(int dx, int dy, int dz)> brushOffsets,
+        Double3 worldCentre,
         byte labelValue = 255)
     {
         // ------- 0. Cache (once per volume) ----------------------------
         if (!ReferenceEquals(labelMap, _cachedVolume)) InitializeCache(labelMap);
 
-        // ------- 1. Stamp the brush at every centre ---------------------
-        foreach (Vector3 wc in worldCentres)
+        // ------- 1. Stamp the brush at the centre ---------------------
+        if (!labelMap.TryComputeStructuredCoordinates(worldCentre, out (int i, int j, int k) c, out _))
+            return; // ijk outside the volume
+
+        // ----- stamp the brush -----
+        int centreIdx = c.k * _voxPerSlice + c.j * _dimX + c.i;
+        int sliceStride = _voxPerSlice; // dimX * dimY
+        int rowStride = _dimX;
+        int volumeSize = _dimX * _dimY * _dimZ;
+
+        byte* basePtr = _dataPtr;
+
+        foreach ((int dx, int dy, int dz) in brushOffsets)
         {
-            if (!labelMap.TryComputeStructuredCoordinates(wc, out (int i, int j, int k) cVoxel, out _))
-                continue; // ijk outside the volume
-
-            int cX = cVoxel.i;
-            int cY = cVoxel.j;
-            int cZ = cVoxel.k;
-
-            // ----- stamp the brush -----
-            foreach ((int dx, int dy, int dz) in brushVoxelOffsets)
-            {
-                int x = cX + dx;
-                int y = cY + dy;
-                int z = cZ + dz;
-
-                if (x < 0 || x >= _dimX ||
-                    y < 0 || y >= _dimY ||
-                    z < 0 || z >= _dimZ) continue;
-
-                int linear = z * _voxPerSlice + y * _dimX + x;
-                _dataPtr[linear] = labelValue;
-            }
+            int idx = centreIdx + dz * sliceStride + dy * rowStride + dx;
+            if ((uint)idx < (uint)volumeSize) // single bounds check
+                basePtr[idx] = labelValue;
         }
 
         labelMap.Modified();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void PaintLinear(
+        vtkImageData labelMap,
+        ReadOnlySpan<int> linearBrushOffsets, // ❶ pre-computed
+        Double3 worldCentre,
+        byte labelValue = 255)
+    {
+        if (!ReferenceEquals(labelMap, _cachedVolume)) InitializeCache(labelMap);
+
+        if (!labelMap.TryComputeStructuredCoordinates(worldCentre, out (int i, int j, int k) centre, out _))
+            return; // outside volume
+
+        int centreIdx = centre.k * _voxPerSlice + centre.j * _dimX + centre.i;
+        int volumeSize = _dimX * _dimY * _dimZ;
+
+        byte* basePtr = _dataPtr;
+        foreach (int offset in linearBrushOffsets)
+        {
+            int idx = centreIdx + offset;
+            if ((uint)idx < (uint)volumeSize) // unsigned trick = 1 branch
+                basePtr[idx] = labelValue;
+        }
+
+        labelMap.Modified();
+    }
 
     private void InitializeCache(vtkImageData labelMap)
     {

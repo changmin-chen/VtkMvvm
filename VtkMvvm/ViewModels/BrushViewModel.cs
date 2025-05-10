@@ -1,12 +1,10 @@
-﻿using System.Numerics;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels;
 
 /// <summary>
-///     A brush that live in render window. Represent a widget.
-///     Can futher be used by Painter to modify the labelmap efficiently by caching the brush's active indices.
+///     A 3D brush widget that renders in the VTK window and can be used for interactive painting.
 /// </summary>
 public class BrushViewModel : VtkElementViewModel
 {
@@ -59,20 +57,14 @@ public class BrushViewModel : VtkElementViewModel
     /// <summary>
     ///     Get the port that output the rotated brush <see cref="vtkPolyData" /> but with its center at (0, 0, 0).
     /// </summary>
-    public vtkAlgorithmOutput GetBrushModelOutputPort() =>
-        // _orientFilter.Update();
-        // var output = _orientFilter.GetOutput();
-        // var b = output.GetBounds();
-        // Debug.WriteLine($"Brush bounds from {GetType().Name}: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}"
-        //     + $"Brush diameter: {Diameter} Height: {Height}");
-        _orientFilter.GetOutputPort();
+    public vtkAlgorithmOutput GetBrushGeometryPort() => _orientFilter.GetOutputPort();
 
     #region Binable properties
 
     private double _diameter = 2.0;
     private double _height = 2.0;
     private SliceOrientation _orientation = SliceOrientation.Axial;
-    private Vector3 _center = Vector3.Zero;
+    private Double3 _center = Double3.Zero;
 
     public double Diameter
     {
@@ -113,9 +105,9 @@ public class BrushViewModel : VtkElementViewModel
         }
     }
 
-    public float CenterX => _center.X;
-    public float CenterY => _center.Y;
-    public float CenterZ => _center.Z;
+    public double CenterX => _center.X;
+    public double CenterY => _center.Y;
+    public double CenterZ => _center.Z;
 
     private void SetDiameter(double diameter)
     {
@@ -145,14 +137,14 @@ public class BrushViewModel : VtkElementViewModel
     /// <summary>
     ///     For center update, we expose method to update x, y, z concurrently
     /// </summary>
-    public void SetCenter(float x, float y, float z)
+    public void SetCenter(double x, double y, double z)
     {
         _position.Identity();
         _position.Translate(x, y, z);
         _positionFilter.Modified();
         OnModified();
 
-        _center = new Vector3(x, y, z);
+        _center = new Double3(x, y, z);
         OnPropertyChanged(nameof(CenterX));
         OnPropertyChanged(nameof(CenterY));
         OnPropertyChanged(nameof(CenterZ));

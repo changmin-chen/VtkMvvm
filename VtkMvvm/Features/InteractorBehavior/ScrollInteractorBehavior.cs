@@ -8,8 +8,17 @@ public sealed class ScrollInteractorBehavior : IInteractorBehavior, IDisposable
 {
     private readonly Subject<bool> _scrollSubject = new();
     private vtkInteractorStyle? _style;
-
+    
+    
+    /// <summary>
+    /// Scroll forward emits true, scroll backward emits false
+    /// </summary>
     public IObservable<bool> Scrolls => _scrollSubject.AsObservable();
+    
+    /// <summary>
+    /// If not override, will forward the base event handler
+    /// </summary>
+    public bool OverrideBaseStyle { get; set; } = false;
 
     public void Dispose()
     {
@@ -35,13 +44,17 @@ public sealed class ScrollInteractorBehavior : IInteractorBehavior, IDisposable
 
     private void OnScrollBackward(vtkObject sender, vtkObjectEventArgs e)
     {
-        _style!.OnMouseWheelBackward();
         _scrollSubject.OnNext(false);
+        if (OverrideBaseStyle) return;  // If override, don't call base style
+
+        _style!.OnMouseWheelBackward();
     }
 
     private void OnScrollForward(vtkObject sender, vtkObjectEventArgs e)
     {
-        _style!.OnMouseWheelForward();
         _scrollSubject.OnNext(true);
+        if (OverrideBaseStyle) return;  // If override, don't call base style
+
+        _style!.OnMouseWheelForward();
     }
 }

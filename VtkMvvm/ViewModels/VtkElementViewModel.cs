@@ -4,6 +4,9 @@ using Kitware.VTK;
 
 namespace VtkMvvm.ViewModels;
 
+/// <summary>
+///     Abstract base ViewModel that can be put into RenderWindow control
+/// </summary>
 public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
 {
     public abstract vtkProp Actor { get; }
