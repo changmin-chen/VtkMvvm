@@ -18,17 +18,35 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+
+        <!-- Extra binding tests -->
         <Grid>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Brush diameter" />
-                <Slider Value="{Binding BrushVm.Diameter}"
-                        Minimum="1"
-                        Maximum="5"
-                        Width="200" />
-                <TextBlock Text="{Binding BrushVm.Diameter, StringFormat={}{0:F2}}" />
-                <TextBlock Text=" mm" />
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0 4">
+                    <TextBlock Text="Brush diameter" />
+                    <Slider Value="{Binding BrushVm.Diameter}"
+                            Minimum="1"
+                            Maximum="5"
+                            Width="200" />
+                    <TextBlock Text="{Binding BrushVm.Diameter, StringFormat={}{0:F2}}" />
+                    <TextBlock Text=" mm" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0 4">
+                    <TextBlock Text="Actor opacity" />
+                    <Slider Value="{Binding AxialVms[1].Opacity}"
+                            Minimum="0"
+                            Maximum="1"
+                            Width="200" />
+                    <TextBlock Text="{Binding AxialVms[1].Opacity, StringFormat={}{0:F2}}" />
+
+                    <TextBlock Text="Visible?" Margin="4 0" />
+                    <CheckBox IsChecked="{Binding AxialVms[1].Visible}" />
+                </StackPanel>
             </StackPanel>
+
         </Grid>
+
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
