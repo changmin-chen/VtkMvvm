@@ -9,12 +9,14 @@
     <Configurations>Debug;Release</Configurations>
     <Platforms>x64</Platforms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-      <AssemblyVersion>1.0.0</AssemblyVersion>
-      <FileVersion>1.0.0</FileVersion>
+      <AssemblyVersion>1.0.3</AssemblyVersion>
+      <FileVersion>1.0.3</FileVersion>
+      <Version>1.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Activiz.NET.x64" />
+    <PackageReference Include="System.Reactive"/>
   </ItemGroup>
 
 </Project>

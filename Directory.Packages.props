@@ -3,8 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="MedXtend" Version="1.0.2" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="SimpleITK-win64-CSharp-x64" Version="1.0.0.1"/>
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.6.0.109712" />
     <!-- Core ref packages -->
     <PackageVersion Include="Activiz.NET.x64" Version="5.8.0" />
@@ -12,6 +12,7 @@
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="System.Reactive" Version="6.0.1"/>
     <PackageVersion Include="xunit" Version="2.5.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.3" />
     <!--    Presentation tests-->

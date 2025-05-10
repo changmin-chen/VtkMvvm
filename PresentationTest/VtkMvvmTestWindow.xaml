@@ -5,91 +5,140 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:presentationTest="clr-namespace:PresentationTest"
         xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
-
         mc:Ignorable="d"
-        Title="VtkMvvmTestWindow" Height="500" Width="1200">
+        Title="VtkMvvmTestWindow"
+        Height="1080" Width="1920">
 
     <d:Window.DataContext>
         <presentationTest:VtkMvvmTestWindowViewModel />
     </d:Window.DataContext>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <!-- Axial-->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <controls:VtkImageOrthogonalSlicesControl x:Name="AxialControl" SceneObjects="{Binding AxialVms}"
-                                                      Grid.Row="0" />
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
-                <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
-                <Slider Width="200"
-                        Minimum="0"
-                        Maximum="{Binding Path=AxialVms[0].ImageModel.Extent.MaxZ, Mode=OneWay}"
-                        Value="{Binding AxialSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
-
-                <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding AxialSliceIndex}" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding Path=AxialVms[0].ImageModel.Extent.MaxZ, Mode=OneWay}" Foreground="White"
-                           Margin="0,5,5,0" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Brush diameter" />
+                <Slider Value="{Binding BrushVm.Diameter}"
+                        Minimum="1"
+                        Maximum="5"
+                        Width="200" />
+                <TextBlock Text="{Binding BrushVm.Diameter, StringFormat={}{0:F2}}" />
+                <TextBlock Text=" mm" />
             </StackPanel>
         </Grid>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <!-- Axial-->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-        <!-- Coronal-->
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+                <controls:VtkImageSceneControl x:Name="AxialControl" Grid.Row="0"
+                                               SceneObjects="{Binding AxialVms}"
+                                               OverlayObjects="{Binding  BrushSharedVms}" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5"
+                            Grid.Row="1">
+                    <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
+                    <Slider Width="200"
+                            Minimum="0"
+                            Maximum="{Binding Path=AxialVms[0].ImageModel.Extent.MaxZ, Mode=OneWay}"
+                            Value="{Binding AxialSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
 
-            <controls:VtkImageOrthogonalSlicesControl x:Name="CoronalControl" SceneObjects="{Binding CoronalVms}"
-                                                      Grid.Row="0" />
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
-                <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
-                <Slider Width="200"
-                        Minimum="0"
-                        Maximum="{Binding Path=CoronalVms[0].ImageModel.Extent.MaxY, Mode=OneWay}"
-                        Value="{Binding CoronalSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
+                    <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="{Binding AxialSliceIndex}" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="{Binding Path=AxialVms[0].ImageModel.Extent.MaxZ, Mode=OneWay}" Foreground="White"
+                               Margin="0,5,5,0" />
+                </StackPanel>
+            </Grid>
 
-                <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding CoronalSliceIndex}" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding Path=CoronalVms[0].ImageModel.Extent.MaxY, Mode=OneWay}" Foreground="White"
-                           Margin="0,5,5,0" />
-            </StackPanel>
-        </Grid>
+            <!-- Coronal-->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-        <!-- Sagittal-->
-        <Grid Grid.Column="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+                <controls:VtkImageSceneControl x:Name="CoronalControl"
+                                               SceneObjects="{Binding CoronalVms}"
+                                               OverlayObjects="{Binding BrushSharedVms}"
+                                               Grid.Row="0" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5"
+                            Grid.Row="1">
+                    <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
+                    <Slider Width="200"
+                            Minimum="0"
+                            Maximum="{Binding Path=CoronalVms[0].ImageModel.Extent.MaxY, Mode=OneWay}"
+                            Value="{Binding CoronalSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
 
-            <controls:VtkImageOrthogonalSlicesControl x:Name="SagittalControl" SceneObjects="{Binding SagittalVms}"
-                                                      Grid.Row="0" />
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5" Grid.Row="1">
-                <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
-                <Slider Width="200"
-                        Minimum="0"
-                        Maximum="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}"
-                        Value="{Binding SagittalSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
+                    <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="{Binding CoronalSliceIndex}" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
+                    <TextBlock Text="{Binding Path=CoronalVms[0].ImageModel.Extent.MaxY, Mode=OneWay}"
+                               Foreground="White"
+                               Margin="0,5,5,0" />
+                </StackPanel>
+            </Grid>
 
-                <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding SagittalSliceIndex}" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
-                <TextBlock Text="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}" Foreground="White"
-                           Margin="0,5,5,0" />
-            </StackPanel>
+            <!-- Sagittal-->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <controls:VtkImageSceneControl x:Name="SagittalControl"
+                                               SceneObjects="{Binding SagittalVms}"
+                                               OverlayObjects="{Binding BrushSharedVms}"
+                                               Grid.Row="0" />
+
+                <StackPanel Grid.Row="1">
+                    <!-- Slice adjust -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Background="#80000000" Margin="5">
+                        <TextBlock Text="Slice:" Foreground="White" Margin="0,5,5,0" />
+                        <Slider Width="200"
+                                Minimum="0"
+                                Maximum="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}"
+                                Value="{Binding SagittalSliceIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" />
+
+                        <TextBlock Text="Slice Index:" Foreground="White" Margin="0,5,5,0" />
+                        <TextBlock Text="{Binding SagittalSliceIndex}" Foreground="White" Margin="0,5,5,0" />
+                        <TextBlock Text="Max:" Foreground="White" Margin="0,5,5,0" />
+                        <TextBlock Text="{Binding Path=SagittalVms[0].ImageModel.Extent.MaxX, Mode=OneWay}"
+                                   Foreground="White"
+                                   Margin="0,5,5,0" />
+                    </StackPanel>
+                    <!-- Adjust window -->
+                    <StackPanel Orientation="Horizontal" Background="#80000000" Margin="5">
+                        <TextBlock Text="Level:" Foreground="White" Margin="0,5,5,0" />
+                        <Slider Width="200"
+                                Value="{Binding SagittalVms[0].WindowLevel, Mode=TwoWay}" IsSnapToTickEnabled="True"
+                                Minimum="{Binding SagittalVms[0].ImageModel.ScalarRange[0]}"
+                                Maximum="{Binding SagittalVms[0].ImageModel.ScalarRange[1]}" />
+                        <TextBlock Text="{Binding SagittalVms[0].WindowLevel}" Foreground="White" Margin="0,5,5,0" />
+
+                        <TextBlock Text="Width:" Foreground="White" Margin="0,5,5,0" />
+                        <Slider Width="200"
+                                Value="{Binding SagittalVms[0].WindowWidth, Mode=TwoWay}" IsSnapToTickEnabled="True"
+                                Minimum="100000"
+                                Maximum="500000" />
+                        <TextBlock Text="{Binding SagittalVms[0].WindowWidth}" Foreground="White" Margin="0,5,5,0" />
+
+                    </StackPanel>
+                </StackPanel>
+
+            </Grid>
         </Grid>
     </Grid>
+
 
 </Window>

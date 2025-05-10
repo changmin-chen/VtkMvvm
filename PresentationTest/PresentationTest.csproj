@@ -9,6 +9,7 @@
         <UseWindowsForms>true</UseWindowsForms>
         <PlatformTarget>x64</PlatformTarget>
         <Platforms>x64</Platforms>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -21,31 +22,26 @@
 
     <ItemGroup>
         <PackageReference Include="Activiz.NET.x64" />
-        <PackageReference Include="MedXtend" />
         <PackageReference Include="Prism.DryIoc" />
         <PackageReference Include="Prism.Wpf" />
         <PackageReference Include="ReactiveUI.Fody" />
         <PackageReference Include="ReactiveUI.Validation" />
         <PackageReference Include="ReactiveUI.WPF" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="SimpleITKCSharpManaged">
-            <HintPath>C:\Libs\CSharp\simpleitk-win64-csharp-x64\2.4.1\SimpleITKCSharpManaged.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-    
-
-    <ItemGroup>
-        <EmbeddedResource Include="TestData\big_dog_mri.nii" />
-        <EmbeddedResource Include="TestData\small_dog_ct.nii" />
-        <EmbeddedResource Include="TestData\small_dog_mri.nii" />
+        <PackageReference Include="SimpleITK-win64-CSharp-x64"/>
     </ItemGroup>
 
     
 
     <ItemGroup>
-      <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj" />
+        <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
+    </ItemGroup>
+
+    
+
+    <ItemGroup>
+        <None Update="TestData\CT_Abdo.nii.gz">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 
@@ -60,11 +56,9 @@
 
         <ItemGroup Condition="'$(PlatformFolder)' != ''">
             <NativeVtkDlls Include="$(NuGetPackageRoot)activiz.net.$(PlatformFolder)\5.8.0\lib\net20\*.dll" />
-            <NativeVtkDlls Include="C:\Libs\CSharp\simpleitk-win64-csharp-x64\2.4.1\SimpleITKCSharpNative.dll" />
+            <NativeVtkDlls Include="$(NuGetPackageRoot)simpleitk-win64-csharp-x64\1.0.0.1\lib\SimpleITKCSharpNative.dll"/>
         </ItemGroup>
-
         <Copy SourceFiles="@(NativeVtkDlls)" DestinationFolder="$(NativeDllPath)" SkipUnchangedFiles="true" />
-       
     </Target>
 
 
