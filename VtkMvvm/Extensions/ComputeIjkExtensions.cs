@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Kitware.VTK;
+using VtkMvvm.Models;
 
 namespace VtkMvvm.Extensions;
 
@@ -15,9 +16,9 @@ public static class ComputeIjkExtensions
     /// <returns><c>true</c> if <paramref name="world" /> lies inside the volume.</returns>
     public static unsafe bool TryComputeStructuredCoordinates(
         this vtkImageData image,
-        in Vector3 world,
+        in Double3 world,
         out (int i, int j, int k) ijk,
-        out Vector3 pcoords)
+        out Double3 pcoords)
     {
         // stack-allocate the tiny scratch buffers → zero GC pressure
         double* xPtr = stackalloc double[3] { world.X, world.Y, world.Z };
@@ -30,10 +31,10 @@ public static class ComputeIjkExtensions
             (IntPtr)pcoordPtr);
 
         ijk = (ijkPtr[0], ijkPtr[1], ijkPtr[2]);
-        pcoords = new Vector3(
-            (float)pcoordPtr[0],
-            (float)pcoordPtr[1],
-            (float)pcoordPtr[2]);
+        pcoords = new Double3(
+            pcoordPtr[0],
+            pcoordPtr[1],
+            pcoordPtr[2]);
 
         return inside == 1;
     }
@@ -45,7 +46,7 @@ public static class ComputeIjkExtensions
     ///     Call this only *after* a successful <c>Pick(..)</c>/<c>Pick3DPoint(..)</c> –
     ///     otherwise the result is undefined (VTK never initialises the array for you).
     /// </remarks>
-    public static unsafe Vector3 GetPickWorldPosition(this vtkAbstractPicker picker)
+    public static unsafe Double3 GetPickWorldPosition(this vtkAbstractPicker picker)
     {
         if (picker is null) throw new ArgumentNullException(nameof(picker));
 
@@ -56,9 +57,9 @@ public static class ComputeIjkExtensions
         picker.GetPickPosition((IntPtr)posPtr);
 
         // Convert to a nice, managed Vector3 and return.
-        return new Vector3(
-            (float)posPtr[0],
-            (float)posPtr[1],
-            (float)posPtr[2]);
+        return new Double3(
+            posPtr[0],
+            posPtr[1],
+            posPtr[2]);
     }
 }

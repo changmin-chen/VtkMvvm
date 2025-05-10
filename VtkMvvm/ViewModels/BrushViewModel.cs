@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels;
@@ -65,7 +64,7 @@ public class BrushViewModel : VtkElementViewModel
     private double _diameter = 2.0;
     private double _height = 2.0;
     private SliceOrientation _orientation = SliceOrientation.Axial;
-    private Vector3 _center = Vector3.Zero;
+    private Double3 _center = Double3.Zero;
 
     public double Diameter
     {
@@ -106,9 +105,9 @@ public class BrushViewModel : VtkElementViewModel
         }
     }
 
-    public float CenterX => _center.X;
-    public float CenterY => _center.Y;
-    public float CenterZ => _center.Z;
+    public double CenterX => _center.X;
+    public double CenterY => _center.Y;
+    public double CenterZ => _center.Z;
 
     private void SetDiameter(double diameter)
     {
@@ -138,14 +137,14 @@ public class BrushViewModel : VtkElementViewModel
     /// <summary>
     ///     For center update, we expose method to update x, y, z concurrently
     /// </summary>
-    public void SetCenter(float x, float y, float z)
+    public void SetCenter(double x, double y, double z)
     {
         _position.Identity();
         _position.Translate(x, y, z);
         _positionFilter.Modified();
         OnModified();
 
-        _center = new Vector3(x, y, z);
+        _center = new Double3(x, y, z);
         OnPropertyChanged(nameof(CenterX));
         OnPropertyChanged(nameof(CenterY));
         OnPropertyChanged(nameof(CenterZ));

@@ -1,8 +1,8 @@
-﻿using System.Numerics;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 using PresentationTest.TestData;
 using ReactiveUI;
 using VtkMvvm.Controls;
+using VtkMvvm.Extensions;
 using VtkMvvm.Features.BrushPainter;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
@@ -126,13 +126,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         }
     }
 
-
     public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
-        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
-        if (_background.TryComputeStructuredCoordinates(clickWorldPos, out (int i, int j, int k) voxel, out Vector3 bary))
+        Double3 clickWorldPos = _picker.GetPickWorldPosition();
+        if (_background.TryComputeStructuredCoordinates(clickWorldPos, out (int i, int j, int k) voxel, out Double3 _))
         {
             AxialSliceIndex = voxel.k;
             CoronalSliceIndex = voxel.j;
@@ -144,7 +143,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
-        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
+        Double3 clickWorldPos = _picker.GetPickWorldPosition();
         IReadOnlyList<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
 
         _painter.Paint(_labelMap, activeOffsets, [clickWorldPos], 1);
@@ -154,7 +153,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
-        Vector3 clickWorldPos = _picker.GetPickWorldPosition();
+        Double3 clickWorldPos = _picker.GetPickWorldPosition();
 
         BrushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
         BrushVm.Orientation = sender.Orientation;

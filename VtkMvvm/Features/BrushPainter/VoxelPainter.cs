@@ -1,6 +1,6 @@
-﻿using System.Numerics;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 using VtkMvvm.Extensions;
+using VtkMvvm.Models;
 
 namespace VtkMvvm.Features.BrushPainter;
 
@@ -18,14 +18,14 @@ public sealed unsafe class VoxelPainter
     public void Paint(
         vtkImageData labelMap,
         IReadOnlyCollection<(int dx, int dy, int dz)> brushVoxelOffsets,
-        IEnumerable<Vector3> worldCentres,
+        IEnumerable<Double3> worldCentres,
         byte labelValue = 255)
     {
         // ------- 0. Cache (once per volume) ----------------------------
         if (!ReferenceEquals(labelMap, _cachedVolume)) InitializeCache(labelMap);
 
         // ------- 1. Stamp the brush at every centre ---------------------
-        foreach (Vector3 wc in worldCentres)
+        foreach (Double3 wc in worldCentres)
         {
             if (!labelMap.TryComputeStructuredCoordinates(wc, out (int i, int j, int k) cVoxel, out _))
                 continue; // ijk outside the volume
