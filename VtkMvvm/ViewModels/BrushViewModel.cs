@@ -5,8 +5,7 @@ using VtkMvvm.Models;
 namespace VtkMvvm.ViewModels;
 
 /// <summary>
-///     A brush that live in render window. Represent a widget.
-///     Can futher be used by Painter to modify the labelmap efficiently by caching the brush's active indices.
+///     A 3D brush widget that renders in the VTK window and can be used for interactive painting.
 /// </summary>
 public class BrushViewModel : VtkElementViewModel
 {
@@ -59,13 +58,7 @@ public class BrushViewModel : VtkElementViewModel
     /// <summary>
     ///     Get the port that output the rotated brush <see cref="vtkPolyData" /> but with its center at (0, 0, 0).
     /// </summary>
-    public vtkAlgorithmOutput GetBrushModelOutputPort() =>
-        // _orientFilter.Update();
-        // var output = _orientFilter.GetOutput();
-        // var b = output.GetBounds();
-        // Debug.WriteLine($"Brush bounds from {GetType().Name}: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}"
-        //     + $"Brush diameter: {Diameter} Height: {Height}");
-        _orientFilter.GetOutputPort();
+    public vtkAlgorithmOutput GetBrushModelOutputPort() => _orientFilter.GetOutputPort();
 
     #region Binable properties
 

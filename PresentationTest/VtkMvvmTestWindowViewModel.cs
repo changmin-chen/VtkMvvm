@@ -1,7 +1,5 @@
 ﻿using System.Numerics;
 using Kitware.VTK;
-using MedXtend;
-using MedXtend.Vtk.ImageData;
 using PresentationTest.TestData;
 using ReactiveUI;
 using VtkMvvm.Controls;
@@ -9,7 +7,6 @@ using VtkMvvm.Features.BrushPainter;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
-using Image = itk.simple.Image;
 
 namespace PresentationTest;
 
@@ -32,8 +29,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     public VtkMvvmTestWindowViewModel()
     {
-        using Image imageItk = TestImageLoader.LoadEmbeddedTestImage("big_dog_mri.nii");
-        _background = imageItk.ToOrientedVtk();
+        _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
 
         ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
@@ -75,14 +71,21 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Add brushes that render on top of the image
-        BrushVm.Diameter = 2.0;
-        BrushVm.Height = 0.000000001;
+        BrushVm.Diameter = 3.0;
         BrushSharedVms = [BrushVm];
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
+        BrushVm.Height = spacing.Min();
         _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
         _offsetsConverter.SetBrushModelInputConnection(BrushVm.GetBrushModelOutputPort());
+
+        // Pick list
+        _picker.SetTolerance(0.005);
+        _picker.PickFromListOn();
+        _picker.AddPickList(axialVm.Actor);
+        _picker.AddPickList(coronalVm.Actor);
+        _picker.AddPickList(sagittalVm.Actor);
     }
 
     // Axial, Coronal, Sagittal slice view models
