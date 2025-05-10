@@ -59,6 +59,32 @@ public class BrushViewModel : VtkElementViewModel
     /// </summary>
     public vtkAlgorithmOutput GetBrushGeometryPort() => _orientFilter.GetOutputPort();
 
+
+    private void SetDiameter(double diameter)
+    {
+        _brushSource.SetRadius(diameter / 2.0);
+        _brushSource.Modified();
+    }
+
+    private void SetHeight(double value)
+    {
+        _brushSource.SetHeight(value);
+        _brushSource.Modified();
+    }
+
+    private void SetOrientation(SliceOrientation orientation)
+    {
+        _orient.Identity();
+        switch (orientation)
+        {
+            case SliceOrientation.Sagittal: _orient.RotateZ(-90); break; // align normal from y to x
+            case SliceOrientation.Coronal: /*nothing*/ break; // already y
+            case SliceOrientation.Axial: _orient.RotateX(90); break; // align normal from y to z
+        }
+
+        _orient.Modified();
+    }
+
     #region Binable properties
 
     private double _diameter = 2.0;
@@ -109,31 +135,6 @@ public class BrushViewModel : VtkElementViewModel
     public double CenterY => _center.Y;
     public double CenterZ => _center.Z;
 
-    private void SetDiameter(double diameter)
-    {
-        _brushSource.SetRadius(diameter / 2.0);
-        _brushSource.Modified();
-    }
-
-    private void SetHeight(double value)
-    {
-        _brushSource.SetHeight(value);
-        _brushSource.Modified();
-    }
-
-    private void SetOrientation(SliceOrientation orientation)
-    {
-        _orient.Identity();
-        switch (orientation)
-        {
-            case SliceOrientation.Sagittal: _orient.RotateZ(-90); break; // align normal from y to x
-            case SliceOrientation.Coronal: /*nothing*/ break; // already y
-            case SliceOrientation.Axial: _orient.RotateX(90); break; // align normal from y to z
-        }
-
-        _orient.Modified();
-    }
-
     /// <summary>
     ///     For center update, we expose method to update x, y, z concurrently
     /// </summary>
@@ -148,6 +149,21 @@ public class BrushViewModel : VtkElementViewModel
         OnPropertyChanged(nameof(CenterX));
         OnPropertyChanged(nameof(CenterY));
         OnPropertyChanged(nameof(CenterZ));
+    }
+
+    public bool Visible
+    {
+        get => Actor.GetVisibility() == 1;
+        set
+        {
+            bool current = Actor.GetVisibility() == 1;
+            if (current == value) return;
+            Actor.SetVisibility(value ? 1 : 0);
+            Actor.Modified();
+
+            OnPropertyChanged();
+            OnModified();
+        }
     }
 
     #endregion
