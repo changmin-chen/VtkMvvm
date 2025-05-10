@@ -70,6 +70,35 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         }
     }
 
+    public double Opacity
+    {
+        get => Actor.GetOpacity();
+        set
+        {
+            if (Math.Abs(Actor.GetOpacity() - value) < 1e-3) return;
+            Actor.SetOpacity(value);
+            Actor.Modified();
+
+            OnPropertyChanged();
+            OnModified();
+        }
+    }
+
+    public bool Visible
+    {
+        get => Actor.GetVisibility() == 1;
+        set
+        {
+            bool current = Actor.GetVisibility() == 1;
+            if (current == value) return;
+            Actor.SetVisibility(value ? 1 : 0);
+            Actor.Modified();
+
+            OnPropertyChanged();
+            OnModified();
+        }
+    }
+
     private void SetSliceIndex(int sliceIndex)
     {
         Debug.WriteLine($"{Orientation}-SliceIndex: {sliceIndex}");
