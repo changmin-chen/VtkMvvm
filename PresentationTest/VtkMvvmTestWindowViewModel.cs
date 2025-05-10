@@ -144,9 +144,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
-        IReadOnlyList<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
+        ReadOnlySpan<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
 
-        _painter.Paint(_labelMap, activeOffsets, [clickWorldPos], 1);
+        _painter.Paint(_labelMap, activeOffsets, clickWorldPos, 1);
     }
 
     public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)

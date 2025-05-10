@@ -1,8 +1,13 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Kitware.VTK;
 
 namespace VtkMvvm.Features.BrushPainter;
 
+/// <summary>
+///     Convert the brush into unsigned char ImageData using stencil filter. And then compute its active (> threshold)
+///     indices.
+/// </summary>
 public class BrushToActiveOffsetsConvertor
 {
     // For painting, we compute the active offset of the brush at (0,0,0)
@@ -24,7 +29,7 @@ public class BrushToActiveOffsetsConvertor
 
         _toStencil.SetOutputSpacing(1, 1, 1); // output to IJK space
 
-        _toMask.SetInsideValue(1);
+        _toMask.SetInsideValue(255);
         _toMask.SetOutsideValue(0);
         _toMask.SetOutputScalarTypeToUnsignedChar();
 
@@ -65,39 +70,30 @@ public class BrushToActiveOffsetsConvertor
         _millimeterToIjk.Modified();
     }
 
-    public IReadOnlyList<(int dx, int dy, int dz)> GetActiveVoxelOffsets(double threshold = 0.5)
+    public ReadOnlySpan<(int dx, int dy, int dz)> GetActiveVoxelOffsets(double threshold = 1)
     {
-        _toMask.UpdateInformation();
-
         // If we have already computed the offsets for exactly this image – reuse them.
+        _toMask.UpdateInformation();
         uint currentMTime = _toMask.GetOutput().GetPipelineMTime();
         if (currentMTime == _cachedMTime && _cachedOffsets is not null)
-        {
-            return _cachedOffsets!;
-        }
+            return CollectionsMarshal.AsSpan(_cachedOffsets);
 
         // Otherwise: (re-)compute.
-        _toMask.Update();
-        vtkImageData? mask = _toMask.GetOutput();
-        int[]? ext = mask.GetExtent();
-        List<(int dx, int dy, int dz)> list = _cachedOffsets ??= new List<(int dx, int dy, int dz)>();
-        list.Clear();
+        _toMask.Update(); // force execution
+        vtkImageData mask = _toMask.GetOutput();
+        int[] ext = mask.GetExtent();
 
+        _cachedOffsets ??= new List<(int, int, int)>(512);
+        _cachedOffsets.Clear();
         for (int z = ext[4]; z <= ext[5]; ++z)
-        {
-            for (int y = ext[2]; y <= ext[3]; ++y)
-            {
-                for (int x = ext[0]; x <= ext[1]; ++x)
-                    if (mask.GetScalarComponentAsDouble(x, y, z, 0) > threshold)
-                    {
-                        list.Add((x, y, z));
-                    }
-            }
-        }
+        for (int y = ext[2]; y <= ext[3]; ++y)
+        for (int x = ext[0]; x <= ext[1]; ++x)
+            if (mask.GetScalarComponentAsDouble(x, y, z, 0) >= threshold)
+                _cachedOffsets.Add((x, y, z));
 
         // update cache bookkeeping
         _cachedMTime = currentMTime;
         Debug.WriteLine($"Recompute offset at time: {_cachedMTime:X16} {DateTime.Now:O}");
-        return list;
+        return CollectionsMarshal.AsSpan(_cachedOffsets);
     }
 }
