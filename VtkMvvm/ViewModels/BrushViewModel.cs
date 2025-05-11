@@ -33,7 +33,6 @@ public class BrushViewModel : VtkElementViewModel
         _orientFilter.SetInputConnection(_brushSource.GetOutputPort());
 
         // 3. Placing the brush to interested world position
-        SetCenter(CenterX, CenterY, CenterZ);
         _positionFilter.SetTransform(_position);
         _positionFilter.SetInputConnection(_orientFilter.GetOutputPort());
 
@@ -131,25 +130,21 @@ public class BrushViewModel : VtkElementViewModel
         }
     }
 
-    public double CenterX => _center.X;
-    public double CenterY => _center.Y;
-    public double CenterZ => _center.Z;
-
-    /// <summary>
-    ///     For center update, we expose method to update x, y, z concurrently
-    /// </summary>
-    public void SetCenter(double x, double y, double z)
+    public Double3 Center
     {
-        _position.Identity();
-        _position.Translate(x, y, z);
-        _positionFilter.Modified();
-        OnModified();
-
-        _center = new Double3(x, y, z);
-        OnPropertyChanged(nameof(CenterX));
-        OnPropertyChanged(nameof(CenterY));
-        OnPropertyChanged(nameof(CenterZ));
+        get => _center;
+        set
+        {
+            if (SetField(ref _center, value))
+            {
+                _position.Identity();
+                _position.Translate(value.X, value.Y, value.Z);
+                _positionFilter.Modified();
+                OnModified();
+            }
+        }
     }
+
 
     public bool Visible
     {

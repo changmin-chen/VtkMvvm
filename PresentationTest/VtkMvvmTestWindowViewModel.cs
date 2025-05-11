@@ -156,7 +156,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
 
-        BrushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
+        BrushVm.Center = clickWorldPos;
         BrushVm.Orientation = sender.Orientation;
     }
 
