@@ -33,7 +33,6 @@ public class BrushViewModel : VtkElementViewModel
         _orientFilter.SetInputConnection(_brushSource.GetOutputPort());
 
         // 3. Placing the brush to interested world position
-        SetCenter(CenterX, CenterY, CenterZ);
         _positionFilter.SetTransform(_position);
         _positionFilter.SetInputConnection(_orientFilter.GetOutputPort());
 
@@ -58,6 +57,32 @@ public class BrushViewModel : VtkElementViewModel
     ///     Get the port that output the rotated brush <see cref="vtkPolyData" /> but with its center at (0, 0, 0).
     /// </summary>
     public vtkAlgorithmOutput GetBrushGeometryPort() => _orientFilter.GetOutputPort();
+
+
+    private void SetDiameter(double diameter)
+    {
+        _brushSource.SetRadius(diameter / 2.0);
+        _brushSource.Modified();
+    }
+
+    private void SetHeight(double value)
+    {
+        _brushSource.SetHeight(value);
+        _brushSource.Modified();
+    }
+
+    private void SetOrientation(SliceOrientation orientation)
+    {
+        _orient.Identity();
+        switch (orientation)
+        {
+            case SliceOrientation.Sagittal: _orient.RotateZ(-90); break; // align normal from y to x
+            case SliceOrientation.Coronal: /*nothing*/ break; // already y
+            case SliceOrientation.Axial: _orient.RotateX(90); break; // align normal from y to z
+        }
+
+        _orient.Modified();
+    }
 
     #region Binable properties
 
@@ -105,49 +130,35 @@ public class BrushViewModel : VtkElementViewModel
         }
     }
 
-    public double CenterX => _center.X;
-    public double CenterY => _center.Y;
-    public double CenterZ => _center.Z;
-
-    private void SetDiameter(double diameter)
+    public Double3 Center
     {
-        _brushSource.SetRadius(diameter / 2.0);
-        _brushSource.Modified();
-    }
-
-    private void SetHeight(double value)
-    {
-        _brushSource.SetHeight(value);
-        _brushSource.Modified();
-    }
-
-    private void SetOrientation(SliceOrientation orientation)
-    {
-        _orient.Identity();
-        switch (orientation)
+        get => _center;
+        set
         {
-            case SliceOrientation.Sagittal: _orient.RotateZ(-90); break; // align normal from y to x
-            case SliceOrientation.Coronal: /*nothing*/ break; // already y
-            case SliceOrientation.Axial: _orient.RotateX(90); break; // align normal from y to z
+            if (SetField(ref _center, value))
+            {
+                _position.Identity();
+                _position.Translate(value.X, value.Y, value.Z);
+                _positionFilter.Modified();
+                OnModified();
+            }
         }
-
-        _orient.Modified();
     }
 
-    /// <summary>
-    ///     For center update, we expose method to update x, y, z concurrently
-    /// </summary>
-    public void SetCenter(double x, double y, double z)
-    {
-        _position.Identity();
-        _position.Translate(x, y, z);
-        _positionFilter.Modified();
-        OnModified();
 
-        _center = new Double3(x, y, z);
-        OnPropertyChanged(nameof(CenterX));
-        OnPropertyChanged(nameof(CenterY));
-        OnPropertyChanged(nameof(CenterZ));
+    public bool Visible
+    {
+        get => Actor.GetVisibility() == 1;
+        set
+        {
+            bool current = Actor.GetVisibility() == 1;
+            if (current == value) return;
+            Actor.SetVisibility(value ? 1 : 0);
+            Actor.Modified();
+
+            OnPropertyChanged();
+            OnModified();
+        }
     }
 
     #endregion

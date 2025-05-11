@@ -1,6 +1,8 @@
 ﻿using Kitware.VTK;
+using PresentationTest.Constants;
 using PresentationTest.TestData;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using VtkMvvm.Controls;
 using VtkMvvm.Extensions;
 using VtkMvvm.Features.BrushPainter;
@@ -12,11 +14,12 @@ namespace PresentationTest;
 
 public class VtkMvvmTestWindowViewModel : ReactiveObject
 {
-    // Image data
+    // Go with image data
     private readonly vtkImageData _background;
 
     // Brush
     private readonly vtkImageData _labelMap;
+    private readonly vtkLookupTable _labelMapLut = LabelMapLookupTable.NewTable();
     private readonly BrushLinearOffsetCache _offsetsConverter = new();
     private readonly VoxelPainter _painter = new();
 
@@ -33,28 +36,16 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
         ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
-            .WithLinearInterpolation(false)
+            .WithLinearInterpolation(true)
             .WithOpacity(1.0);
         _labelMap = CreateLabelMap(_background);
-        vtkLookupTable labelLut = new();
-        labelLut.SetNumberOfTableValues(256);
-        labelLut.SetRange(0, 255);
-        labelLut.SetTableValue(0, 0.0, 0.0, 0.0, 0.0); // label 0 transparent
-        for (int i = 1; i < 256; ++i)
-        {
-            // simple “rainbow” – HSV -> RGB
-            double h = i / 255.0; // hue 0-1
-            (double r, double g, double b) = HsvToRgb(h, 1, 1);
-            labelLut.SetTableValue(i, r, g, b, 0.3); // 30 % opacity
-        }
 
-        labelLut.Build();
 
         ColoredImagePipelineBuilder labelMapPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_labelMap)
             .WithLinearInterpolation(false)
             .WithPickable(false)
-            .WithRgbaLookupTable(labelLut);
+            .WithRgbaLookupTable(_labelMapLut);
 
         ImageOrthogonalSliceViewModel axialVm = new(SliceOrientation.Axial, backgroundPipelineBuilder.Build());
         ImageOrthogonalSliceViewModel labelAxialVm = new(SliceOrientation.Axial, labelMapPipelineBuilder.Build());
@@ -75,7 +66,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
         BrushVm.Height = spacing.Min();
-        // _offsetsConverter.SetVoxelizeSpacing(spacing[0], spacing[1], spacing[2]);
         _offsetsConverter.BindLabelMapInfo(_labelMap);
         _offsetsConverter.SetBrushGeometry(BrushVm.GetBrushGeometryPort());
 
@@ -85,7 +75,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(axialVm.Actor);
         _picker.AddPickList(coronalVm.Actor);
         _picker.AddPickList(sagittalVm.Actor);
+
+        // Commands
+        SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
     }
+
 
     // Axial, Coronal, Sagittal slice view models
     public ImageOrthogonalSliceViewModel[] AxialVms { get; }
@@ -125,6 +119,22 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         }
     }
 
+    [Reactive] public byte LabelMapFillingValue { get; set; } = 1;
+
+    public DelegateCommand<bool?> SetLabelOneVisibilityCommand { get; }
+
+    private void SetLabelOneVisibility(bool? isVisible)
+    {
+        if (isVisible is null) return;
+
+        double opacity = isVisible.Value ? LabelMapLookupTable.Opacity : 0.0;
+        double[]? labelColor = _labelMapLut.GetColor(1); // take label==1 for example
+        _labelMapLut.SetTableValue(1, labelColor[0], labelColor[1], labelColor[2], opacity);
+        _labelMapLut.Modified();
+
+        AxialVms[1].ForceRender();
+    }
+
     public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
@@ -143,11 +153,10 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
-        // ReadOnlySpan<(int dx, int dy, int dz)> activeOffsets = _offsetsConverter.GetActiveVoxelOffsets();
         ReadOnlySpan<int> activeOffsets = _offsetsConverter.GetLinearOffsets();
 
-        // _painter.Paint(_labelMap, activeOffsets, clickWorldPos, 1);
-        _painter.PaintLinear(_labelMap, activeOffsets, clickWorldPos, 1);
+        byte fillingValue = LabelMapFillingValue;
+        _painter.PaintLinear(_labelMap, activeOffsets, clickWorldPos, fillingValue);
     }
 
     public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)
@@ -156,7 +165,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
 
-        BrushVm.SetCenter(clickWorldPos.X, clickWorldPos.Y, clickWorldPos.Z);
+        BrushVm.Center = clickWorldPos;
         BrushVm.Orientation = sender.Orientation;
     }
 
@@ -179,42 +188,5 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         labelMap.AllocateScalars();
         labelMap.ZeroScalars();
         return labelMap;
-    }
-
-
-    /// <summary>
-    /// Convert an HSV color (hue, saturation, value) to RGB.
-    /// h, s, v ∈ [0,1]. Returns r, g, b ∈ [0,1].
-    /// </summary>
-    private static (double r, double g, double b) HsvToRgb(double h, double s, double v)
-    {
-        // 1. If sat=0, it's a gray (achromatic) color: r=g=b=v
-        if (s == 0)
-        {
-            return (v, v, v);
-        }
-
-        // 2. Hue sector: scale hue to [0,6), then take integer + fractional part
-        double sector = h * 6.0;
-        int i = (int)Math.Floor(sector); // sector index: 0..5
-        double f = sector - i; // fractional part within sector
-
-        // 3. Precompute intermediate p, q, t values
-        double p = v * (1.0 - s);
-        double q = v * (1.0 - s * f);
-        double t = v * (1.0 - s * (1 - f));
-
-        // 4. Select the correct RGB case based on sector index
-        switch (i % 6)
-        {
-            case 0: return (v, t, p); // red→yellow
-            case 1: return (q, v, p); // yellow→green
-            case 2: return (p, v, t); // green→cyan
-            case 3: return (p, q, v); // cyan→blue
-            case 4: return (t, p, v); // blue→magenta
-            case 5: return (v, p, q); // magenta→red
-            default: // should never happen
-                return (0, 0, 0);
-        }
     }
 }

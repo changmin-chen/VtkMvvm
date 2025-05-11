@@ -17,16 +17,8 @@ public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
         GC.SuppressFinalize(this);
     }
 
+
     public event PropertyChangedEventHandler? PropertyChanged;
-
-
-    // Notify SceneControl to render the scene
-    public event EventHandler<EventArgs>? Modified;
-
-    protected void OnModified()
-    {
-        Modified?.Invoke(this, EventArgs.Empty);
-    }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
@@ -49,4 +41,22 @@ public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
             Actor.Dispose();
         }
     }
+
+
+    #region Notify RenderWindow to render the scene
+
+    public event EventHandler<EventArgs>? Modified;
+
+    protected void OnModified()
+    {
+        Modified?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    ///     Force RenderWindow to render the scene. Generally used when the mutatable pipeline component has been modified
+    ///     externally.
+    /// </summary>
+    public void ForceRender() => OnModified();
+
+    #endregion
 }
