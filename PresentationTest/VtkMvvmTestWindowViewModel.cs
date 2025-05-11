@@ -75,7 +75,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(axialVm.Actor);
         _picker.AddPickList(coronalVm.Actor);
         _picker.AddPickList(sagittalVm.Actor);
+
+        // Commands
+        SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
     }
+
 
     // Axial, Coronal, Sagittal slice view models
     public ImageOrthogonalSliceViewModel[] AxialVms { get; }
@@ -116,6 +120,20 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     }
 
     [Reactive] public byte LabelMapFillingValue { get; set; } = 1;
+
+    public DelegateCommand<bool?> SetLabelOneVisibilityCommand { get; }
+
+    private void SetLabelOneVisibility(bool? isVisible)
+    {
+        if (isVisible is null) return;
+
+        double opacity = isVisible.Value ? LabelMapLookupTable.Opacity : 0.0;
+        double[]? labelColor = _labelMapLut.GetColor(1); // take label==1 for example
+        _labelMapLut.SetTableValue(1, labelColor[0], labelColor[1], labelColor[2], opacity);
+        _labelMapLut.Modified();
+
+        AxialVms[1].ForceRender();
+    }
 
     public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
     {

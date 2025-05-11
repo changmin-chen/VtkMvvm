@@ -79,11 +79,18 @@
                     </StackPanel>
                 </StackPanel>
 
+                <!-- Label map color -->
                 <StackPanel Margin="0 16">
                     <TextBlock Text="LabelMap color" />
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Filling value: " />
                         <TextBox Text="{Binding LabelMapFillingValue, UpdateSourceTrigger=PropertyChanged}" Width="40" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Command="{Binding SetLabelOneVisibilityCommand }"
+                                  CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
+                        <TextBlock Text="Set visibility of specific label value (1 in this case) " />
                     </StackPanel>
                 </StackPanel>
 
