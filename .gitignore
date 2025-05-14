@@ -94,8 +94,5 @@ StyleCopReport.xml
 *.wiXsource
 
 # Image data files
-*.nii
-*.nii.gz
-
-# Python env
-VtkLab/pythondotnet-vtk
+#*.nii
+#*.nii.gz
