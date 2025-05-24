@@ -18,6 +18,11 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         nameof(OverlayObjects), typeof(IList<VtkElementViewModel>), typeof(VtkImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
+    /// <summary>
+    ///     Indicates whether the control is loaded. Or else the RenderWindowControl.RenderWindow may be null.
+    /// </summary>
+    private bool _isLoaded;
+
     public VtkImageSceneControl()
     {
         InitializeComponent();
@@ -45,11 +50,6 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
-
-    /// <summary>
-    ///     Indicates whether the control is loaded. Or else the RenderWindowControl.RenderWindow may be null.
-    /// </summary>
-    public bool IsLoaded { get; private set; }
 
     /// <summary>
     ///     Indicates the orientation of the slices so that the camera can be set up correctly.
@@ -98,7 +98,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
         RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
 
-        IsLoaded = true;
+        _isLoaded = true;
     }
 
     public void SetInteractStyle(vtkInteractorObserver interactorStyle)
@@ -157,7 +157,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         FitSlice(first.Actor, first.Orientation);
 
         // ----- 4. Render the scene to show the new stuff-----
-        if (IsLoaded)
+        if (_isLoaded)
         {
             OnSceneObjectsModified(this, EventArgs.Empty);
         }
@@ -173,7 +173,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     /// </summary>
     private void OnSceneObjectsModified(object? sender, EventArgs args)
     {
-        if (IsLoaded)
+        if (_isLoaded)
         {
             MainRenderer.ResetCameraClippingRange();
             RenderWindowControl.RenderWindow.Render();
@@ -280,7 +280,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         }
 
         // ----- 3. Render the scene to show the new stuff-----
-        if (IsLoaded)
+        if (_isLoaded)
         {
             OnSceneObjectsModified(this, EventArgs.Empty);
         }
