@@ -11,11 +11,15 @@ namespace VtkMvvm.Controls;
 public partial class VtkImageSceneControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
-        nameof(SceneObjects), typeof(IList<ImageOrthogonalSliceViewModel>), typeof(VtkImageSceneControl),
+        nameof(SceneObjects),
+        typeof(IList<ImageOrthogonalSliceViewModel>),
+        typeof(VtkImageSceneControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
-        nameof(OverlayObjects), typeof(IList<VtkElementViewModel>), typeof(VtkImageSceneControl),
+        nameof(OverlayObjects),
+        typeof(IList<VtkElementViewModel>),
+        typeof(VtkImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
     /// <summary>
@@ -101,13 +105,16 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         _isLoaded = true;
     }
 
-    public void SetInteractStyle(vtkInteractorObserver interactorStyle)
+    private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
-        ArgumentNullException.ThrowIfNull(interactorStyle);
+        renderer.AddActor(viewModel.Actor);
+        viewModel.Modified += OnSceneObjectsModified;
+    }
 
-        vtkRenderWindowInteractor? iren = RenderWindowControl.RenderWindow.GetInteractor();
-        iren.SetInteractorStyle(interactorStyle);
-        iren.Initialize();
+    private void UnHookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
+    {
+        renderer.RemoveActor(viewModel.Actor);
+        viewModel.Modified -= OnSceneObjectsModified;
     }
 
 
@@ -126,30 +133,19 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         // ----- 1. Remove & unsubscribe old stuff -----
         if (oldSceneObjects != null)
         {
-            foreach (ImageOrthogonalSliceViewModel sceneObject in oldSceneObjects)
-            {
-                MainRenderer.RemoveActor(sceneObject.Actor);
-                sceneObject.Modified -= OnSceneObjectsModified;
-            }
+            foreach (ImageOrthogonalSliceViewModel item in oldSceneObjects)
+                UnHookActor(MainRenderer, item);
         }
 
         // Bail early if we have nothing new
-        if (newSceneObjects == null)
+        if (newSceneObjects == null || newSceneObjects.Count == 0)
         {
             return;
         }
 
         // ----- 2. Add & subscribe new stuff -----
-        if (newSceneObjects.Count == 0)
-        {
-            return;
-        }
-
-        foreach (ImageOrthogonalSliceViewModel sceneObject in newSceneObjects)
-        {
-            MainRenderer.AddActor(sceneObject.Actor);
-            sceneObject.Modified += OnSceneObjectsModified;
-        }
+        foreach (ImageOrthogonalSliceViewModel item in newSceneObjects)
+            HookActor(MainRenderer, item);
 
         // ----- 3. Camera magic (use the first slice as reference) -----
         ImageOrthogonalSliceViewModel first = newSceneObjects[0];
@@ -173,11 +169,10 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     /// </summary>
     private void OnSceneObjectsModified(object? sender, EventArgs args)
     {
-        if (_isLoaded)
-        {
-            MainRenderer.ResetCameraClippingRange();
-            RenderWindowControl.RenderWindow.Render();
-        }
+        if (!_isLoaded) return;
+
+        MainRenderer.ResetCameraClippingRange();
+        RenderWindowControl.RenderWindow.Render();
     }
 
     /// <summary>
@@ -255,29 +250,15 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     {
         if (oldOverlayObjects != null)
         {
-            foreach (VtkElementViewModel overlayObject in oldOverlayObjects)
-            {
-                OverlayRenderer.RemoveActor(overlayObject.Actor);
-                overlayObject.Modified -= OnSceneObjectsModified;
-            }
+            foreach (VtkElementViewModel item in oldOverlayObjects)
+                UnHookActor(OverlayRenderer, item);
         }
 
-        if (newOverlayObjects == null)
-        {
+        if (newOverlayObjects == null || newOverlayObjects.Count == 0)
             return;
-        }
 
-        // ----- 2. Add & subscribe new stuff -----
-        if (newOverlayObjects.Count == 0)
-        {
-            return;
-        }
-
-        foreach (VtkElementViewModel overlayObject in newOverlayObjects)
-        {
-            OverlayRenderer.AddActor(overlayObject.Actor);
-            overlayObject.Modified += OnSceneObjectsModified;
-        }
+        foreach (VtkElementViewModel item in newOverlayObjects)
+            HookActor(OverlayRenderer, item);
 
         // ----- 3. Render the scene to show the new stuff-----
         if (_isLoaded)
