@@ -28,7 +28,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         ColoredImagePipeline pipe = bgBuilder.Build();
         double[]? spacing = _background.GetSpacing();
 
-        Quaternion viewAngle = Quaternion.CreateFromYawPitchRoll(0, 0, 45);
+        Quaternion viewAngle = Quaternion.CreateFromYawPitchRoll(-20, -20, 45);
         ImageObliqueSliceViewModel axialVm = new(viewAngle, spacing.Max(), pipe);
         ImageVms = [axialVm];
     }

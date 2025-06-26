@@ -7,6 +7,9 @@ using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;
 
+/// <summary>
+/// For binding to the Image slice that may not be orthogonal
+/// </summary>
 public partial class VtkImageControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
@@ -149,10 +152,9 @@ public partial class VtkImageControl : UserControl, IDisposable
         foreach (VtkElementViewModel item in newSceneObjects)
             HookActor(MainRenderer, item);
 
-        // // ----- 3. Camera magic (use the first slice as reference) -----
-        // var first = newSceneObjects[0];
-        // Orientation = first.Orientation;
-        // FitSlice(first.Actor, first.Orientation);
+        // ----- 3. Camera magic (use the first slice as reference) -----
+        var first = newSceneObjects[0];
+        FitSlice(first.Actor);
 
         // ----- 4. Render the scene to show the new stuff-----
         if (_isLoaded)
@@ -163,6 +165,35 @@ public partial class VtkImageControl : UserControl, IDisposable
         {
             Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
         }
+    }
+
+    /// <summary>
+    /// Unlike <see cref="VtkImageSceneControl"/> that decide which two axes to measure.
+    /// We assume axial slice orientation: XY live, Z flat.
+    /// </summary>
+    private void FitSlice(vtkProp slice)
+    {
+        ArgumentNullException.ThrowIfNull(slice);
+
+        const double camDist = 500;
+
+        vtkCamera? cam = MainRenderer.GetActiveCamera();
+        cam.ParallelProjectionOn(); // orthographic, no perspective
+        cam.SetClippingRange(0.1, 5000);
+
+        double[] b = slice.GetBounds(); // xmin xmax ymin ymax zmin zmax
+
+        // Assume XY live, Z flat. 
+        double width = b[1] - b[0]; // xmax - xmin
+        double height = b[3] - b[2]; // ymax - ymin
+        double cx = 0.5 * (b[0] + b[1]);
+        double cy = 0.5 * (b[2] + b[3]);
+        double cz = b[4]; // zmin == zmax
+        cam.SetPosition(cx, cy, cz + camDist);
+        cam.SetViewUp(0, -1, 0);
+
+        cam.SetFocalPoint(cx, cy, cz);
+        cam.SetParallelScale(0.5 * Math.Max(width, height)); // <= **key line**
     }
 
     #endregion
