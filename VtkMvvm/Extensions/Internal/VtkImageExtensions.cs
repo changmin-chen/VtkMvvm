@@ -1,6 +1,6 @@
 ﻿using Kitware.VTK;
 
-namespace VtkMvvm.Extensions
+namespace VtkMvvm.Extensions.Internal
 {
     internal static class VtkImageExtensions
     {

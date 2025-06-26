@@ -47,9 +47,10 @@ public static class ComputeIjkExtensions
     ///     Call this only *after* a successful <c>Pick(..)</c>/<c>Pick3DPoint(..)</c> –
     ///     otherwise the result is undefined (VTK never initialises the array for you).
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe Double3 GetPickWorldPosition(this vtkAbstractPicker picker)
     {
-        if (picker is null) throw new ArgumentNullException(nameof(picker));
+        ArgumentNullException.ThrowIfNull(picker);
 
         // Tiny, fixed-size scratch buffer on the stack → zero allocations.
         double* posPtr = stackalloc double[3];

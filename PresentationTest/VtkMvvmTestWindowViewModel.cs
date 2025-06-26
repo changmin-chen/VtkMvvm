@@ -1,5 +1,6 @@
 ﻿using Kitware.VTK;
 using PresentationTest.Constants;
+using PresentationTest.Extensions;
 using PresentationTest.TestData;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;

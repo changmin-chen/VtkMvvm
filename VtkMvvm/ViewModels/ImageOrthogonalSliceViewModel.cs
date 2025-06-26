@@ -10,7 +10,7 @@ namespace VtkMvvm.ViewModels;
 public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
     private readonly vtkImageMapToColors _colorMap;
-    private int _sliceIndex;
+    private int _sliceIndex = int.MinValue;
     private double _windowLevel;
     private double _windowWidth;
 
@@ -23,7 +23,9 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         _colorMap = pipeline.ColorMap;
         pipeline.Connect();
 
-        SetSliceIndex(0); // necessary. this not only affects which slice it initially displayed, but also the slicing orientation
+        // SetSliceIndex here is necessary.
+        // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
+        SetSliceIndex(0); 
     }
 
     public SliceOrientation Orientation { get; }

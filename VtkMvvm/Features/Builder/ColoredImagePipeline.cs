@@ -3,7 +3,7 @@
 namespace VtkMvvm.Features.Builder;
 
 /// <summary>
-///     DTO for color-mapped image pipeline
+///     DTO for color-mapped image pipeline/
 /// </summary>
 public record ColoredImagePipeline(
     vtkImageData Image,
@@ -11,6 +11,9 @@ public record ColoredImagePipeline(
     vtkImageActor Actor
 )
 {
+    /// <summary>
+    ///     Connect pipeline: Image -> ColorMap -> Actor
+    /// </summary>
     public void Connect()
     {
         ColorMap.SetInput(Image);
