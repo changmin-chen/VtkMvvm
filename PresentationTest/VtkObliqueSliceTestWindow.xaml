@@ -17,8 +17,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
-                                  Grid.Row="0"
-                                  SceneObjects="{Binding ImageVms}" />
+                                              Grid.Row="0"
+                                              SceneObjects="{Binding ImageVms}" />
         <StackPanel Grid.Row="1"
                     Margin="5"
                     VerticalAlignment="Top"
@@ -28,8 +28,8 @@
                        Text="Slice:"
                        Foreground="White" />
             <Slider Width="200"
-                    Minimum="0"
-                    Maximum="{Binding Path=ImageVms[0].ImageModel.Extent.MaxZ, Mode=OneWay}"
+                    Minimum="{Binding ImageVms[0].MinSliceIndex}"
+                    Maximum="{Binding  ImageVms[0].MaxSliceIndex}"
                     IsSnapToTickEnabled="True"
                     Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
 
@@ -39,12 +39,22 @@
             <TextBlock Margin="0,5,5,0"
                        Text="{Binding ObliqueSliceIndex}"
                        Foreground="White" />
-            <TextBlock Margin="0,5,5,0"
-                       Text="Max:"
-                       Foreground="White" />
-            <TextBlock Margin="0,5,5,0"
-                       Text="{Binding Path=ImageVms[0].ImageModel.Extent.MaxZ, Mode=OneWay}"
-                       Foreground="White" />
+            
+            <StackPanel Orientation="Horizontal" Margin="8 0">
+                <TextBlock Margin="0,5,5,0"
+                           Text="Min:"
+                           Foreground="White" />
+                <TextBlock Margin="0,5,5,0"
+                           Text="{Binding ImageVms[0].MinSliceIndex}"
+                           Foreground="White" />
+                <TextBlock Margin="0,5,5,0"
+                           Text="Max:"
+                           Foreground="White" />
+                <TextBlock Margin="0,5,5,0"
+                           Text="{Binding ImageVms[0].MaxSliceIndex}"
+                           Foreground="White" />
+            </StackPanel>
+      
         </StackPanel>
     </Grid>
 </Window>
