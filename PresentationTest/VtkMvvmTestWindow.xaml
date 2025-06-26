@@ -114,7 +114,7 @@
                 <controls:VtkImageSceneControl x:Name="AxialControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding AxialVms}"
-                                               OverlayObjects="{Binding BrushSharedVms}" />
+                                               OverlayObjects="{Binding AxialOverlayVms}" />
                 <StackPanel Grid.Row="1"
                             Margin="5"
                             VerticalAlignment="Top"
@@ -154,7 +154,7 @@
                 <controls:VtkImageSceneControl x:Name="CoronalControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding CoronalVms}"
-                                               OverlayObjects="{Binding BrushSharedVms}" />
+                                               OverlayObjects="{Binding CoronalOverlayVms}" />
                 <StackPanel Grid.Row="1"
                             Margin="5"
                             VerticalAlignment="Top"
@@ -194,7 +194,7 @@
                 <controls:VtkImageSceneControl x:Name="SagittalControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding SagittalVms}"
-                                               OverlayObjects="{Binding BrushSharedVms}" />
+                                               OverlayObjects="{Binding SagittalOverlayVms}" />
 
                 <StackPanel Grid.Row="1">
                     <!--  Slice adjust  -->

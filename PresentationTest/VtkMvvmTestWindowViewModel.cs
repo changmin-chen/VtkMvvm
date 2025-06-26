@@ -16,6 +16,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 {
     // Go with image data
     private readonly vtkImageData _background;
+    private readonly int[] _backgroundDims;
+
+    // Cross hair overlay
+    private readonly CrosshairViewModel _axialCrosshairVm;
+    private readonly CrosshairViewModel _coronalCrosshairVm;
+    private readonly CrosshairViewModel _sagittalCrosshairVm;
 
     // Brush
     private readonly vtkImageData _labelMap;
@@ -33,13 +39,13 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public VtkMvvmTestWindowViewModel()
     {
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
+        _backgroundDims = _background.GetDimensions();
 
         ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
             .WithLinearInterpolation(true)
             .WithOpacity(1.0);
         _labelMap = CreateLabelMap(_background);
-
 
         ColoredImagePipelineBuilder labelMapPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_labelMap)
@@ -61,7 +67,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
         // Add brushes that render on top of the image
         BrushVm.Diameter = 3.0;
-        BrushSharedVms = [BrushVm];
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
@@ -76,24 +81,37 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(coronalVm.Actor);
         _picker.AddPickList(sagittalVm.Actor);
 
+        // Overlay VMs: Crosshair and Brush
+        double[]? bounds = _background.GetBounds();
+        _axialCrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, bounds);
+        _coronalCrosshairVm = new CrosshairViewModel(SliceOrientation.Coronal, bounds);
+        _sagittalCrosshairVm = new CrosshairViewModel(SliceOrientation.Sagittal, bounds);
+        AxialOverlayVms = [BrushVm, _axialCrosshairVm];
+        CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
+        SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];
+
         // Commands
         SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
     }
 
 
-    // Axial, Coronal, Sagittal slice view models
+    // Background ViewModels: Axial, Coronal, Sagittal slice view models
     public ImageOrthogonalSliceViewModel[] AxialVms { get; }
     public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
     public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
 
-    public BrushViewModel BrushVm { get; } = new();
-    public VtkElementViewModel[] BrushSharedVms { get; }
+    // Overlay ViewModels
+    public BrushViewModel BrushVm { get; } = new(); // directly binds to slider for setting diameter
+    public VtkElementViewModel[] AxialOverlayVms { get; }
+    public VtkElementViewModel[] CoronalOverlayVms { get; }
+    public VtkElementViewModel[] SagittalOverlayVms { get; }
 
     public int AxialSliceIndex
     {
         get => _axialSliceIndex;
         set
         {
+            if (value < 0 || value >= _backgroundDims[2]) return;
             this.RaiseAndSetIfChanged(ref _axialSliceIndex, value);
             SetSliceIndex(AxialVms, value);
         }
@@ -104,6 +122,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         get => _coronalSliceIndex;
         set
         {
+            if (value < 0 || value >= _backgroundDims[1]) return;
             this.RaiseAndSetIfChanged(ref _coronalSliceIndex, value);
             SetSliceIndex(CoronalVms, value);
         }
@@ -114,6 +133,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         get => _sagittalSliceIndex;
         set
         {
+            if (value < 0 || value >= _backgroundDims[0]) return;
             this.RaiseAndSetIfChanged(ref _sagittalSliceIndex, value);
             SetSliceIndex(SagittalVms, value);
         }
@@ -145,6 +165,10 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             AxialSliceIndex = voxel.k;
             CoronalSliceIndex = voxel.j;
             SagittalSliceIndex = voxel.i;
+
+            _axialCrosshairVm.FocalPoint = clickWorldPos;
+            _coronalCrosshairVm.FocalPoint = clickWorldPos;
+            _sagittalCrosshairVm.FocalPoint = clickWorldPos;
         }
     }
 

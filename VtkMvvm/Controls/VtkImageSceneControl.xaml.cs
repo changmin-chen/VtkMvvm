@@ -8,15 +8,27 @@ using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;
 
+/// <summary>
+///     Displaying orthogonal slices of an image volume as the background image, while putting overlay objects onto it.
+/// </summary>
 public partial class VtkImageSceneControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
-        nameof(SceneObjects), typeof(IEnumerable<ImageOrthogonalSliceViewModel>), typeof(VtkImageSceneControl),
+        nameof(SceneObjects),
+        typeof(IList<ImageOrthogonalSliceViewModel>),
+        typeof(VtkImageSceneControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
-        nameof(OverlayObjects), typeof(IEnumerable<VtkElementViewModel>), typeof(VtkImageSceneControl),
+        nameof(OverlayObjects),
+        typeof(IList<VtkElementViewModel>),
+        typeof(VtkImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
+
+    /// <summary>
+    ///     Indicates whether the control is loaded. Or else the RenderWindowControl.RenderWindow may be null.
+    /// </summary>
+    private bool _isLoaded;
 
     public VtkImageSceneControl()
     {
@@ -30,15 +42,16 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         Loaded += OnLoadedOnce;
     }
 
-    public IEnumerable<ImageOrthogonalSliceViewModel>? SceneObjects
+
+    public IList<ImageOrthogonalSliceViewModel>? SceneObjects
     {
-        get => (IEnumerable<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
+        get => (IList<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
         set => SetValue(SceneObjectsProperty, value);
     }
 
-    public IEnumerable<VtkElementViewModel>? OverlayObjects
+    public IList<VtkElementViewModel>? OverlayObjects
     {
-        get => (IEnumerable<VtkElementViewModel>)GetValue(OverlayObjectsProperty);
+        get => (IList<VtkElementViewModel>)GetValue(OverlayObjectsProperty);
         set => SetValue(OverlayObjectsProperty, value);
     }
 
@@ -47,13 +60,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     public RenderWindowControl RenderWindowControl { get; } = new();
 
     /// <summary>
-    ///     Indicates whether the control is loaded. Or else the RenderWindowControl.RenderWindow may be null.
-    /// </summary>
-    public bool IsLoaded { get; private set; }
-
-    /// <summary>
     ///     Indicates the orientation of the slices so that the camera can be set up correctly.
-    ///     This orientation is based on the first slice in the SceneObjects collection.
+    ///     This orientation is based on the first slice in the <see cref="SceneObjects"/> collection.
     /// </summary>
     public SliceOrientation Orientation { get; private set; }
 
@@ -62,17 +70,13 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         if (SceneObjects is { } objects)
         {
             foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
-            {
                 sceneObj.Modified -= OnSceneObjectsModified;
-            }
         }
 
         if (OverlayObjects is { } overlays)
         {
             foreach (VtkElementViewModel overlayObj in overlays)
-            {
                 overlayObj.Modified -= OnSceneObjectsModified;
-            }
         }
 
         WFHost.Child = null;
@@ -98,16 +102,31 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
         RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
 
-        IsLoaded = true;
+        _isLoaded = true;
     }
 
-    public void SetInteractStyle(vtkInteractorObserver interactorStyle)
+    private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
-        ArgumentNullException.ThrowIfNull(interactorStyle);
+        renderer.AddActor(viewModel.Actor);
+        viewModel.Modified += OnSceneObjectsModified;
+    }
 
-        vtkRenderWindowInteractor? iren = RenderWindowControl.RenderWindow.GetInteractor();
-        iren.SetInteractorStyle(interactorStyle);
-        iren.Initialize();
+    private void UnHookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
+    {
+        renderer.RemoveActor(viewModel.Actor);
+        viewModel.Modified -= OnSceneObjectsModified;
+    }
+
+    /// <summary>
+    ///     Render the scene when the actors are modified.
+    ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
+    /// </summary>
+    private void OnSceneObjectsModified(object? sender, EventArgs args)
+    {
+        if (!_isLoaded) return;
+
+        MainRenderer.ResetCameraClippingRange();
+        RenderWindowControl.RenderWindow.Render();
     }
 
 
@@ -116,49 +135,37 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkImageSceneControl control = (VtkImageSceneControl)d;
-        control.UpdateSlices((IEnumerable<ImageOrthogonalSliceViewModel>)e.OldValue, (IEnumerable<ImageOrthogonalSliceViewModel>)e.NewValue);
+        control.UpdateSlices((IList<ImageOrthogonalSliceViewModel>)e.OldValue, (IList<ImageOrthogonalSliceViewModel>)e.NewValue);
     }
 
     private void UpdateSlices(
-        IEnumerable<ImageOrthogonalSliceViewModel>? oldSceneObjects,
-        IEnumerable<ImageOrthogonalSliceViewModel>? newSceneObjects)
+        IList<ImageOrthogonalSliceViewModel>? oldSceneObjects,
+        IList<ImageOrthogonalSliceViewModel>? newSceneObjects)
     {
         // ----- 1. Remove & unsubscribe old stuff -----
         if (oldSceneObjects != null)
         {
-            foreach (ImageOrthogonalSliceViewModel sceneObject in oldSceneObjects)
-            {
-                MainRenderer.RemoveActor(sceneObject.Actor);
-                sceneObject.Modified -= OnSceneObjectsModified;
-            }
+            foreach (ImageOrthogonalSliceViewModel item in oldSceneObjects)
+                UnHookActor(MainRenderer, item);
         }
 
         // Bail early if we have nothing new
-        if (newSceneObjects == null)
+        if (newSceneObjects == null || newSceneObjects.Count == 0)
         {
             return;
         }
 
         // ----- 2. Add & subscribe new stuff -----
-        ImageOrthogonalSliceViewModel[] array = newSceneObjects.ToArray();
-        if (array.Length == 0)
-        {
-            return;
-        }
-
-        foreach (ImageOrthogonalSliceViewModel sceneObject in array)
-        {
-            MainRenderer.AddActor(sceneObject.Actor);
-            sceneObject.Modified += OnSceneObjectsModified;
-        }
+        foreach (ImageOrthogonalSliceViewModel item in newSceneObjects)
+            HookActor(MainRenderer, item);
 
         // ----- 3. Camera magic (use the first slice as reference) -----
-        ImageOrthogonalSliceViewModel first = array[0];
+        ImageOrthogonalSliceViewModel first = newSceneObjects[0];
         Orientation = first.Orientation;
         FitSlice(first.Actor, first.Orientation);
 
         // ----- 4. Render the scene to show the new stuff-----
-        if (IsLoaded)
+        if (_isLoaded)
         {
             OnSceneObjectsModified(this, EventArgs.Empty);
         }
@@ -168,18 +175,6 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         }
     }
 
-    /// <summary>
-    ///     Render the scene when the actors are modified.
-    ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
-    /// </summary>
-    private void OnSceneObjectsModified(object? sender, EventArgs args)
-    {
-        if (IsLoaded)
-        {
-            MainRenderer.ResetCameraClippingRange();
-            RenderWindowControl.RenderWindow.Render();
-        }
-    }
 
     /// <summary>
     ///     Fits a single vtkImageActor / vtkImageSlice so it fills the viewport
@@ -247,42 +242,27 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     private static void OnOverlayObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkImageSceneControl control = (VtkImageSceneControl)d;
-        control.UpdateOverlays((IEnumerable<VtkElementViewModel>)e.OldValue, (IEnumerable<VtkElementViewModel>)e.NewValue);
+        control.UpdateOverlays((IList<VtkElementViewModel>)e.OldValue, (IList<VtkElementViewModel>)e.NewValue);
     }
 
     private void UpdateOverlays(
-        IEnumerable<VtkElementViewModel>? oldOverlayObjects,
-        IEnumerable<VtkElementViewModel>? newOverlayObjects)
+        IList<VtkElementViewModel>? oldOverlayObjects,
+        IList<VtkElementViewModel>? newOverlayObjects)
     {
         if (oldOverlayObjects != null)
         {
-            foreach (VtkElementViewModel overlayObject in oldOverlayObjects)
-            {
-                OverlayRenderer.RemoveActor(overlayObject.Actor);
-                overlayObject.Modified -= OnSceneObjectsModified;
-            }
+            foreach (VtkElementViewModel item in oldOverlayObjects)
+                UnHookActor(OverlayRenderer, item);
         }
 
-        if (newOverlayObjects == null)
-        {
+        if (newOverlayObjects == null || newOverlayObjects.Count == 0)
             return;
-        }
 
-        // ----- 2. Add & subscribe new stuff -----
-        VtkElementViewModel[] array = newOverlayObjects.ToArray();
-        if (array.Length == 0)
-        {
-            return;
-        }
-
-        foreach (VtkElementViewModel overlayObject in array)
-        {
-            OverlayRenderer.AddActor(overlayObject.Actor);
-            overlayObject.Modified += OnSceneObjectsModified;
-        }
+        foreach (VtkElementViewModel item in newOverlayObjects)
+            HookActor(OverlayRenderer, item);
 
         // ----- 3. Render the scene to show the new stuff-----
-        if (IsLoaded)
+        if (_isLoaded)
         {
             OnSceneObjectsModified(this, EventArgs.Empty);
         }

@@ -11,6 +11,20 @@ public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
 {
     public abstract vtkProp Actor { get; }
 
+    public bool Visible
+    {
+        get => Actor.GetVisibility() == 1;
+        set
+        {
+            bool current = Actor.GetVisibility() == 1;
+            if (current == value) return;
+            Actor.SetVisibility(value ? 1 : 0);
+            Actor.Modified();
+            OnPropertyChanged();
+            OnModified();
+        }
+    }
+
     public void Dispose()
     {
         Dispose(true);
@@ -33,7 +47,6 @@ public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
         return true;
     }
 
-    // Disposal
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)

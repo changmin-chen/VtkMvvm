@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 
@@ -24,7 +23,7 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         _colorMap = pipeline.ColorMap;
         pipeline.Connect();
 
-        SetSliceIndex(0); // necessary. this not only affects which slice it initially displayed, but also the slicing dimension
+        SetSliceIndex(0); // necessary. this not only affects which slice it initially displayed, but also the slicing orientation
     }
 
     public SliceOrientation Orientation { get; }
@@ -78,22 +77,6 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
             if (Math.Abs(Actor.GetOpacity() - value) < 1e-3) return;
             Actor.SetOpacity(value);
             Actor.Modified();
-
-            OnPropertyChanged();
-            OnModified();
-        }
-    }
-
-    public bool Visible
-    {
-        get => Actor.GetVisibility() == 1;
-        set
-        {
-            bool current = Actor.GetVisibility() == 1;
-            if (current == value) return;
-            Actor.SetVisibility(value ? 1 : 0);
-            Actor.Modified();
-
             OnPropertyChanged();
             OnModified();
         }
@@ -101,8 +84,6 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 
     private void SetSliceIndex(int sliceIndex)
     {
-        Debug.WriteLine($"{Orientation}-SliceIndex: {sliceIndex}");
-
         int[] dims = ImageModel.Dimensions;
         switch (Orientation)
         {
