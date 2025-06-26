@@ -41,6 +41,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         _reslice.SetInterpolationModeToLinear();
         _reslice.AutoCropOutputOn(); // trims black borders
         _reslice.SetOutputDimensionality(2); // 2-D slice
+        _reslice.SetBackgroundLevel(image.GetScalarRange()[0]);  // fill the background with min scalar value
 
         // Connect pipeline: Reslice → ColorMap → Actor. The pipe.Connect() does not fit to this case
         vtkImageActor actor = pipe.Actor;
