@@ -9,9 +9,11 @@ namespace VtkMvvm.ViewModels;
 /// </summary>
 public class CrosshairViewModel : VtkElementViewModel
 {
-    private readonly double[] _bounds;
+    private readonly double[] _bounds; // based on background image volume to decides line boundary
 
     private readonly vtkLineSource _hLine = vtkLineSource.New();
+    private readonly vtkLineSource _vLine = vtkLineSource.New();
+    private readonly vtkAppendPolyData _append = vtkAppendPolyData.New();
     private readonly vtkPolyDataMapper _mapper = vtkPolyDataMapper.New();
     private readonly vtkActor _actor = vtkActor.New();
 
@@ -22,9 +24,12 @@ public class CrosshairViewModel : VtkElementViewModel
         Orientation = orientation;
         _bounds = imageBounds;
 
-        _mapper.SetInputConnection(_hLine.GetOutputPort());
-        _actor.SetMapper(_mapper);
+        // build pipeline: H-line + V-line → append → mapper → actor
+        _append.AddInputConnection(_hLine.GetOutputPort());
+        _append.AddInputConnection(_vLine.GetOutputPort());
 
+        _mapper.SetInputConnection(_append.GetOutputPort());
+        _actor.SetMapper(_mapper);
         _actor.GetProperty().SetColor(1, 0, 0);
         _actor.GetProperty().SetLineWidth(1.5F);
     }
@@ -58,18 +63,25 @@ public class CrosshairViewModel : VtkElementViewModel
             case SliceOrientation.Axial: //  Z is fixed
                 _hLine.SetPoint1(_bounds[0], wy, wz);
                 _hLine.SetPoint2(_bounds[1], wy, wz);
+                _vLine.SetPoint1(wx, _bounds[2], wz);
+                _vLine.SetPoint2(wx, _bounds[3], wz);
                 break;
             case SliceOrientation.Coronal: //  Y is fixed
                 _hLine.SetPoint1(_bounds[0], wy, _bounds[4]);
                 _hLine.SetPoint2(_bounds[1], wy, _bounds[4]);
+                _vLine.SetPoint1(wx, wy, _bounds[4]);
+                _vLine.SetPoint2(wx, wy, _bounds[5]);
                 break;
 
             case SliceOrientation.Sagittal: //  X is fixed
                 _hLine.SetPoint1(wx, _bounds[2], _bounds[4]);
                 _hLine.SetPoint2(wx, _bounds[3], _bounds[4]);
+                _vLine.SetPoint1(wx, wy, _bounds[4]);
+                _vLine.SetPoint2(wx, wy, _bounds[5]);
                 break;
         }
 
         _hLine.Modified();
+        _vLine.Modified();
     }
 }
