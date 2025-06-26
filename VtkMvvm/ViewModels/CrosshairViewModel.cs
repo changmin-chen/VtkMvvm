@@ -17,7 +17,7 @@ public class CrosshairViewModel : VtkElementViewModel
     private readonly vtkPolyDataMapper _mapper = vtkPolyDataMapper.New();
     private readonly vtkActor _actor = vtkActor.New();
 
-    private Double3 _crossingPosition;
+    private Double3 _focalPoint;
 
     public CrosshairViewModel(SliceOrientation orientation, double[] imageBounds)
     {
@@ -40,14 +40,15 @@ public class CrosshairViewModel : VtkElementViewModel
 
     #region Bindable Properties
 
-    public Double3 CrossingPosition
+    public Double3 FocalPoint
     {
-        get => _crossingPosition;
+        get => _focalPoint;
         set
         {
-            if (SetField(ref _crossingPosition, value))
+            if (SetField(ref _focalPoint, value))
             {
                 UpdateCrosshair(value);
+                _append.Modified();
                 OnModified();
             }
         }
@@ -67,15 +68,15 @@ public class CrosshairViewModel : VtkElementViewModel
                 _vLine.SetPoint2(wx, _bounds[3], wz);
                 break;
             case SliceOrientation.Coronal: //  Y is fixed
-                _hLine.SetPoint1(_bounds[0], wy, _bounds[4]);
-                _hLine.SetPoint2(_bounds[1], wy, _bounds[4]);
+                _hLine.SetPoint1(_bounds[0], wy, wz);
+                _hLine.SetPoint2(_bounds[1], wy, wz);
                 _vLine.SetPoint1(wx, wy, _bounds[4]);
                 _vLine.SetPoint2(wx, wy, _bounds[5]);
                 break;
 
             case SliceOrientation.Sagittal: //  X is fixed
-                _hLine.SetPoint1(wx, _bounds[2], _bounds[4]);
-                _hLine.SetPoint2(wx, _bounds[3], _bounds[4]);
+                _hLine.SetPoint1(wx, _bounds[2], wz);
+                _hLine.SetPoint2(wx, _bounds[3], wz);
                 _vLine.SetPoint1(wx, wy, _bounds[4]);
                 _vLine.SetPoint2(wx, wy, _bounds[5]);
                 break;

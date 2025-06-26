@@ -166,9 +166,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             CoronalSliceIndex = voxel.j;
             SagittalSliceIndex = voxel.i;
 
-            _axialCrosshairVm.CrossingPosition = clickWorldPos;
-            _coronalCrosshairVm.CrossingPosition = clickWorldPos;
-            _sagittalCrosshairVm.CrossingPosition = clickWorldPos;
+            _axialCrosshairVm.FocalPoint = clickWorldPos;
+            _coronalCrosshairVm.FocalPoint = clickWorldPos;
+            _sagittalCrosshairVm.FocalPoint = clickWorldPos;
         }
     }
 

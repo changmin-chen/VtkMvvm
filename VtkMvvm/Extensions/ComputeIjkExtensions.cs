@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using System.Runtime.CompilerServices;
 using Kitware.VTK;
 using VtkMvvm.Models;
 
@@ -14,6 +14,7 @@ public static class ComputeIjkExtensions
     /// <param name="ijk">Integer voxel indices (only valid when the method returns <c>true</c>).</param>
     /// <param name="pcoords">Barycentric coordinates inside that voxel.</param>
     /// <returns><c>true</c> if <paramref name="world" /> lies inside the volume.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe bool TryComputeStructuredCoordinates(
         this vtkImageData image,
         in Double3 world,
