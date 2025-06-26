@@ -30,18 +30,18 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         ColoredImagePipeline pipe)
     {
         _colorMap = pipe.ColorMap;
-
+        
         vtkImageData image = pipe.Image;
-        ImageModel = ImageModel.Create(image);
-        _imgCentre = ImageModel.Center;
+        ImageModel = ImageModel.Create(pipe.Image);
+        _imgCentre = image.GetCenter();
         _imgBounds = image.GetBounds();
 
         // Configure reslice
-        _reslice.SetInput(pipe.Image);
+        _reslice.SetInput(image);
         _reslice.SetInterpolationModeToLinear();
         _reslice.AutoCropOutputOn(); // trims black borders
         _reslice.SetOutputDimensionality(2); // 2-D slice
-        _reslice.SetBackgroundLevel(image.GetScalarRange()[0]);  // fill the background with min scalar value
+        _reslice.SetBackgroundLevel(image.GetScalarRange()[0]); // fill the background with min scalar value
 
         // Connect pipeline: Reslice → ColorMap → Actor. The pipe.Connect() does not fit to this case
         vtkImageActor actor = pipe.Actor;
@@ -60,7 +60,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     // ── Public surface identical to orthogonal VM ──
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
-    
+
 
     #region Bindable Properties
 
@@ -102,6 +102,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     /// </summary>
     private void SetOrientation(Quaternion q)
     {
+        // 1) apply the quaternion to the reslicing grid
         using var tf = vtkTransform.New();
         tf.Identity();
         tf.RotateWXYZ(q);
@@ -142,7 +143,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         OnPropertyChanged(nameof(MinSliceIndex));
         OnPropertyChanged(nameof(MaxSliceIndex));
 
-        // keep current sliceIndex within the new range
+        // keep the current slice index within the new range
         SliceIndex = Math.Clamp(_sliceIndex, _minSliceIdx, _maxSliceIdx);
     }
 
@@ -150,7 +151,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     /// We define 'sliceOrigin(i) = centre + n · (i · Δ)'
     /// centre: the dataset centre (GetCenter) we chose as index 0
     /// n: unit normal of the reslice plane (third column of the axes matrix)
-    /// Δ: physical step per index ( ≈ “nativeSpacing ·
+    /// Δ: physical step per index
     /// </summary>
     private void SetSliceIndex(int idx)
     {
