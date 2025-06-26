@@ -14,36 +14,41 @@
         <local:VtkObliqueSliceTestWindowViewModel />
     </d:Window.DataContext>
 
-    <Window.Resources>
-        <Style TargetType="TextBox">
-            <Setter Property="Width" Value="80" />
-        </Style>
-        <Style TargetType="TextBlock">
-            <Setter Property="Width" Value="80" />
-        </Style>
-    </Window.Resources>
 
     <Grid Margin="16">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <Grid Margin="12">
             <StackPanel>
-                <TextBlock Text="Setting oblique slicing angle" Width="200" />
+                <StackPanel.Resources>
+                    <Style TargetType="TextBox">
+                        <Setter Property="Width" Value="80" />
+                    </Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Width" Value="80" />
+                    </Style>
+                </StackPanel.Resources>
+
+                <TextBlock Width="240"
+                           HorizontalAlignment="Left"
+                           Text="Setting oblique slicing angle (degrees)"
+                           FontWeight="Bold"
+                           FontSize="12" />
 
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Yaw: " />
-                    <TextBox Text="{Binding Yaw}" />
+                    <TextBox Text="{Binding YawDegrees}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Pitch: " />
-                    <TextBox Text="{Binding Pitch}" />
+                    <TextBox Text="{Binding PitchDegrees}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Roll: " />
-                    <TextBox Text="{Binding Roll}" />
+                    <TextBox Text="{Binding RollDegrees}" />
                 </StackPanel>
                 <Button Content="Update Angle" Command="{Binding UpdateSlicingAngleCommand}" />
             </StackPanel>

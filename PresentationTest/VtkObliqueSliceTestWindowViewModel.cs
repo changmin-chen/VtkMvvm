@@ -15,6 +15,9 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
     private int _obliqueSliceIndex;
     public ImageObliqueSliceViewModel[] ImageVms { get; }
+    [Reactive] public float YawDegrees { get; set; } = -20;
+    [Reactive] public float PitchDegrees { get; set; } = -20;
+    [Reactive] public float RollDegrees { get; set; } = 45;
 
     public VtkObliqueSliceTestWindowViewModel()
     {
@@ -28,17 +31,17 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
         ColoredImagePipeline pipe = bgBuilder.Build();
 
-        Quaternion slicingAngle = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, Roll);
+        Quaternion slicingAngle = Quaternion.CreateFromYawPitchRoll(
+            DegreesToRadius(YawDegrees),
+            DegreesToRadius(PitchDegrees),
+            DegreesToRadius(RollDegrees));
         ImageObliqueSliceViewModel axialVm = new(slicingAngle, pipe);
         ImageVms = [axialVm];
-        
+
         UpdateSlicingAngleCommand = new DelegateCommand(UpdateSlicingAngle);
     }
 
-    [Reactive] public float Yaw { get; set; } = -20;
-    [Reactive] public float Pitch { get; set; } = -20;
-    [Reactive] public float Roll { get; set; } = 45;
-    
+
     public DelegateCommand UpdateSlicingAngleCommand { get; }
 
     public int ObliqueSliceIndex
@@ -53,11 +56,17 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
     private void UpdateSlicingAngle()
     {
-        var slicingAngle = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, Roll);
+        var slicingAngle = Quaternion.CreateFromYawPitchRoll(
+            DegreesToRadius(YawDegrees),
+            DegreesToRadius(PitchDegrees),
+            DegreesToRadius(RollDegrees));
         ImageVms[0].SliceOrientation = slicingAngle;
     }
+
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)
     {
         foreach (ImageObliqueSliceViewModel vm in vms) vm.SliceIndex = sliceIndex;
     }
+
+    private static float DegreesToRadius(float degrees) => (float)(degrees * Math.PI / 180);
 }
