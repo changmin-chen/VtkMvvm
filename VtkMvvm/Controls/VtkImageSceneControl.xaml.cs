@@ -8,6 +8,9 @@ using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;
 
+/// <summary>
+///     Displaying orthogonal slices of an image volume as the background image, while putting overlay objects onto it.
+/// </summary>
 public partial class VtkImageSceneControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
@@ -39,6 +42,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         Loaded += OnLoadedOnce;
     }
 
+
     public IList<ImageOrthogonalSliceViewModel>? SceneObjects
     {
         get => (IList<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
@@ -57,7 +61,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     /// <summary>
     ///     Indicates the orientation of the slices so that the camera can be set up correctly.
-    ///     This orientation is based on the first slice in the SceneObjects collection.
+    ///     This orientation is based on the first slice in the <see cref="SceneObjects"/> collection.
     /// </summary>
     public SliceOrientation Orientation { get; private set; }
 
@@ -66,17 +70,13 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         if (SceneObjects is { } objects)
         {
             foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
-            {
                 sceneObj.Modified -= OnSceneObjectsModified;
-            }
         }
 
         if (OverlayObjects is { } overlays)
         {
             foreach (VtkElementViewModel overlayObj in overlays)
-            {
                 overlayObj.Modified -= OnSceneObjectsModified;
-            }
         }
 
         WFHost.Child = null;
@@ -115,6 +115,18 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     {
         renderer.RemoveActor(viewModel.Actor);
         viewModel.Modified -= OnSceneObjectsModified;
+    }
+
+    /// <summary>
+    ///     Render the scene when the actors are modified.
+    ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
+    /// </summary>
+    private void OnSceneObjectsModified(object? sender, EventArgs args)
+    {
+        if (!_isLoaded) return;
+
+        MainRenderer.ResetCameraClippingRange();
+        RenderWindowControl.RenderWindow.Render();
     }
 
 
@@ -163,17 +175,6 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         }
     }
 
-    /// <summary>
-    ///     Render the scene when the actors are modified.
-    ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
-    /// </summary>
-    private void OnSceneObjectsModified(object? sender, EventArgs args)
-    {
-        if (!_isLoaded) return;
-
-        MainRenderer.ResetCameraClippingRange();
-        RenderWindowControl.RenderWindow.Render();
-    }
 
     /// <summary>
     ///     Fits a single vtkImageActor / vtkImageSlice so it fills the viewport
