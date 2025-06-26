@@ -23,6 +23,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     private int _minSliceIdx; // slider bound (-)
     private int _maxSliceIdx; // slider bound (+)
     private int _sliceIndex;
+    private Quaternion _orientation;
 
     public ImageObliqueSliceViewModel(
         Quaternion orientation,
@@ -76,14 +77,29 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         }
     }
 
+    public Quaternion Orientation
+    {
+        get => _orientation;
+        set
+        {
+            if (SetField(ref _orientation, value))
+            {
+                SetOrientation(value);
+                OnModified();
+            }
+        }
+    }
+
     public int MinSliceIndex => _minSliceIdx;
     public int MaxSliceIndex => _maxSliceIdx;
 
     #endregion
 
 
-    // ── Orientation & scrolling helpers ──
-    public void SetOrientation(Quaternion q)
+    /// <summary>
+    /// Update the orientation of the reslicing quaternion and recompute the allowed slice index boundary.
+    /// </summary>
+    private void SetOrientation(Quaternion q)
     {
         using var tf = vtkTransform.New();
         tf.Identity();
@@ -101,7 +117,6 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         _axes.SetElement(3, 1, 0);
         _axes.SetElement(3, 2, 0);
         _axes.SetElement(3, 3, 1);
-
         _reslice.SetResliceAxes(_axes);
         _reslice.Modified();
 

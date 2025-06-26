@@ -2,6 +2,7 @@
 using Kitware.VTK;
 using PresentationTest.TestData;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.ViewModels;
 
@@ -27,10 +28,18 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
         ColoredImagePipeline pipe = bgBuilder.Build();
 
-        Quaternion viewAngle = Quaternion.CreateFromYawPitchRoll(-20, -20, 45);
-        ImageObliqueSliceViewModel axialVm = new(viewAngle, pipe);
+        Quaternion slicingAngle = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, Roll);
+        ImageObliqueSliceViewModel axialVm = new(slicingAngle, pipe);
         ImageVms = [axialVm];
+        
+        UpdateSlicingAngleCommand = new DelegateCommand(UpdateSlicingAngle);
     }
+
+    [Reactive] public float Yaw { get; set; } = -20;
+    [Reactive] public float Pitch { get; set; } = -20;
+    [Reactive] public float Roll { get; set; } = 45;
+    
+    public DelegateCommand UpdateSlicingAngleCommand { get; }
 
     public int ObliqueSliceIndex
     {
@@ -42,6 +51,11 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         }
     }
 
+    private void UpdateSlicingAngle()
+    {
+        var slicingAngle = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, Roll);
+        ImageVms[0].Orientation = slicingAngle;
+    }
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)
     {
         foreach (ImageObliqueSliceViewModel vm in vms) vm.SliceIndex = sliceIndex;

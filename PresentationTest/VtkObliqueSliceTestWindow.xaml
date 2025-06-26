@@ -5,56 +5,96 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:PresentationTest"
         xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
-        mc:Ignorable="d"
-        Title="VtkObliqueSliceTestWindow" Height="800" Width="800">
+        Title="VtkObliqueSliceTestWindow"
+        Width="1200"
+        Height="1000"
+        mc:Ignorable="d">
+
     <d:Window.DataContext>
         <local:VtkObliqueSliceTestWindowViewModel />
     </d:Window.DataContext>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
-                                              Grid.Row="0"
-                                              SceneObjects="{Binding ImageVms}" />
-        <StackPanel Grid.Row="1"
-                    Margin="5"
-                    VerticalAlignment="Top"
-                    Orientation="Horizontal"
-                    Background="#80000000">
-            <TextBlock Margin="0,5,5,0"
-                       Text="Slice:"
-                       Foreground="White" />
-            <Slider Width="200"
-                    Minimum="{Binding ImageVms[0].MinSliceIndex}"
-                    Maximum="{Binding  ImageVms[0].MaxSliceIndex}"
-                    IsSnapToTickEnabled="True"
-                    Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Width" Value="80" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Width" Value="80" />
+        </Style>
+    </Window.Resources>
 
-            <TextBlock Margin="0,5,5,0"
-                       Text="Slice Index:"
-                       Foreground="White" />
-            <TextBlock Margin="0,5,5,0"
-                       Text="{Binding ObliqueSliceIndex}"
-                       Foreground="White" />
-            
-            <StackPanel Orientation="Horizontal" Margin="8 0">
-                <TextBlock Margin="0,5,5,0"
-                           Text="Min:"
-                           Foreground="White" />
-                <TextBlock Margin="0,5,5,0"
-                           Text="{Binding ImageVms[0].MinSliceIndex}"
-                           Foreground="White" />
-                <TextBlock Margin="0,5,5,0"
-                           Text="Max:"
-                           Foreground="White" />
-                <TextBlock Margin="0,5,5,0"
-                           Text="{Binding ImageVms[0].MaxSliceIndex}"
-                           Foreground="White" />
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Margin="12">
+            <StackPanel>
+                <TextBlock Text="Setting oblique slicing angle" Width="200" />
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Yaw: " />
+                    <TextBox Text="{Binding Yaw}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Pitch: " />
+                    <TextBox Text="{Binding Pitch}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Roll: " />
+                    <TextBox Text="{Binding Roll}" />
+                </StackPanel>
+                <Button Content="Update Angle" Command="{Binding UpdateSlicingAngleCommand}" />
             </StackPanel>
-      
-        </StackPanel>
+        </Grid>
+
+        <Grid Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
+                                                  Grid.Row="0"
+                                                  SceneObjects="{Binding ImageVms}" />
+            <StackPanel Grid.Row="1"
+                        Margin="5"
+                        VerticalAlignment="Top"
+                        Orientation="Horizontal"
+                        Background="#80000000">
+                <TextBlock Margin="0,5,5,0"
+                           Text="Slice:"
+                           Foreground="White" />
+                <Slider Width="200"
+                        Minimum="{Binding ImageVms[0].MinSliceIndex}"
+                        Maximum="{Binding ImageVms[0].MaxSliceIndex}"
+                        IsSnapToTickEnabled="True"
+                        Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
+
+                <TextBlock Margin="0,5,5,0"
+                           Text="Slice Index:"
+                           Foreground="White" />
+                <TextBlock Margin="0,5,5,0"
+                           Text="{Binding ObliqueSliceIndex}"
+                           Foreground="White" />
+
+                <StackPanel Margin="8,0" Orientation="Horizontal">
+                    <TextBlock Margin="0,5,5,0"
+                               Text="Min:"
+                               Foreground="White" />
+                    <TextBlock Margin="0,5,5,0"
+                               Text="{Binding ImageVms[0].MinSliceIndex}"
+                               Foreground="White" />
+                    <TextBlock Margin="0,5,5,0"
+                               Text="Max:"
+                               Foreground="White" />
+                    <TextBlock Margin="0,5,5,0"
+                               Text="{Binding ImageVms[0].MaxSliceIndex}"
+                               Foreground="White" />
+                </StackPanel>
+
+            </StackPanel>
+        </Grid>
     </Grid>
+
 </Window>
