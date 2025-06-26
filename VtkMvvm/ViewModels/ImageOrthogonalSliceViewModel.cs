@@ -23,7 +23,9 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         _colorMap = pipeline.ColorMap;
         pipeline.Connect();
 
-        SetSliceIndex(0); // necessary. this not only affects which slice it initially displayed, but also the slicing orientation
+        // SetSliceIndex here is necessary.
+        // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
+        SetSliceIndex(0); 
     }
 
     public SliceOrientation Orientation { get; }

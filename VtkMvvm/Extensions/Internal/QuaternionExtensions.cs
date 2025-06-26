@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace VtkMvvm.Extensions;
+namespace VtkMvvm.Extensions.Internal;
 
 internal static class QuaternionExtensions
 {

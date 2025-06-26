@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using Kitware.VTK;
-using VtkMvvm.Extensions;
+using VtkMvvm.Extensions.Internal;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 
@@ -19,6 +19,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     /// </summary>
     private readonly double _nativeSpacing;
 
+    // Backing fields
     private int _sliceIndex;
 
     public ImageObliqueSliceViewModel(
@@ -60,18 +61,23 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     public int SliceIndex
     {
         get => _sliceIndex;
-        set => SetSliceIndex(value);
+        set
+        {
+            if (SetField(ref _sliceIndex, value))
+            {
+                SetSliceIndex(value);
+                OnModified();
+            }
+        }
     }
 
 
     // ── Orientation & scrolling helpers ──
     public void SetOrientation(Quaternion q)
     {
-        q.ToAxisAngle(out Vector3 axis, out float angle);
-
         using vtkTransform? tf = vtkTransform.New();
         tf.Identity();
-        tf.RotateWXYZ(angle, axis.X, axis.Y, axis.Z);
+        tf.RotateWXYZ(q);
         vtkMatrix4x4 rot = tf.GetMatrix();
         for (int r = 0; r < 3; ++r)
         {
@@ -92,9 +98,6 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
 
     private void SetSliceIndex(int idx)
     {
-        if (idx == _sliceIndex) return;
-        _sliceIndex = idx;
-
         double nx = _axes.GetElement(0, 2);
         double ny = _axes.GetElement(1, 2);
         double nz = _axes.GetElement(2, 2);
@@ -104,8 +107,8 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         _axes.SetElement(2, 3, _imageCenter[2] + nz * idx * _nativeSpacing);
 
         _reslice.SetResliceAxes(_axes);
-        _reslice.Modified(); // forces recompute next Render()
+        _reslice.Modified(); 
+        
         Actor.Modified();
-        OnModified();
     }
 }
