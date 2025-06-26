@@ -18,11 +18,11 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     ///     distance in mm between two adjacent native slices along the chosen normal. For isotropic volumes you can just pass
     ///     volume.GetSpacing()[0].
     /// </summary>
-    private double _step; // Δ  (mm per SliceIndex)
+    private double _step; // Δ (mm per SliceIndex)
 
     private int _minSliceIdx; // slider bound (-)
     private int _maxSliceIdx; // slider bound (+)
-    private int _sliceIndex;
+    private int _sliceIndex = int.MinValue;
     private Quaternion _sliceOrientation;
 
     public ImageObliqueSliceViewModel(
@@ -53,8 +53,8 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         // orientation also sets step size & slider limits
         SetOrientation(orientation);
 
-        // initialise at centre slice. DO NOT set via SliceIndex property.
-        ApplySliceTranslation(0);
+        // initialise at centre slice.  
+        SetSliceIndex(0);
     }
 
     // ── Public surface identical to orthogonal VM ──
@@ -72,7 +72,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
             value = Math.Clamp(value, _minSliceIdx, _maxSliceIdx);
             if (SetField(ref _sliceIndex, value))
             {
-                ApplySliceTranslation(value);
+                SetSliceIndex(value);
                 OnModified();
             }
         }
@@ -152,7 +152,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     /// n: unit normal of the reslice plane (third column of the axes matrix)
     /// Δ: physical step per index ( ≈ “nativeSpacing ·
     /// </summary>
-    private void ApplySliceTranslation(int idx)
+    private void SetSliceIndex(int idx)
     {
         double nx = _axes.GetElement(0, 2);
         double ny = _axes.GetElement(1, 2);

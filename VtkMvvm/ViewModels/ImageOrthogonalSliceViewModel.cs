@@ -10,7 +10,7 @@ namespace VtkMvvm.ViewModels;
 public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
     private readonly vtkImageMapToColors _colorMap;
-    private int _sliceIndex;
+    private int _sliceIndex = int.MinValue;
     private double _windowLevel;
     private double _windowWidth;
 
