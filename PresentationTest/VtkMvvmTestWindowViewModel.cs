@@ -17,6 +17,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     // Go with image data
     private readonly vtkImageData _background;
 
+    private readonly int[] _backgroundDims;
+
     // Brush
     private readonly vtkImageData _labelMap;
     private readonly vtkLookupTable _labelMapLut = LabelMapLookupTable.NewTable();
@@ -33,13 +35,13 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public VtkMvvmTestWindowViewModel()
     {
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
+        _backgroundDims = _background.GetDimensions();
 
         ColoredImagePipelineBuilder backgroundPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
             .WithLinearInterpolation(true)
             .WithOpacity(1.0);
         _labelMap = CreateLabelMap(_background);
-
 
         ColoredImagePipelineBuilder labelMapPipelineBuilder = ColoredImagePipelineBuilder
             .WithImage(_labelMap)
@@ -59,9 +61,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         ImageOrthogonalSliceViewModel labelSagittalVm = new(SliceOrientation.Sagittal, labelMapPipelineBuilder.Build());
         SagittalVms = [sagittalVm, labelSagittalVm];
 
+        // Overlay: Crosshair to indicate the selected position
+        CrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, _background.GetBounds());
+
         // Add brushes that render on top of the image
         BrushVm.Diameter = 3.0;
-        BrushSharedVms = [BrushVm];
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
@@ -81,19 +85,22 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     }
 
 
-    // Axial, Coronal, Sagittal slice view models
+    // Background ViewModels: Axial, Coronal, Sagittal slice view models
     public ImageOrthogonalSliceViewModel[] AxialVms { get; }
     public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
     public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
 
+    // Overlay ViewModels
     public BrushViewModel BrushVm { get; } = new();
-    public VtkElementViewModel[] BrushSharedVms { get; }
+    public CrosshairViewModel CrosshairVm { get; }
+    public VtkElementViewModel[] BrushSharedVms => [BrushVm];
 
     public int AxialSliceIndex
     {
         get => _axialSliceIndex;
         set
         {
+            if (value < 0 || value >= _backgroundDims[2]) return;
             this.RaiseAndSetIfChanged(ref _axialSliceIndex, value);
             SetSliceIndex(AxialVms, value);
         }
@@ -104,6 +111,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         get => _coronalSliceIndex;
         set
         {
+            if (value < 0 || value >= _backgroundDims[1]) return;
             this.RaiseAndSetIfChanged(ref _coronalSliceIndex, value);
             SetSliceIndex(CoronalVms, value);
         }
@@ -114,6 +122,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         get => _sagittalSliceIndex;
         set
         {
+            if (value < 0 || value >= _backgroundDims[0]) return;
             this.RaiseAndSetIfChanged(ref _sagittalSliceIndex, value);
             SetSliceIndex(SagittalVms, value);
         }

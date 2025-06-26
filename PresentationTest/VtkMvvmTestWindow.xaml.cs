@@ -5,6 +5,7 @@ using Kitware.VTK;
 using ReactiveUI;
 using VtkMvvm.Controls;
 using VtkMvvm.Features.InteractorBehavior;
+using VtkMvvm.Models;
 
 namespace PresentationTest;
 
@@ -42,27 +43,54 @@ public partial class VtkMvvmTestWindow : Window
             vtkRenderWindowInteractor? iren = control.RenderWindowControl.RenderWindow.GetInteractor();
 
             MouseInteractorBehavior leftBehavior = new(TriggerMouseButton.Left);
-
+            ScrollInteractorBehavior scrollBehavior = new() { OverrideBaseStyle = true };
             leftBehavior.AttachTo(style);
-
+            scrollBehavior.AttachTo(style);
             iren.SetInteractorStyle(style);
             iren.Initialize();
 
-            // Left mouse: paint and render
+            // Left mouse paint and render
             leftBehavior.Moves
                 .Subscribe(pos => { _vm.OnControlGetBrushPosition(control, pos.x, pos.y); });
 
+            // should move + pressing
             IObservable<(int x, int y)> leftMouseDrag = leftBehavior.Moves
-                .Where(_ => leftBehavior.IsPressing); // should move + pressing
+                .Where(_ => leftBehavior.IsPressing);
 
             leftMouseDrag
-                .Subscribe(pos => { _vm.OnControlGetMousePaintPosition(control, pos.x, pos.y); })
+                .Subscribe(pos =>
+                {
+                    if (iren.GetAltKey() != 0)
+                        _vm.OnControlGetMouseDisplayPosition(control, pos.x, pos.y);
+                    else
+                        _vm.OnControlGetMousePaintPosition(control, pos.x, pos.y);
+                })
                 .DisposeWith(_disposables);
 
             leftMouseDrag
                 .Sample(TimeSpan.FromMilliseconds(33), RxApp.MainThreadScheduler)
                 .Subscribe(_ => RenderControls())
                 .DisposeWith(_disposables); // render every 33ms if paint
+
+            // Scroll: change slice index based on view
+            scrollBehavior.Scrolls
+                .Subscribe(forward =>
+                {
+                    int increment = forward ? 1 : -1;
+                    switch (control.Orientation)
+                    {
+                        case SliceOrientation.Axial:
+                            _vm.AxialSliceIndex += increment;
+                            break;
+                        case SliceOrientation.Coronal:
+                            _vm.CoronalSliceIndex += increment;
+                            break;
+                        case SliceOrientation.Sagittal:
+                            _vm.SagittalSliceIndex += increment;
+                            break;
+                    }
+                })
+                .DisposeWith(_disposables);
 
             _disposables.Add(leftBehavior);
         }
