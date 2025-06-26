@@ -54,7 +54,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
     private void UpdateSlicingAngle()
     {
         var slicingAngle = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, Roll);
-        ImageVms[0].Orientation = slicingAngle;
+        ImageVms[0].SliceOrientation = slicingAngle;
     }
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)
     {

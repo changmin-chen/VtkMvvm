@@ -23,7 +23,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     private int _minSliceIdx; // slider bound (-)
     private int _maxSliceIdx; // slider bound (+)
     private int _sliceIndex;
-    private Quaternion _orientation;
+    private Quaternion _sliceOrientation;
 
     public ImageObliqueSliceViewModel(
         Quaternion orientation,
@@ -77,12 +77,12 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         }
     }
 
-    public Quaternion Orientation
+    public Quaternion SliceOrientation
     {
-        get => _orientation;
+        get => _sliceOrientation;
         set
         {
-            if (SetField(ref _orientation, value))
+            if (SetField(ref _sliceOrientation, value))
             {
                 SetOrientation(value);
                 OnModified();
