@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 
@@ -101,8 +100,6 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 
     private void SetSliceIndex(int sliceIndex)
     {
-        Debug.WriteLine($"{Orientation}-SliceIndex: {sliceIndex}");
-
         int[] dims = ImageModel.Dimensions;
         switch (Orientation)
         {
