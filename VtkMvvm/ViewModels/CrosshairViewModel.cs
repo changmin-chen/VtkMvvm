@@ -15,7 +15,6 @@ public class CrosshairViewModel : VtkElementViewModel
     private readonly vtkLineSource _vLine = vtkLineSource.New();
     private readonly vtkAppendPolyData _append = vtkAppendPolyData.New();
     private readonly vtkPolyDataMapper _mapper = vtkPolyDataMapper.New();
-    private readonly vtkActor _actor = vtkActor.New();
 
     private Double3 _focalPoint;
 
@@ -27,16 +26,17 @@ public class CrosshairViewModel : VtkElementViewModel
         // build pipeline: H-line + V-line → append → mapper → actor
         _append.AddInputConnection(_hLine.GetOutputPort());
         _append.AddInputConnection(_vLine.GetOutputPort());
-
         _mapper.SetInputConnection(_append.GetOutputPort());
-        _actor.SetMapper(_mapper);
-        _actor.GetProperty().SetColor(1, 0, 0);
-        _actor.GetProperty().SetLineWidth(1.5F);
+
+        vtkActor? actor = vtkActor.New();
+        actor.SetMapper(_mapper);
+        actor.GetProperty().SetColor(1, 0, 0);
+        actor.GetProperty().SetLineWidth(1.5F);
+        Actor = actor;
     }
 
     public SliceOrientation Orientation { get; }
-    public override vtkProp Actor => _actor;
-
+    public override vtkActor Actor { get; }
 
     #region Bindable Properties
 
@@ -47,7 +47,7 @@ public class CrosshairViewModel : VtkElementViewModel
         {
             if (SetField(ref _focalPoint, value))
             {
-                UpdateCrosshair(value);
+                SetFocalPoint(value);
                 _append.Modified();
                 OnModified();
             }
@@ -56,7 +56,7 @@ public class CrosshairViewModel : VtkElementViewModel
 
     #endregion
 
-    private void UpdateCrosshair(Double3 worldPosition)
+    private void SetFocalPoint(Double3 worldPosition)
     {
         (double wx, double wy, double wz) = worldPosition;
         switch (Orientation)

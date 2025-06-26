@@ -145,21 +145,5 @@ public class BrushViewModel : VtkElementViewModel
         }
     }
 
-
-    public bool Visible
-    {
-        get => Actor.GetVisibility() == 1;
-        set
-        {
-            bool current = Actor.GetVisibility() == 1;
-            if (current == value) return;
-            Actor.SetVisibility(value ? 1 : 0);
-            Actor.Modified();
-
-            OnPropertyChanged();
-            OnModified();
-        }
-    }
-
     #endregion
 }
