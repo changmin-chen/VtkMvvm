@@ -8,20 +8,20 @@ using UserControl = System.Windows.Controls.UserControl;
 namespace VtkMvvm.Controls;
 
 /// <summary>
-/// For binding to the Image slice that may not be orthogonal
+/// For binding to the image slice that may not be orthogonal.
 /// </summary>
-public partial class VtkImageControl : UserControl, IDisposable
+public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IList<VtkElementViewModel>),
-        typeof(VtkImageControl),
+        typeof(VtkObliqueImageSceneControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
         nameof(OverlayObjects),
         typeof(IList<VtkElementViewModel>),
-        typeof(VtkImageControl),
+        typeof(VtkObliqueImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
     /// <summary>
@@ -29,7 +29,7 @@ public partial class VtkImageControl : UserControl, IDisposable
     /// </summary>
     private bool _isLoaded;
 
-    public VtkImageControl()
+    public VtkObliqueImageSceneControl()
     {
         InitializeComponent();
         if (DesignerProperties.GetIsInDesignMode(this)) return;
@@ -127,7 +127,7 @@ public partial class VtkImageControl : UserControl, IDisposable
 
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkImageControl control = (VtkImageControl)d;
+        VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
         control.UpdateSlices((IList<VtkElementViewModel>)e.OldValue, (IList<VtkElementViewModel>)e.NewValue);
     }
 
@@ -154,7 +154,7 @@ public partial class VtkImageControl : UserControl, IDisposable
 
         // ----- 3. Camera magic (use the first slice as reference) -----
         var first = newSceneObjects[0];
-        FitSlice(first.Actor);
+        FitAxialSlice(first.Actor);
 
         // ----- 4. Render the scene to show the new stuff-----
         if (_isLoaded)
@@ -169,9 +169,9 @@ public partial class VtkImageControl : UserControl, IDisposable
 
     /// <summary>
     /// Unlike <see cref="VtkImageSceneControl"/> that decide which two axes to measure.
-    /// We assume axial slice orientation: XY live, Z flat.
+    /// We assume axial slice orientation (XY live, Z flat), which can fit to the vtkImageReslice output.
     /// </summary>
-    private void FitSlice(vtkProp slice)
+    private void FitAxialSlice(vtkProp slice)
     {
         ArgumentNullException.ThrowIfNull(slice);
 
@@ -202,7 +202,7 @@ public partial class VtkImageControl : UserControl, IDisposable
 
     private static void OnOverlayObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkImageControl control = (VtkImageControl)d;
+        VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
         control.UpdateOverlays((IList<VtkElementViewModel>)e.OldValue, (IList<VtkElementViewModel>)e.NewValue);
     }
 

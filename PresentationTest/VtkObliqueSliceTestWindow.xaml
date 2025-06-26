@@ -16,7 +16,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <controls:VtkImageControl x:Name="ObliqueControl"
+        <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
                                   Grid.Row="0"
                                   SceneObjects="{Binding ImageVms}" />
         <StackPanel Grid.Row="1"
