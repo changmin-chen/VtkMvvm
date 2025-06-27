@@ -44,6 +44,21 @@
         </None>
     </ItemGroup>
 
+    
+
+    <ItemGroup>
+      <Page Update="Views\VtkMvvmTestWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+      <Page Update="Views\VtkObliqueSliceTestWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+    </ItemGroup>
+
 
     <!-- Copy Native DLLs based on Platform -->
     <Target Name="CopyNativeDLLs" AfterTargets="Build">

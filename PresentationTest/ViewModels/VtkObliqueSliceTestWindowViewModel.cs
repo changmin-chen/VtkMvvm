@@ -10,17 +10,17 @@ using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
 
-namespace PresentationTest;
+namespace PresentationTest.ViewModels;
 
 public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 {
     private readonly vtkImageData _background;
     private readonly vtkCellPicker _picker = new();
-    private readonly CrosshairViewModel _crosshair;
 
     private int _obliqueSliceIndex;
     public ImageObliqueSliceViewModel[] ObliqueImageVms { get; private set; }
-    public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [_crosshair];
+    public CrosshairViewModel CrosshairVm { get; }
+    public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [CrosshairVm];
     [Reactive] public float YawDegrees { get; set; } = -20;
     [Reactive] public float PitchDegrees { get; set; } = -20;
     [Reactive] public float RollDegrees { get; set; } = 45;
@@ -46,7 +46,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         UpdateSlicingAngleCommand = new DelegateCommand(UpdateSlicingAngle);
 
         // Crosshair
-        _crosshair = new CrosshairViewModel(SliceOrientation.Axial, _background.GetBounds());
+        CrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, _background.GetBounds());
     }
 
     public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
@@ -54,7 +54,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
-        _crosshair.FocalPoint = clickWorldPos;
+        CrosshairVm.FocalPoint = clickWorldPos;
     }
 
     public DelegateCommand UpdateSlicingAngleCommand { get; }

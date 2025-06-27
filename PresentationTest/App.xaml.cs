@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using PresentationTest.Views;
 
 namespace PresentationTest;
 
@@ -12,6 +13,6 @@ public partial class App : PrismApplication
     }
 
     protected override Window CreateShell() =>
-         Container.Resolve<VtkMvvmTestWindow>();
-        // Container.Resolve<VtkObliqueSliceTestWindow>();
+         // Container.Resolve<VtkMvvmTestWindow>();
+        Container.Resolve<VtkObliqueSliceTestWindow>();
 }

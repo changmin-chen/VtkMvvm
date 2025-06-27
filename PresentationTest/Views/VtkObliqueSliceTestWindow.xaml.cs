@@ -2,10 +2,11 @@
 using System.Reactive.Linq;
 using System.Windows;
 using Kitware.VTK;
+using PresentationTest.ViewModels;
 using VtkMvvm.Controls;
 using VtkMvvm.Features.InteractorBehavior;
 
-namespace PresentationTest;
+namespace PresentationTest.Views;
 
 public partial class VtkObliqueSliceTestWindow : Window
 {

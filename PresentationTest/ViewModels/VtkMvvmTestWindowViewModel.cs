@@ -11,7 +11,7 @@ using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
 
-namespace PresentationTest;
+namespace PresentationTest.ViewModels;
 
 public class VtkMvvmTestWindowViewModel : ReactiveObject
 {
