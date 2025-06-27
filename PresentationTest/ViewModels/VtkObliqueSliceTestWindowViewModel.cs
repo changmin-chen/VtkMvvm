@@ -43,7 +43,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         ImageObliqueSliceViewModel obliqueVm = new(slicingAngle, pipe);
 
         ObliqueImageVms = [obliqueVm];
-        UpdateSlicingAngleCommand = new DelegateCommand(UpdateSlicingAngle);
+        UpdateSliceOrientationCommand = new DelegateCommand(UpdateSliceOrientation);
 
         // Crosshair
         // CrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, _background.GetBounds());
@@ -63,7 +63,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         CrosshairVm.FocalPoint = clickWorldPos;
     }
 
-    public DelegateCommand UpdateSlicingAngleCommand { get; }
+    public DelegateCommand UpdateSliceOrientationCommand { get; }
 
     public int ObliqueSliceIndex
     {
@@ -75,7 +75,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         }
     }
 
-    private void UpdateSlicingAngle()
+    private void UpdateSliceOrientation()
     {
         var slicingAngle = Quaternion.CreateFromYawPitchRoll(
             DegreesToRadius(YawDegrees),
@@ -83,6 +83,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(RollDegrees));
         
         ObliqueImageVms[0].SliceOrientation = slicingAngle;
+        CrosshairVm.UpdatePlaneAxes(ObliqueImageVms[0].PlaneAxisU, ObliqueImageVms[0].PlaneAxisV);
     }
 
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)

@@ -56,7 +56,7 @@
                     <TextBlock Text="Roll: " />
                     <TextBox Text="{Binding RollDegrees}" />
                 </StackPanel>
-                <Button Content="Update Angle" Command="{Binding UpdateSlicingAngleCommand}" />
+                <Button Content="Update Angle" Command="{Binding UpdateSliceOrientationCommand}" />
             </StackPanel>
             
             <!-- Setting cross hair visuals -->
