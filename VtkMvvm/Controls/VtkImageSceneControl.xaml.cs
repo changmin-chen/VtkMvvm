@@ -97,6 +97,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         // Render overlays onto the main renderer
         MainRenderer.SetLayer(0);
         OverlayRenderer.SetLayer(1);
+        OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
         RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
