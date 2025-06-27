@@ -23,14 +23,14 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     private int _minSliceIdx; // slider bound (-)
     private int _maxSliceIdx; // slider bound (+)
     private int _sliceIndex = int.MinValue;
-    private Quaternion _sliceOrientation;
+    private Quaternion _sliceOrientation = Quaternion.Identity;
 
     public ImageObliqueSliceViewModel(
         Quaternion orientation,
         ColoredImagePipeline pipe)
     {
         _colorMap = pipe.ColorMap;
-        
+
         vtkImageData image = pipe.Image;
         ImageModel = ImageModel.Create(pipe.Image);
         _imgCentre = image.GetCenter();
@@ -51,16 +51,15 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         Actor = pipe.Actor;
 
         // orientation also sets step size & slider limits
-        SetOrientation(orientation);
+        SliceOrientation = orientation;
 
         // initialise at centre slice.  
-        SetSliceIndex(0);
+        SliceIndex = 0;
     }
 
     // ── Public surface identical to orthogonal VM ──
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
-    
 
 
     #region Bindable Properties
@@ -95,9 +94,9 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     public int MinSliceIndex => _minSliceIdx;
     public int MaxSliceIndex => _maxSliceIdx;
 
-    public Double3 InPlaneAxis1 => new(_axes.GetElement(0, 0), _axes.GetElement(1, 0), _axes.GetElement(2, 0));
-    public Double3 InPlaneAxis2 => new(_axes.GetElement(0, 1), _axes.GetElement(1, 1), _axes.GetElement(2, 1));
-    public Double3 InPlaneNormal => new(_axes.GetElement(0, 2), _axes.GetElement(1, 2), _axes.GetElement(2, 2));
+    public Double3 PlaneAxisU => new(_axes.GetElement(0, 0), _axes.GetElement(1, 0), _axes.GetElement(2, 0));
+    public Double3 PlaneAxisV => new(_axes.GetElement(0, 1), _axes.GetElement(1, 1), _axes.GetElement(2, 1));
+    public Double3 PlaneNormal => new(_axes.GetElement(0, 2), _axes.GetElement(1, 2), _axes.GetElement(2, 2));
 
     #endregion
 
