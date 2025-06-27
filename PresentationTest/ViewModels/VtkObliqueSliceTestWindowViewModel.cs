@@ -19,7 +19,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
     private int _obliqueSliceIndex;
     public ImageObliqueSliceViewModel[] ObliqueImageVms { get; private set; }
-    public CrosshairViewModel CrosshairVm { get; }
+    public CrosshairBoxViewModel CrosshairVm { get; }
     public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [CrosshairVm];
     [Reactive] public float YawDegrees { get; set; } = -20;
     [Reactive] public float PitchDegrees { get; set; } = -20;
@@ -40,13 +40,19 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
-        ImageObliqueSliceViewModel axialVm = new(slicingAngle, pipe);
+        ImageObliqueSliceViewModel obliqueVm = new(slicingAngle, pipe);
 
-        ObliqueImageVms = [axialVm];
+        ObliqueImageVms = [obliqueVm];
         UpdateSlicingAngleCommand = new DelegateCommand(UpdateSlicingAngle);
 
         // Crosshair
-        CrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, _background.GetBounds());
+        // CrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, _background.GetBounds());
+        CrosshairVm = new CrosshairBoxViewModel( obliqueVm.PlaneAxisU, obliqueVm.PlaneAxisV, _background.GetBounds());
+        
+        // Pick list
+        _picker.SetTolerance(0.005);
+        _picker.PickFromListOn();
+        _picker.AddPickList(obliqueVm.Actor);
     }
 
     public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
