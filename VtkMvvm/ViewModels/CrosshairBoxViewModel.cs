@@ -11,12 +11,12 @@ namespace VtkMvvm.ViewModels;
 public sealed class CrosshairBoxViewModel : VtkElementViewModel
 {
     // ── geometry helpers ───────────────────────────────────────────
-    private readonly double[] _half;        // hx, hy, hz
-    private Double3 _u;                     // first in-plane axis (unit)
-    private Double3 _v;                     // second in-plane axis (unit)
+    private readonly double[] _half; // hx, hy, hz
+    private Double3 _u; // first in-plane axis (unit)
+    private Double3 _v; // second in-plane axis (unit)
 
-    private readonly vtkLineSource   _lineU = vtkLineSource.New();
-    private readonly vtkLineSource   _lineV = vtkLineSource.New();
+    private readonly vtkLineSource _lineU = vtkLineSource.New();
+    private readonly vtkLineSource _lineV = vtkLineSource.New();
     private readonly vtkAppendPolyData _append = vtkAppendPolyData.New();
     private readonly vtkPolyDataMapper _mapper = vtkPolyDataMapper.New();
 
@@ -24,21 +24,21 @@ public sealed class CrosshairBoxViewModel : VtkElementViewModel
 
     // ── ctor ───────────────────────────────────────────────────────
     public CrosshairBoxViewModel(
-        Double3           uDir,             // plane X-axis  (unit)
-        Double3           vDir,             // plane Y-axis  (unit)
-        double[]          imageBounds)      // xmin,xmax, ymin,ymax, zmin,zmax
+        Double3 uDir, // plane X-axis  (unit)
+        Double3 vDir, // plane Y-axis  (unit)
+        double[] imageBounds) // xmin,xmax, ymin,ymax, zmin,zmax
     {
         if (imageBounds.Length != 6) throw new ArgumentException(nameof(imageBounds));
 
         _u = uDir.Normalized();
         _v = vDir.Normalized();
 
-        _half = new[]
-        {
-            0.5 * (imageBounds[1] - imageBounds[0]),   // hx
-            0.5 * (imageBounds[3] - imageBounds[2]),   // hy
-            0.5 * (imageBounds[5] - imageBounds[4])    // hz
-        };
+        _half =
+        [
+            0.5 * (imageBounds[1] - imageBounds[0]), // hx
+            0.5 * (imageBounds[3] - imageBounds[2]), // hy
+            0.5 * (imageBounds[5] - imageBounds[4]) // hz
+        ];
 
         // VTK plumbing: U-line + V-line → append → mapper → actor
         _append.AddInputConnection(_lineU.GetOutputPort());
@@ -47,9 +47,20 @@ public sealed class CrosshairBoxViewModel : VtkElementViewModel
 
         vtkActor act = vtkActor.New();
         act.SetMapper(_mapper);
-        act.GetProperty().SetColor(1, 0, 0);   // red
+        act.GetProperty().SetColor(1, 0, 0); // red
         act.GetProperty().SetLineWidth(1.5f);
         Actor = act;
+    }
+
+    public static CrosshairBoxViewModel Create(SliceOrientation orientation, double[] imageBounds)
+    {
+        return orientation switch
+        {
+            SliceOrientation.Axial => new CrosshairBoxViewModel(Double3.UnitX, Double3.UnitY, imageBounds),
+            SliceOrientation.Sagittal => new CrosshairBoxViewModel(Double3.UnitY, Double3.UnitZ, imageBounds),
+            SliceOrientation.Coronal => new CrosshairBoxViewModel(Double3.UnitX, Double3.UnitZ, imageBounds),
+            _ => throw new ArgumentOutOfRangeException(nameof(orientation))
+        };
     }
 
     public override vtkActor Actor { get; }

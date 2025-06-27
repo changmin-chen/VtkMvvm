@@ -8,9 +8,9 @@ internal static class VtkTransformExtensions
     /// <summary>
     ///     Extensional helper for setting <see cref="vtkTransform" /> rotation directly through Quaternion.
     /// </summary>
-    public static void RotateWXYZ(this vtkTransform vtkTransform, Quaternion quaternion)
+    public static void RotateWithQuaternion(this vtkTransform vtkTransform, Quaternion q)
     {
-        quaternion.ToAxisAngle(out Vector3 axis, out float angle);
+        q.ToAxisAngle(out Vector3 axis, out float angle);
         vtkTransform.RotateWXYZ(angle, axis.X, axis.Y, axis.Z);
     }
 }

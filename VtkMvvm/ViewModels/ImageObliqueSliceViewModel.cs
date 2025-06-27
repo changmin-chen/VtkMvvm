@@ -109,7 +109,8 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         // 1) apply the quaternion to the reslicing grid
         using var tf = vtkTransform.New();
         tf.Identity();
-        tf.RotateWXYZ(q);
+        tf.RotateWithQuaternion(q);
+        
         vtkMatrix4x4 rot = tf.GetMatrix();
         for (int r = 0; r < 3; ++r)
         {
