@@ -61,6 +61,13 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
 
+    public double[] GetObliqueSliceBounds() 
+    {
+        _reslice.Update();
+        vtkImageData img = _reslice.GetOutput();
+        return img.GetBounds();
+    }
+
 
     #region Bindable Properties
 
@@ -94,9 +101,23 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     public int MinSliceIndex => _minSliceIdx;
     public int MaxSliceIndex => _maxSliceIdx;
 
-    public Double3 PlaneAxisU => new(_axes.GetElement(0, 0), _axes.GetElement(1, 0), _axes.GetElement(2, 0));
-    public Double3 PlaneAxisV => new(_axes.GetElement(0, 1), _axes.GetElement(1, 1), _axes.GetElement(2, 1));
-    public Double3 PlaneNormal => new(_axes.GetElement(0, 2), _axes.GetElement(1, 2), _axes.GetElement(2, 2));
+    /// <summary>
+    /// vtkImageReslice expects a world → slice matrix in ResliceAxes. So we extract from row instead of column, which is mathematically inversed.
+    /// </summary>
+    public Double3 PlaneAxisU // slice X-axis in world coords
+        => new(_axes.GetElement(0, 0),
+            _axes.GetElement(0, 1),
+            _axes.GetElement(0, 2));
+
+    public Double3 PlaneAxisV // slice Y-axis in world coords
+        => new(_axes.GetElement(1, 0),
+            _axes.GetElement(1, 1),
+            _axes.GetElement(1, 2));
+
+    public Double3 PlaneNormal // slice Z-axis (normal) in world coords
+        => new(_axes.GetElement(2, 0),
+            _axes.GetElement(2, 1),
+            _axes.GetElement(2, 2));
 
     #endregion
 
@@ -110,7 +131,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         using var tf = vtkTransform.New();
         tf.Identity();
         tf.RotateWithQuaternion(q);
-        
+
         vtkMatrix4x4 rot = tf.GetMatrix();
         for (int r = 0; r < 3; ++r)
         {
