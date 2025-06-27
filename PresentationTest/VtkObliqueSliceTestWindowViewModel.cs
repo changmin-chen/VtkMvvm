@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections.Immutable;
+using System.Numerics;
 using Kitware.VTK;
 using PresentationTest.TestData;
 using ReactiveUI;
@@ -11,10 +12,10 @@ namespace PresentationTest;
 public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 {
     private readonly vtkImageData _background;
-    private readonly int[] _backgroundDims;
 
     private int _obliqueSliceIndex;
-    public ImageObliqueSliceViewModel[] ImageVms { get; }
+    public ImageObliqueSliceViewModel[] ObliqueImageVms { get; private set; }
+    public ImmutableList<VtkElementViewModel> ObliqueOverlayVms { get; private set; }
     [Reactive] public float YawDegrees { get; set; } = -20;
     [Reactive] public float PitchDegrees { get; set; } = -20;
     [Reactive] public float RollDegrees { get; set; } = 45;
@@ -22,7 +23,6 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
     public VtkObliqueSliceTestWindowViewModel()
     {
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
-        _backgroundDims = _background.GetDimensions();
 
         ColoredImagePipelineBuilder bgBuilder = ColoredImagePipelineBuilder
             .WithImage(_background)
@@ -36,8 +36,9 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
         ImageObliqueSliceViewModel axialVm = new(slicingAngle, pipe);
-        ImageVms = [axialVm];
 
+
+        ObliqueImageVms = [axialVm];
         UpdateSlicingAngleCommand = new DelegateCommand(UpdateSlicingAngle);
     }
 
@@ -50,7 +51,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         set
         {
             this.RaiseAndSetIfChanged(ref _obliqueSliceIndex, value);
-            SetSliceIndex(ImageVms, value);
+            SetSliceIndex(ObliqueImageVms, value);
         }
     }
 
@@ -60,7 +61,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
-        ImageVms[0].SliceOrientation = slicingAngle;
+        ObliqueImageVms[0].SliceOrientation = slicingAngle;
     }
 
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)

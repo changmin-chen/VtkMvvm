@@ -1,88 +1,118 @@
-﻿using Kitware.VTK;
+﻿using System.Numerics;
+using Kitware.VTK;
 using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels;
 
 /// <summary>
-///     A crosshair widget that can be rendered and overlay onto a background image.
-///     The crossing position should sync with the user-selected world coordinate to provide the visual hint.
+/// A 2-D cross-hair that works in any slicing plane.
+/// Supply the two orthonormal in-plane directions (u,v) once,
+/// then update FocalPoint whenever the user changes the pick.
+/// <remarks>
+/// Core idea: halfLength(d) = |d.x|·hx + |d.y|·hy + |d.z|·hz
+/// where hx, hy, hz are the half-extents of the volume and d is a unit direction in that plane.
+/// L1:  F − u·halfLength(u) ⟶ F + u·halfLength(u)
+/// L2:  F − v·halfLength(v) ⟶ F + v·halfLength(v)
+/// </remarks>
 /// </summary>
-public class CrosshairViewModel : VtkElementViewModel
+public sealed class CrosshairViewModel : VtkElementViewModel
 {
-    private readonly double[] _bounds; // based on background image volume to decides line boundary
+    // ── geometry helpers ───────────────────────────────────────────
+    private readonly double[] _half; // hx, hy, hz for line boundary
+    private Vector3 _u; // first in-plane axis (unit)
+    private Vector3 _v; // second in-plane axis (unit)
 
-    private readonly vtkLineSource _hLine = vtkLineSource.New();
-    private readonly vtkLineSource _vLine = vtkLineSource.New();
+    private readonly vtkLineSource _lineU = vtkLineSource.New();
+    private readonly vtkLineSource _lineV = vtkLineSource.New();
     private readonly vtkAppendPolyData _append = vtkAppendPolyData.New();
     private readonly vtkPolyDataMapper _mapper = vtkPolyDataMapper.New();
 
     private Double3 _focalPoint;
 
-    public CrosshairViewModel(SliceOrientation orientation, double[] imageBounds)
+    private CrosshairViewModel(
+        Vector3 uDir, // plane X-axis  (unit)
+        Vector3 vDir, // plane Y-axis  (unit)
+        double[] imageBounds) // xmin,xmax, ymin,ymax, zmin,zmax
     {
-        Orientation = orientation;
-        _bounds = imageBounds;
+        if (imageBounds.Length != 6) throw new ArgumentException(nameof(imageBounds));
 
-        // build pipeline: H-line + V-line → append → mapper → actor
-        _append.AddInputConnection(_hLine.GetOutputPort());
-        _append.AddInputConnection(_vLine.GetOutputPort());
+        _u = Vector3.Normalize(uDir);
+        _v = Vector3.Normalize(vDir);
+
+        _half =
+        [
+            0.5 * (imageBounds[1] - imageBounds[0]), // hx
+            0.5 * (imageBounds[3] - imageBounds[2]), // hy
+            0.5 * (imageBounds[5] - imageBounds[4]) // hz
+        ];
+
+        // VTK plumbing: U-line + V-line → append → mapper → actor
+        _append.AddInputConnection(_lineU.GetOutputPort());
+        _append.AddInputConnection(_lineV.GetOutputPort());
         _mapper.SetInputConnection(_append.GetOutputPort());
 
-        vtkActor? actor = vtkActor.New();
-        actor.SetMapper(_mapper);
-        actor.GetProperty().SetColor(1, 0, 0);
-        actor.GetProperty().SetLineWidth(1.5F);
-        Actor = actor;
+        vtkActor act = vtkActor.New();
+        act.SetMapper(_mapper);
+        act.GetProperty().SetColor(1, 0, 0); // red
+        act.GetProperty().SetLineWidth(1.5f);
+        Actor = act;
     }
 
-    public SliceOrientation Orientation { get; }
+    public static CrosshairViewModel Create(SliceOrientation orientation, double[] imageBounds)
+    {
+        return orientation switch
+        {
+            SliceOrientation.Axial => new CrosshairViewModel(Vector3.UnitX, Vector3.UnitY, imageBounds),
+            SliceOrientation.Coronal => new CrosshairViewModel(Vector3.UnitX, Vector3.UnitZ, imageBounds),
+            SliceOrientation.Sagittal => new CrosshairViewModel(Vector3.UnitY, Vector3.UnitZ, imageBounds),
+            _ => throw new ArgumentOutOfRangeException(nameof(orientation))
+        };
+    }
+
     public override vtkActor Actor { get; }
 
-    #region Bindable Properties
-
+    // ── Bindable properties ────────────────────────────────────────
     public Double3 FocalPoint
     {
         get => _focalPoint;
         set
         {
-            if (SetField(ref _focalPoint, value))
-            {
-                SetFocalPoint(value);
-                _append.Modified();
-                OnModified();
-            }
+            if (!SetField(ref _focalPoint, value)) return;
+            RebuildLines();
+            _append.Modified();
+            OnModified();
         }
     }
 
-    #endregion
-
-    private void SetFocalPoint(Double3 worldPosition)
+    /// <summary>
+    /// Change the plane orientation on-the-fly (e.g. user rotates oblique view).
+    /// Provide the *new* orthonormal basis.
+    /// </summary>
+    public void UpdatePlaneAxes(Vector3 uDir, Vector3 vDir)
     {
-        (double wx, double wy, double wz) = worldPosition;
-        switch (Orientation)
-        {
-            case SliceOrientation.Axial: //  Z is fixed
-                _hLine.SetPoint1(_bounds[0], wy, wz);
-                _hLine.SetPoint2(_bounds[1], wy, wz);
-                _vLine.SetPoint1(wx, _bounds[2], wz);
-                _vLine.SetPoint2(wx, _bounds[3], wz);
-                break;
-            case SliceOrientation.Coronal: //  Y is fixed
-                _hLine.SetPoint1(_bounds[0], wy, wz);
-                _hLine.SetPoint2(_bounds[1], wy, wz);
-                _vLine.SetPoint1(wx, wy, _bounds[4]);
-                _vLine.SetPoint2(wx, wy, _bounds[5]);
-                break;
+        _u = Vector3.Normalize(uDir);
+        _v = Vector3.Normalize(vDir);
+        RebuildLines();
+        _append.Modified();
+        OnModified();
+    }
 
-            case SliceOrientation.Sagittal: //  X is fixed
-                _hLine.SetPoint1(wx, _bounds[2], wz);
-                _hLine.SetPoint2(wx, _bounds[3], wz);
-                _vLine.SetPoint1(wx, wy, _bounds[4]);
-                _vLine.SetPoint2(wx, wy, _bounds[5]);
-                break;
+    // ── private helpers ────────────────────────────────────────────
+    private void RebuildLines()
+    {
+        (double fx, double fy, double fz) = _focalPoint;
+
+        // helper lambda
+        void SetLine(vtkLineSource ls, Vector3 vec)
+        {
+            double h = Math.Abs(vec.X) * _half[0] + Math.Abs(vec.Y) * _half[1] + Math.Abs(vec.Z) * _half[2];
+
+            ls.SetPoint1(fx - vec.X * h, fy - vec.Y * h, fz - vec.Z * h);
+            ls.SetPoint2(fx + vec.X * h, fy + vec.Y * h, fz + vec.Z * h);
+            ls.Modified();
         }
 
-        _hLine.Modified();
-        _vLine.Modified();
+        SetLine(_lineU, _u);
+        SetLine(_lineV, _v);
     }
 }

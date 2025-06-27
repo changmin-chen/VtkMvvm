@@ -61,7 +61,7 @@
             </Grid.RowDefinitions>
             <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
                                                   Grid.Row="0"
-                                                  SceneObjects="{Binding ImageVms}" />
+                                                  SceneObjects="{Binding ObliqueImageVms}" />
             <StackPanel Grid.Row="1"
                         Margin="5"
                         VerticalAlignment="Top"
@@ -71,8 +71,8 @@
                            Text="Slice:"
                            Foreground="White" />
                 <Slider Width="200"
-                        Minimum="{Binding ImageVms[0].MinSliceIndex}"
-                        Maximum="{Binding ImageVms[0].MaxSliceIndex}"
+                        Minimum="{Binding ObliqueImageVms[0].MinSliceIndex}"
+                        Maximum="{Binding ObliqueImageVms[0].MaxSliceIndex}"
                         IsSnapToTickEnabled="True"
                         Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
 
@@ -88,13 +88,13 @@
                                Text="Min:"
                                Foreground="White" />
                     <TextBlock Margin="0,5,5,0"
-                               Text="{Binding ImageVms[0].MinSliceIndex}"
+                               Text="{Binding ObliqueImageVms[0].MinSliceIndex}"
                                Foreground="White" />
                     <TextBlock Margin="0,5,5,0"
                                Text="Max:"
                                Foreground="White" />
                     <TextBlock Margin="0,5,5,0"
-                               Text="{Binding ImageVms[0].MaxSliceIndex}"
+                               Text="{Binding ObliqueImageVms[0].MaxSliceIndex}"
                                Foreground="White" />
                 </StackPanel>
 

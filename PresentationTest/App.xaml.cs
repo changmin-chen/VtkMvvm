@@ -12,6 +12,6 @@ public partial class App : PrismApplication
     }
 
     protected override Window CreateShell() =>
-        // return Container.Resolve<VtkMvvmTestWindow>();
-        Container.Resolve<VtkObliqueSliceTestWindow>();
+         Container.Resolve<VtkMvvmTestWindow>();
+        // Container.Resolve<VtkObliqueSliceTestWindow>();
 }
