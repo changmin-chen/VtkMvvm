@@ -71,12 +71,10 @@ public sealed class CrosshairBoxViewModel : VtkElementViewModel
         get => _focalPoint;
         set
         {
-            if (SetField(ref _focalPoint, value))
-            {
-                RebuildLines();
-                _append.Modified();
-                OnModified();
-            }
+            if (!SetField(ref _focalPoint, value)) return;
+            RebuildLines();
+            _append.Modified();
+            OnModified();
         }
     }
 

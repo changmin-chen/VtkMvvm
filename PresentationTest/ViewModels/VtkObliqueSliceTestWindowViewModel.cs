@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Numerics;
 using Kitware.VTK;
 using PresentationTest.TestData;
@@ -46,9 +47,9 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         UpdateSliceOrientationCommand = new DelegateCommand(UpdateSliceOrientation);
 
         // Crosshair
-        // CrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, _background.GetBounds());
-        CrosshairVm = new CrosshairBoxViewModel( obliqueVm.PlaneAxisU, obliqueVm.PlaneAxisV, _background.GetBounds());
-        
+        CrosshairVm = new CrosshairBoxViewModel(Double3.UnitX, Double3.UnitY, _background.GetBounds());
+        // CrosshairVm = new CrosshairBoxViewModel( obliqueVm.PlaneAxisU, obliqueVm.PlaneAxisV, _background.GetBounds());
+
         // Pick list
         _picker.SetTolerance(0.005);
         _picker.PickFromListOn();
@@ -77,13 +78,16 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
     private void UpdateSliceOrientation()
     {
-        var slicingAngle = Quaternion.CreateFromYawPitchRoll(
+        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
-        
-        ObliqueImageVms[0].SliceOrientation = slicingAngle;
+
+        ObliqueImageVms[0].SliceOrientation = sliceOrientation;
         CrosshairVm.UpdatePlaneAxes(ObliqueImageVms[0].PlaneAxisU, ObliqueImageVms[0].PlaneAxisV);
+
+        var b = ObliqueImageVms[0].GetObliqueSliceBounds();
+        Debug.WriteLine($"Slice bounds: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}");
     }
 
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)
