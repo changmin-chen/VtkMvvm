@@ -60,6 +60,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     // ── Public surface identical to orthogonal VM ──
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
+    
 
 
     #region Bindable Properties
@@ -93,6 +94,10 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
 
     public int MinSliceIndex => _minSliceIdx;
     public int MaxSliceIndex => _maxSliceIdx;
+
+    public Double3 InPlaneAxis1 => new(_axes.GetElement(0, 0), _axes.GetElement(1, 0), _axes.GetElement(2, 0));
+    public Double3 InPlaneAxis2 => new(_axes.GetElement(0, 1), _axes.GetElement(1, 1), _axes.GetElement(2, 1));
+    public Double3 InPlaneNormal => new(_axes.GetElement(0, 2), _axes.GetElement(1, 2), _axes.GetElement(2, 2));
 
     #endregion
 

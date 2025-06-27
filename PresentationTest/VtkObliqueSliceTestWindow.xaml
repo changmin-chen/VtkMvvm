@@ -61,7 +61,8 @@
             </Grid.RowDefinitions>
             <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
                                                   Grid.Row="0"
-                                                  SceneObjects="{Binding ObliqueImageVms}" />
+                                                  SceneObjects="{Binding ObliqueImageVms}" 
+                                                  OverlayObjects="{Binding ObliqueOverlayVms}"/>
             <StackPanel Grid.Row="1"
                         Margin="5"
                         VerticalAlignment="Top"
