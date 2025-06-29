@@ -204,8 +204,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
                 cx = 0.5 * (b[0] + b[1]);
                 cy = 0.5 * (b[2] + b[3]);
                 cz = b[4]; // zmin == zmax
-                cam.SetPosition(cx, cy, cz + camDist);
-                cam.SetViewUp(0, -1, 0);
+                cam.SetPosition(cx, cy, cz - camDist); // feet → head (+Z)
+                cam.SetViewUp(0, -1, 0); // anterior (-Y) to up
                 break;
 
             case SliceOrientation.Coronal: // XZ live, Y flat
@@ -214,8 +214,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
                 cx = 0.5 * (b[0] + b[1]);
                 cy = b[2]; // ymin == ymax
                 cz = 0.5 * (b[4] + b[5]);
-                cam.SetPosition(cx, cy + camDist, cz);
-                cam.SetViewUp(0, 0, 1);
+                cam.SetPosition(cx, cy - camDist, cz); // front → back (-Y)
+                cam.SetViewUp(0, 0, 1); // superior (+Z) to up
                 break;
 
             case SliceOrientation.Sagittal: // YZ live, X flat
@@ -224,8 +224,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
                 cx = b[0]; // xmin == xmax
                 cy = 0.5 * (b[2] + b[3]);
                 cz = 0.5 * (b[4] + b[5]);
-                cam.SetPosition(cx + camDist, cy, cz);
-                cam.SetViewUp(0, 0, 1);
+                cam.SetPosition(cx - camDist, cy, cz); // left → right (-X)
+                cam.SetViewUp(0, 0, 1); // superior (+Z) to up
                 break;
 
             default:
