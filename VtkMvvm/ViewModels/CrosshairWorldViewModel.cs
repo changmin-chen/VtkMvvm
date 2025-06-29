@@ -11,7 +11,7 @@ namespace VtkMvvm.ViewModels;
 public sealed class CrosshairWorldViewModel : VtkElementViewModel
 {
     // ── geometry helpers ───────────────────────────────────────────
-    private double[] _bounds; // xmin, xmax, ymin, ymax, zmin, zmax
+    private Bounds _bounds; // xmin, xmax, ymin, ymax, zmin, zmax
     private Double3 _u; // first in-plane axis (unit)
     private Double3 _v; // second in-plane axis (unit)
 
@@ -35,9 +35,8 @@ public sealed class CrosshairWorldViewModel : VtkElementViewModel
     public CrosshairWorldViewModel(
         Double3 uDir,
         Double3 vDir,
-        double[] lineBounds)
+        Bounds lineBounds)
     {
-        if (lineBounds.Length != 6) throw new ArgumentException(nameof(lineBounds));
         _bounds = lineBounds;
 
         _u = uDir.Normalized();
@@ -55,19 +54,21 @@ public sealed class CrosshairWorldViewModel : VtkElementViewModel
         Actor = act;
 
         // Initialize the focal point to bounds center
-        FocalPoint = new Double3(
-            (lineBounds[0] + lineBounds[1]) / 2,
-            (lineBounds[2] + lineBounds[3]) / 2,
-            (lineBounds[4] + lineBounds[5]) / 2);
+        FocalPoint = lineBounds.Center;
     }
-
-    public static CrosshairWorldViewModel Create(SliceOrientation orientation, double[] imageBounds)
+    
+    /// <summary>
+    /// Represents a ViewModel for rendering a crosshair in a 3D world space.
+    /// This factory method simplifies creation by using a predefined SliceOrientation
+    /// to determine the U and V direction vectors.
+    /// </summary>
+    public static CrosshairWorldViewModel Create(SliceOrientation orientation, Bounds lineBounds)
     {
         return orientation switch
         {
-            SliceOrientation.Axial => new CrosshairWorldViewModel(Double3.UnitX, Double3.UnitY, imageBounds),
-            SliceOrientation.Sagittal => new CrosshairWorldViewModel(Double3.UnitY, Double3.UnitZ, imageBounds),
-            SliceOrientation.Coronal => new CrosshairWorldViewModel(Double3.UnitX, Double3.UnitZ, imageBounds),
+            SliceOrientation.Axial => new CrosshairWorldViewModel(Double3.UnitX, Double3.UnitY, lineBounds),
+            SliceOrientation.Sagittal => new CrosshairWorldViewModel(Double3.UnitY, Double3.UnitZ, lineBounds),
+            SliceOrientation.Coronal => new CrosshairWorldViewModel(Double3.UnitX, Double3.UnitZ, lineBounds),
             _ => throw new ArgumentOutOfRangeException(nameof(orientation))
         };
     }
@@ -98,10 +99,9 @@ public sealed class CrosshairWorldViewModel : VtkElementViewModel
         OnModified();
     }
 
-    public void UpdateBounds(double[] imageBounds)
+    public void UpdateBounds(Bounds lineBounds)
     {
-        if (imageBounds.Length != 6) throw new ArgumentException(nameof(imageBounds));
-        _bounds = imageBounds;
+        _bounds = lineBounds;
         RebuildLines();
         OnModified();
     }
@@ -116,7 +116,7 @@ public sealed class CrosshairWorldViewModel : VtkElementViewModel
     private static void SetLineToBox(vtkLineSource ls,
         in Double3 dir,
         in Double3 focal,
-        double[] bounds /* xmin,xmax,ymin,ymax,zmin,zmax */)
+        Bounds bounds /* xmin,xmax,ymin,ymax,zmin,zmax */)
     {
         double fx = focal.X, fy = focal.Y, fz = focal.Z;
         double dx = dir.X, dy = dir.Y, dz = dir.Z;
@@ -147,9 +147,9 @@ public sealed class CrosshairWorldViewModel : VtkElementViewModel
             tMax = Math.Min(tMax, t2);
         }
 
-        Slab(fx, dx, bounds[0], bounds[1]);
-        Slab(fy, dy, bounds[2], bounds[3]);
-        Slab(fz, dz, bounds[4], bounds[5]);
+        Slab(fx, dx, bounds.XMin, bounds.XMax);
+        Slab(fy, dy, bounds.YMin, bounds.YMax);
+        Slab(fz, dz, bounds.ZMin, bounds.ZMax);
 
         if (tMin > tMax) return; // line misses the box
 

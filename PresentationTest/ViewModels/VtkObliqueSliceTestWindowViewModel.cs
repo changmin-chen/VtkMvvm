@@ -53,7 +53,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         
         // Initialize ViewModels
         ObliqueImageVm = obliqueVm;
-        double[] lineBounds = obliqueVm.GetSliceBounds();
+        var lineBounds = obliqueVm.GetSliceBounds();
         CrosshairVm = new CrosshairWorldViewModel(Double3.UnitX, Double3.UnitY, lineBounds);
     }
 
@@ -85,11 +85,10 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(RollDegrees));
 
         ObliqueImageVm.SliceOrientation = sliceOrientation;
-        // CrosshairVm.UpdatePlaneAxes(ObliqueImageVms[0].PlaneAxisU, ObliqueImageVms[0].PlaneAxisV);
 
-        var b = ObliqueImageVm.GetSliceBounds();
+        Bounds b = ObliqueImageVm.GetSliceBounds();
         CrosshairVm.UpdateBounds(b);
-        Debug.WriteLine($"Slice bounds: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}");
+        Debug.WriteLine($"Slice bounds: {b}");
     }
 
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)
