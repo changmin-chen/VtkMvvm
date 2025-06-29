@@ -7,9 +7,9 @@ namespace VtkMvvm.ViewModels;
 /// <summary>
 /// Leverage VTK image actor instead of reslicing the image. Simpler and suitable for orthogonal slices.
 /// </summary>
-public class ImageOrthogonalSliceViewModel : VtkElementViewModel
+public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
-    private readonly vtkImageMapToColors _colorMap;
+    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private int _sliceIndex = int.MinValue;
     private double _windowLevel;
     private double _windowWidth;
@@ -17,18 +17,19 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
     public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline)
     {
         Orientation = orientation;
-        Actor = pipeline.Actor;
+        
+        vtkImageActor actor = vtkImageActor.New();
+        Actor = actor;
         ImageModel = ImageModel.Create(pipeline.Image);
-
-        _colorMap = pipeline.ColorMap;
-        pipeline.Connect();
+        pipeline.Connect(_cmap, actor);
 
         // SetSliceIndex here is necessary.
         // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
-        SetSliceIndex(0); 
+        SliceIndex = 0;
     }
 
     public SliceOrientation Orientation { get; }
+
     public ImageModel ImageModel { get; }
     public override vtkImageActor Actor { get; }
 
@@ -37,11 +38,9 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         get => _sliceIndex;
         set
         {
-            if (SetField(ref _sliceIndex, value))
-            {
-                SetSliceIndex(value);
-                OnModified();
-            }
+            if (!SetField(ref _sliceIndex, value)) return;
+            SetSliceIndex(value);
+            OnModified();
         }
     }
 
@@ -50,11 +49,9 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         get => _windowLevel;
         set
         {
-            if (SetField(ref _windowLevel, value))
-            {
-                SetWindowBand(value, WindowWidth);
-                OnModified();
-            }
+            if (!SetField(ref _windowLevel, value)) return;
+            SetWindowBand(value, WindowWidth);
+            OnModified();
         }
     }
 
@@ -63,11 +60,9 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         get => _windowWidth;
         set
         {
-            if (SetField(ref _windowWidth, value))
-            {
-                SetWindowBand(WindowLevel, value);
-                OnModified();
-            }
+            if (!SetField(ref _windowWidth, value)) return;
+            SetWindowBand(WindowLevel, value);
+            OnModified();
         }
     }
 
@@ -82,6 +77,15 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
             OnPropertyChanged();
             OnModified();
         }
+    }
+    
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _cmap.Dispose();
+        }
+        base.Dispose(disposing);
     }
 
     private void SetSliceIndex(int sliceIndex)
@@ -108,12 +112,12 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
         double low = level - width * 0.5;
         double high = level + width * 0.5;
 
-        vtkScalarsToColors? lut = _colorMap.GetLookupTable();
+        vtkScalarsToColors? lut = _cmap.GetLookupTable();
         lut.SetRange(low, high);
         lut.Build();
-        _colorMap.SetLookupTable(lut);
+        _cmap.SetLookupTable(lut);
 
-        _colorMap.Modified();
+        _cmap.Modified();
         Actor.Modified();
     }
 }

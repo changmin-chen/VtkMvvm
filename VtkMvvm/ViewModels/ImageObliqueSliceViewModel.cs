@@ -9,7 +9,7 @@ namespace VtkMvvm.ViewModels;
 public class ImageObliqueSliceViewModel : VtkElementViewModel
 {
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
-    private readonly vtkImageMapToColors _colorMap;
+    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New();
     private readonly double[] _imgCentre;
     private readonly double[] _imgBounds;
@@ -27,12 +27,10 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
 
     public ImageObliqueSliceViewModel(
         Quaternion orientation,
-        ColoredImagePipeline pipe)
+        ColoredImagePipeline pipeline)
     {
-        _colorMap = pipe.ColorMap;
-
-        vtkImageData image = pipe.Image;
-        ImageModel = ImageModel.Create(pipe.Image);
+        vtkImageData image = pipeline.Image;
+        ImageModel = ImageModel.Create(pipeline.Image);
         _imgCentre = image.GetCenter();
         _imgBounds = image.GetBounds();
 
@@ -43,14 +41,12 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         _reslice.SetOutputDimensionality(2); // 2-D slice
         _reslice.SetBackgroundLevel(image.GetScalarRange()[0]); // fill the background with min scalar value
 
-        // Connect pipeline: Reslice → ColorMap → Actor. The pipe.Connect() does not fit to this case
-        vtkImageActor actor = pipe.Actor;
-        _colorMap.SetInputConnection(_reslice.GetOutputPort());
-        actor.SetInput(_colorMap.GetOutput());
-        actor.Modified();
-        Actor = pipe.Actor;
+        // Connect pipeline: Reslice → ColorMap → Actor. 
+        vtkImageActor actor = vtkImageActor.New();
+        Actor = actor;
+        pipeline.ConnectWithReslice(_cmap, _reslice, actor);
 
-        // orientation also sets step size & slider limits
+        // orientation also sets step size and slider limits
         SliceOrientation = orientation;
 
         // initialise at centre slice.  
@@ -66,6 +62,17 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         _reslice.Update();
         vtkImageData img = _reslice.GetOutput();
         return Bounds.FromArray(img.GetBounds());
+    }
+    
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _reslice.Dispose();
+            _axes.Dispose();
+            _cmap.Dispose();
+        }
+        base.Dispose(disposing);
     }
 
 

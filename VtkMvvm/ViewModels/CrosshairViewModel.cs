@@ -22,16 +22,8 @@ public sealed class CrosshairViewModel : VtkElementViewModel
 
     private Double3 _focalPoint;
     private float _lineWidth = 1.5F;
-
-    /// <summary>
-    /// Represents a ViewModel for rendering a crosshair in a 3D world space.
-    /// This class manages the orientation and positioning of the crosshair lines,
-    /// along with the image slice horizontal and vertical in-plane directions. 
-    /// </summary>
-    /// <param name="uDir">Plane X-axis (unit)</param>
-    /// <param name="vDir">Plane Y-axis (unit)</param>
-    /// <param name="lineBounds">Boundary of the crosshair lines. xmin,xmax, ymin,ymax, zmin,zmax</param>
-    public CrosshairViewModel(
+    
+    private CrosshairViewModel(
         Double3 uDir,
         Double3 vDir,
         Bounds lineBounds)
@@ -46,16 +38,16 @@ public sealed class CrosshairViewModel : VtkElementViewModel
         _append.AddInputConnection(_lineV.GetOutputPort());
         _mapper.SetInputConnection(_append.GetOutputPort());
 
-        vtkActor act = vtkActor.New();
-        act.SetMapper(_mapper);
-        act.GetProperty().SetColor(1, 0, 0); // red
-        act.GetProperty().SetLineWidth(_lineWidth);
-        Actor = act;
+        vtkActor actor = vtkActor.New();
+        actor.SetMapper(_mapper);
+        actor.GetProperty().SetColor(1, 0, 0); // red
+        actor.GetProperty().SetLineWidth(_lineWidth);
+        Actor = actor;
 
         // Initialize the focal point to bounds center
         FocalPoint = lineBounds.Center;
     }
-    
+
     /// <summary>
     /// Represents a ViewModel for rendering a crosshair in a 3D world space.
     /// This factory method simplifies creation by using a predefined SliceOrientation
@@ -72,9 +64,20 @@ public sealed class CrosshairViewModel : VtkElementViewModel
         };
     }
 
+    /// <summary>
+    /// Represents a ViewModel for rendering a crosshair in a 3D world space.
+    /// This class manages the orientation and positioning of the crosshair lines,
+    /// along with the image slice horizontal and vertical in-plane directions. 
+    /// </summary>
+    /// <param name="uDir">Plane X-axis (unit)</param>
+    /// <param name="vDir">Plane Y-axis (unit)</param>
+    /// <param name="lineBounds">Boundary of the crosshair lines. xmin,xmax, ymin,ymax, zmin,zmax</param>
+    public static CrosshairViewModel Create(Double3 uDir, Double3 vDir, Bounds lineBounds) => new(uDir, vDir, lineBounds);
+
     public override vtkActor Actor { get; }
 
-    // ── Bindable properties ────────────────────────────────────────
+    #region Bindable Properties
+
     public Double3 FocalPoint
     {
         get => _focalPoint;
@@ -97,7 +100,22 @@ public sealed class CrosshairViewModel : VtkElementViewModel
             OnModified();
         }
     }
+    
+    #endregion
+    
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _append.Dispose();
+            _mapper.Dispose();
+            _lineU.Dispose();
+            _lineV.Dispose();
+        }
+        base.Dispose(disposing);
+    }
 
+    
     /// <summary>
     /// Change the plane orientation on-the-fly (e.g. user rotates oblique view).
     /// Provide the *new* orthonormal basis.
