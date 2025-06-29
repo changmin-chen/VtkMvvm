@@ -57,8 +57,8 @@ public sealed class OrientationLabelBehaviour : IDisposable
         {
             var t = vtkTextActor.New();
             t.GetTextProperty().SetFontFamilyToCourier();
-            t.GetTextProperty().SetFontSize(24);
-            t.GetTextProperty().SetColor(1, 0, 0); // red
+            t.GetTextProperty().SetFontSize(20);
+            t.GetTextProperty().SetColor(1, 1, 1);  // white 
             _overlay.AddActor2D(t);
             return t;
         }

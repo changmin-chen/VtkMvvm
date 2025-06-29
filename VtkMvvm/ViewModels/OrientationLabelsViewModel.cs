@@ -14,6 +14,7 @@ namespace VtkMvvm.ViewModels;
 /// If you set the vtkCamera to have negative ViewUp value or looking from opposite direction,
 /// the label currently won't sync with camera and will be placed at wrong opposite side!!! 
 /// </remarks>
+[Obsolete("Use OrientationLabelBehaviour directly in View instead", true)]
 public sealed class OrientationLabelsViewModel : VtkElementViewModel
 {
     private readonly vtkPropAssembly _assembly = vtkPropAssembly.New();
