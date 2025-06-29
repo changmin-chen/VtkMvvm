@@ -19,8 +19,9 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
     private readonly vtkCellPicker _picker = new();
 
     private int _obliqueSliceIndex;
-    public ImageObliqueSliceViewModel[] ObliqueImageVms { get; private set; }
-    public CrosshairBoxViewModel CrosshairVm { get; }
+    public ImageObliqueSliceViewModel ObliqueImageVm { get; private set; }
+    public CrosshairWorldViewModel CrosshairVm { get; }
+    public ImmutableList<ImageObliqueSliceViewModel> ObliqueImageVms => [ObliqueImageVm];
     public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [CrosshairVm];
     [Reactive] public float YawDegrees { get; set; } = -20;
     [Reactive] public float PitchDegrees { get; set; } = -20;
@@ -28,6 +29,8 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
     public VtkObliqueSliceTestWindowViewModel()
     {
+        UpdateSliceOrientationCommand = new DelegateCommand(UpdateSliceOrientation);
+        
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
 
         ColoredImagePipelineBuilder bgBuilder = ColoredImagePipelineBuilder
@@ -37,23 +40,21 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
         ColoredImagePipeline pipe = bgBuilder.Build();
 
-        Quaternion slicingAngle = Quaternion.CreateFromYawPitchRoll(
+        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
-        ImageObliqueSliceViewModel obliqueVm = new(slicingAngle, pipe);
-
-        ObliqueImageVms = [obliqueVm];
-        UpdateSliceOrientationCommand = new DelegateCommand(UpdateSliceOrientation);
-
-        // Crosshair
-        CrosshairVm = new CrosshairBoxViewModel(Double3.UnitX, Double3.UnitY, _background.GetBounds());
-        // CrosshairVm = new CrosshairBoxViewModel( obliqueVm.PlaneAxisU, obliqueVm.PlaneAxisV, _background.GetBounds());
-
+        var obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, pipe);
+        
         // Pick list
         _picker.SetTolerance(0.005);
         _picker.PickFromListOn();
         _picker.AddPickList(obliqueVm.Actor);
+        
+        // Initialize ViewModels
+        ObliqueImageVm = obliqueVm;
+        double[] lineBounds = obliqueVm.GetSliceBounds();
+        CrosshairVm = new CrosshairWorldViewModel(Double3.UnitX, Double3.UnitY, lineBounds);
     }
 
     public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
@@ -83,10 +84,11 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
 
-        ObliqueImageVms[0].SliceOrientation = sliceOrientation;
-        CrosshairVm.UpdatePlaneAxes(ObliqueImageVms[0].PlaneAxisU, ObliqueImageVms[0].PlaneAxisV);
+        ObliqueImageVm.SliceOrientation = sliceOrientation;
+        // CrosshairVm.UpdatePlaneAxes(ObliqueImageVms[0].PlaneAxisU, ObliqueImageVms[0].PlaneAxisV);
 
-        var b = ObliqueImageVms[0].GetObliqueSliceBounds();
+        var b = ObliqueImageVm.GetSliceBounds();
+        CrosshairVm.UpdateBounds(b);
         Debug.WriteLine($"Slice bounds: {b[0]} {b[1]} {b[2]} {b[3]} {b[4]} {b[5]}");
     }
 

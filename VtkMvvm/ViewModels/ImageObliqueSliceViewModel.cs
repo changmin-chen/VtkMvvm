@@ -61,7 +61,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
 
-    public double[] GetObliqueSliceBounds() 
+    public double[] GetSliceBounds() 
     {
         _reslice.Update();
         vtkImageData img = _reslice.GetOutput();
