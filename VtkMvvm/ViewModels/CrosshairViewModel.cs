@@ -77,7 +77,8 @@ public sealed class CrosshairViewModel : VtkElementViewModel
 
     public override vtkActor Actor { get; }
 
-    // ── Bindable properties ────────────────────────────────────────
+    #region Bindable Properties
+
     public Double3 FocalPoint
     {
         get => _focalPoint;
@@ -100,7 +101,22 @@ public sealed class CrosshairViewModel : VtkElementViewModel
             OnModified();
         }
     }
+    
+    #endregion
+    
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _append.Dispose();
+            _mapper.Dispose();
+            _lineU.Dispose();
+            _lineV.Dispose();
+        }
+        base.Dispose(disposing);
+    }
 
+    
     /// <summary>
     /// Change the plane orientation on-the-fly (e.g. user rotates oblique view).
     /// Provide the *new* orthonormal basis.

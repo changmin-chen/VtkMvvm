@@ -63,6 +63,17 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         vtkImageData img = _reslice.GetOutput();
         return Bounds.FromArray(img.GetBounds());
     }
+    
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _reslice.Dispose();
+            _axes.Dispose();
+            _cmap.Dispose();
+        }
+        base.Dispose(disposing);
+    }
 
 
     #region Bindable Properties

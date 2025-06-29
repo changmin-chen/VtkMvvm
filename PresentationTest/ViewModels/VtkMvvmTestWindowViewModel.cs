@@ -43,27 +43,29 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _backgroundDims = _background.GetDimensions();
 
         // Build the shared background image pipeline
-        var bgPipeBuilder = ColoredImagePipelineBuilder
+        var bgPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
-            .WithLinearInterpolation(true);
-
+            .WithLinearInterpolation(true)
+            .Build();
+        
         // Build the shared labelmap image pipeline
         _labelMap = CreateLabelMap(_background);
-        var labelMapPipeBuilder = ColoredImagePipelineBuilder
+        var labelMapPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_labelMap)
             .WithLinearInterpolation(false)
-            .WithRgbaLookupTable(_labelMapLut);
+            .WithRgbaLookupTable(_labelMapLut)
+            .Build();
 
-        var axialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipeBuilder.Build());
-        var labelAxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipeBuilder.Build());
+        var axialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipe);
+        var labelAxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipe);
         AxialVms = [axialVm, labelAxialVm];
 
-        var coronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, bgPipeBuilder.Build());
-        var labelCoronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, labelMapPipeBuilder.Build());
+        var coronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, bgPipe);
+        var labelCoronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, labelMapPipe);
         CoronalVms = [coronalVm, labelCoronalVm];
 
-        var sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, bgPipeBuilder.Build());
-        var labelSagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipeBuilder.Build());
+        var sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, bgPipe);
+        var labelSagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipe);
         SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Add brushes that render on top of the image
