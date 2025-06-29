@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Threading;
 using Kitware.VTK;
@@ -13,6 +14,8 @@ namespace VtkMvvm.Controls;
 /// </summary>
 public partial class VtkImageSceneControl : UserControl, IDisposable
 {
+    private OrientationLabelBehaviour? _orientationBehaviour;
+
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IList<ImageOrthogonalSliceViewModel>),
@@ -41,6 +44,48 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
         Loaded += OnLoadedOnce;
     }
+
+    private void OnLoadedOnce(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoadedOnce;
+
+        RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
+        MainRenderer.SetBackground(0.0, 0.0, 0.0);
+
+        // Render overlays onto the main renderer
+        MainRenderer.SetLayer(0);
+        OverlayRenderer.SetLayer(1);
+        OverlayRenderer.PreserveDepthBufferOff();
+        OverlayRenderer.InteractiveOff();
+        OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
+        RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
+        RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
+
+        // ── orientation labels (Option 1) ───────────────────────────────
+        _orientationBehaviour = new OrientationLabelBehaviour(
+            OverlayRenderer, // render layer 1
+            MainRenderer.GetActiveCamera(), // same camera
+            RowDirFor(Orientation), // see helpers below
+            ColDirFor(Orientation));
+
+        _isLoaded = true;
+    }
+
+    private static Vector3 RowDirFor(SliceOrientation o) => o switch
+    {
+        SliceOrientation.Axial => Vector3.UnitX,
+        SliceOrientation.Coronal => Vector3.UnitX,
+        SliceOrientation.Sagittal => Vector3.UnitY,
+        _ => throw new ArgumentOutOfRangeException(nameof(o))
+    };
+
+    private static Vector3 ColDirFor(SliceOrientation o) => o switch
+    {
+        SliceOrientation.Axial => Vector3.UnitY,
+        SliceOrientation.Coronal => Vector3.UnitZ,
+        SliceOrientation.Sagittal => Vector3.UnitZ,
+        _ => throw new ArgumentOutOfRangeException(nameof(o))
+    };
 
 
     public IList<ImageOrthogonalSliceViewModel>? SceneObjects
@@ -86,25 +131,6 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         RenderWindowControl.Dispose();
         MainRenderer.Dispose();
         OverlayRenderer.Dispose();
-    }
-
-    private void OnLoadedOnce(object sender, RoutedEventArgs e)
-    {
-        Loaded -= OnLoadedOnce;
-
-        RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
-        MainRenderer.SetBackground(0.0, 0.0, 0.0);
-
-        // Render overlays onto the main renderer
-        MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1);
-        OverlayRenderer.PreserveDepthBufferOff();
-        OverlayRenderer.InteractiveOff();
-        OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
-        RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
-        RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
-
-        _isLoaded = true;
     }
 
     private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
