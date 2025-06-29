@@ -9,7 +9,7 @@ namespace VtkMvvm.ViewModels;
 /// </summary>
 public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
-    private readonly vtkImageMapToColors _colorMap;
+    private readonly ColoredImagePipeline _pipeline;
     private int _sliceIndex = int.MinValue;
     private double _windowLevel;
     private double _windowWidth;
@@ -17,18 +17,20 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
     public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline)
     {
         Orientation = orientation;
-        Actor = pipeline.Actor;
+        _pipeline = pipeline;
+        
+        vtkImageActor actor = vtkImageActor.New();
+        Actor = actor;
         ImageModel = ImageModel.Create(pipeline.Image);
-
-        _colorMap = pipeline.ColorMap;
-        pipeline.Connect();
+        pipeline.Connect(actor);
 
         // SetSliceIndex here is necessary.
         // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
-        SetSliceIndex(0); 
+        SetSliceIndex(0);
     }
 
     public SliceOrientation Orientation { get; }
+
     public ImageModel ImageModel { get; }
     public override vtkImageActor Actor { get; }
 
@@ -105,15 +107,17 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 
     private void SetWindowBand(double level, double width)
     {
+        var colormap = _pipeline.ColorMap;
+        
         double low = level - width * 0.5;
         double high = level + width * 0.5;
 
-        vtkScalarsToColors? lut = _colorMap.GetLookupTable();
+        vtkScalarsToColors? lut = colormap.GetLookupTable();
         lut.SetRange(low, high);
         lut.Build();
-        _colorMap.SetLookupTable(lut);
+        colormap.SetLookupTable(lut);
 
-        _colorMap.Modified();
+        colormap.Modified();
         Actor.Modified();
     }
 }
