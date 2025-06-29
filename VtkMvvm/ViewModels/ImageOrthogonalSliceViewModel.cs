@@ -7,9 +7,9 @@ namespace VtkMvvm.ViewModels;
 /// <summary>
 /// Leverage VTK image actor instead of reslicing the image. Simpler and suitable for orthogonal slices.
 /// </summary>
-public class ImageOrthogonalSliceViewModel : VtkElementViewModel
+public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
-    private readonly ColoredImagePipeline _pipeline;
+    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private int _sliceIndex = int.MinValue;
     private double _windowLevel;
     private double _windowWidth;
@@ -17,12 +17,11 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
     public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline)
     {
         Orientation = orientation;
-        _pipeline = pipeline;
         
         vtkImageActor actor = vtkImageActor.New();
         Actor = actor;
         ImageModel = ImageModel.Create(pipeline.Image);
-        pipeline.Connect(actor);
+        pipeline.Connect(_cmap, actor);
 
         // SetSliceIndex here is necessary.
         // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
@@ -107,17 +106,15 @@ public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 
     private void SetWindowBand(double level, double width)
     {
-        var colormap = _pipeline.ColorMap;
-        
         double low = level - width * 0.5;
         double high = level + width * 0.5;
 
-        vtkScalarsToColors? lut = colormap.GetLookupTable();
+        vtkScalarsToColors? lut = _cmap.GetLookupTable();
         lut.SetRange(low, high);
         lut.Build();
-        colormap.SetLookupTable(lut);
+        _cmap.SetLookupTable(lut);
 
-        colormap.Modified();
+        _cmap.Modified();
         Actor.Modified();
     }
 }

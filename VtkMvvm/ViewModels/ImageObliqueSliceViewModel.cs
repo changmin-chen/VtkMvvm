@@ -8,8 +8,8 @@ namespace VtkMvvm.ViewModels;
 
 public class ImageObliqueSliceViewModel : VtkElementViewModel
 {
-    private readonly ColoredImagePipeline _pipeline;
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
+    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New();
     private readonly double[] _imgCentre;
     private readonly double[] _imgBounds;
@@ -29,8 +29,6 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         Quaternion orientation,
         ColoredImagePipeline pipeline)
     {
-        _pipeline = pipeline;
-
         vtkImageData image = pipeline.Image;
         ImageModel = ImageModel.Create(pipeline.Image);
         _imgCentre = image.GetCenter();
@@ -46,7 +44,7 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         // Connect pipeline: Reslice → ColorMap → Actor. 
         vtkImageActor actor = vtkImageActor.New();
         Actor = actor;
-        pipeline.ConnectWithReslice(actor, _reslice);
+        pipeline.ConnectWithReslice(_cmap, _reslice, actor);
 
         // orientation also sets step size and slider limits
         SliceOrientation = orientation;

@@ -54,16 +54,16 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             .WithLinearInterpolation(false)
             .WithRgbaLookupTable(_labelMapLut);
 
-        ImageOrthogonalSliceViewModel axialVm = new(SliceOrientation.Axial, bgPipeBuilder.Build());
-        ImageOrthogonalSliceViewModel labelAxialVm = new(SliceOrientation.Axial, labelMapPipeBuilder.Build());
+        var axialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipeBuilder.Build());
+        var labelAxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipeBuilder.Build());
         AxialVms = [axialVm, labelAxialVm];
 
-        ImageOrthogonalSliceViewModel coronalVm = new(SliceOrientation.Coronal, bgPipeBuilder.Build());
-        ImageOrthogonalSliceViewModel labelCoronalVm = new(SliceOrientation.Coronal, labelMapPipeBuilder.Build());
+        var coronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, bgPipeBuilder.Build());
+        var labelCoronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, labelMapPipeBuilder.Build());
         CoronalVms = [coronalVm, labelCoronalVm];
 
-        ImageOrthogonalSliceViewModel sagittalVm = new(SliceOrientation.Sagittal, bgPipeBuilder.Build());
-        ImageOrthogonalSliceViewModel labelSagittalVm = new(SliceOrientation.Sagittal, labelMapPipeBuilder.Build());
+        var sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, bgPipeBuilder.Build());
+        var labelSagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipeBuilder.Build());
         SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Add brushes that render on top of the image
@@ -83,7 +83,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(sagittalVm.Actor);
 
         // Overlay VMs: Crosshair and Brush
-        var bounds = Bounds.FromArray(_background.GetBounds()); 
+        var bounds = Bounds.FromArray(_background.GetBounds());
         _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
         _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);

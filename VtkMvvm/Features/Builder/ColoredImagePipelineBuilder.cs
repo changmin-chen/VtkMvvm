@@ -15,7 +15,7 @@ public class ColoredImagePipelineBuilder
     private vtkLookupTable? _rgbaLookupTable; // null means Luminance
 
     private ColoredImagePipelineBuilder(vtkImageData image) => _image = image;
-    
+
     public static ColoredImagePipelineBuilder WithSharedImage(vtkImageData image) => new(image);
 
     private vtkLookupTable CreateDefaultGrayLut()
@@ -43,22 +43,9 @@ public class ColoredImagePipelineBuilder
 
     public ColoredImagePipeline Build()
     {
-        // 1) Create fresh colormap instances
-        var colorMap = vtkImageMapToColors.New();
+        bool isRgba = _rgbaLookupTable != null;
+        vtkLookupTable lut = _rgbaLookupTable ??= CreateDefaultGrayLut();
 
-        // 2) Configure the lookup table
-        if (_rgbaLookupTable is not null)
-        {
-            colorMap.SetLookupTable(_rgbaLookupTable);
-            colorMap.SetOutputFormatToRGBA();
-        }
-        else
-        {
-            var grayLut = CreateDefaultGrayLut();
-            colorMap.SetLookupTable(grayLut);
-            colorMap.SetOutputFormatToLuminance();
-        }
-
-        return new ColoredImagePipeline(_image, colorMap, _linearInterpolation);
+        return new ColoredImagePipeline(_image, lut, isRgba, _linearInterpolation);
     }
 }

@@ -34,9 +34,8 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
 
         var bgBuilder = ColoredImagePipelineBuilder
-            .WithSharedImage(_background)
-            .WithLinearInterpolation(true);
-
+            .WithSharedImage(_background);
+        
         var sliceOrientation = Quaternion.CreateFromYawPitchRoll(
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),

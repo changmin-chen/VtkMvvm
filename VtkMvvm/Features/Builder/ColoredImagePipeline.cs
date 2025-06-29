@@ -10,32 +10,51 @@ namespace VtkMvvm.Features.Builder;
 /// </summary>
 public record ColoredImagePipeline(
     vtkImageData Image,
-    vtkImageMapToColors ColorMap,
+    vtkLookupTable LookupTable,
+    bool IsRgba,
     bool IsLinearInterpolationOn
 )
 {
     /// <summary>
     ///     Connect pipeline: Image -> ColorMap -> Actor
     /// </summary>
-    internal void Connect(vtkImageActor actor)
+    internal void Connect(vtkImageMapToColors mapToColors, vtkImageActor actor)
     {
-        ColorMap.SetInput(Image);
-        actor.SetInput(ColorMap.GetOutput());
+        ConfigureColormap(mapToColors);
+        
+        mapToColors.SetInput(Image);
+        actor.SetInput(mapToColors.GetOutput());
 
         if (IsLinearInterpolationOn) actor.InterpolateOn();
         else actor.InterpolateOff();
     }
-    
+
     /// <summary>
     /// Connect pipeline: Reslice → ColorMap → Actor
     /// </summary>
-    internal void ConnectWithReslice(vtkImageActor actor, vtkImageReslice reslice)
+    internal void ConnectWithReslice(vtkImageMapToColors mapToColors, vtkImageReslice reslice, vtkImageActor actor)
     {
-        reslice.SetInput(Image);
-        ColorMap.SetInputConnection(reslice.GetOutputPort());
-        actor.SetInput(ColorMap.GetOutput());
+        ConfigureColormap(mapToColors);
         
+        reslice.SetInput(Image);
+        mapToColors.SetInputConnection(reslice.GetOutputPort());
+        actor.SetInput(mapToColors.GetOutput());
+
         if (IsLinearInterpolationOn) actor.InterpolateOn();
         else actor.InterpolateOff();
+    }
+
+    private void ConfigureColormap(vtkImageMapToColors mapToColors)
+    {
+        mapToColors.SetLookupTable(LookupTable);
+
+        if (IsRgba)
+        {
+            mapToColors.SetOutputFormatToRGBA();
+        }
+        else
+        {
+            mapToColors.SetOutputFormatToLuminance();
+        }
     }
 }
