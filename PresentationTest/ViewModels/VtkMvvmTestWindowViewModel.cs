@@ -20,9 +20,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly int[] _backgroundDims;
 
     // Cross hair overlay
-    private readonly CrosshairOrthoViewModel _axialCrosshairVm;
-    private readonly CrosshairOrthoViewModel _coronalCrosshairVm;
-    private readonly CrosshairOrthoViewModel _sagittalCrosshairVm;
+    private readonly CrosshairViewModel _axialCrosshairVm;
+    private readonly CrosshairViewModel _coronalCrosshairVm;
+    private readonly CrosshairViewModel _sagittalCrosshairVm;
 
     // Brush
     private readonly vtkImageData _labelMap;
@@ -43,29 +43,27 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _backgroundDims = _background.GetDimensions();
 
         // Build the shared background image pipeline
-        var bgPipe = ColoredImagePipelineBuilder
+        var bgPipeBuilder = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
-            .WithLinearInterpolation(true)
-            .Build();
+            .WithLinearInterpolation(true);
 
         // Build the shared labelmap image pipeline
         _labelMap = CreateLabelMap(_background);
-        var labelMapPipe = ColoredImagePipelineBuilder
+        var labelMapPipeBuilder = ColoredImagePipelineBuilder
             .WithSharedImage(_labelMap)
             .WithLinearInterpolation(false)
-            .WithRgbaLookupTable(_labelMapLut)
-            .Build();
+            .WithRgbaLookupTable(_labelMapLut);
 
-        ImageOrthogonalSliceViewModel axialVm = new(SliceOrientation.Axial, bgPipe);
-        ImageOrthogonalSliceViewModel labelAxialVm = new(SliceOrientation.Axial, labelMapPipe);
+        ImageOrthogonalSliceViewModel axialVm = new(SliceOrientation.Axial, bgPipeBuilder.Build());
+        ImageOrthogonalSliceViewModel labelAxialVm = new(SliceOrientation.Axial, labelMapPipeBuilder.Build());
         AxialVms = [axialVm, labelAxialVm];
 
-        ImageOrthogonalSliceViewModel coronalVm = new(SliceOrientation.Coronal, bgPipe);
-        ImageOrthogonalSliceViewModel labelCoronalVm = new(SliceOrientation.Coronal, labelMapPipe);
+        ImageOrthogonalSliceViewModel coronalVm = new(SliceOrientation.Coronal, bgPipeBuilder.Build());
+        ImageOrthogonalSliceViewModel labelCoronalVm = new(SliceOrientation.Coronal, labelMapPipeBuilder.Build());
         CoronalVms = [coronalVm, labelCoronalVm];
 
-        ImageOrthogonalSliceViewModel sagittalVm = new(SliceOrientation.Sagittal, bgPipe);
-        ImageOrthogonalSliceViewModel labelSagittalVm = new(SliceOrientation.Sagittal, labelMapPipe);
+        ImageOrthogonalSliceViewModel sagittalVm = new(SliceOrientation.Sagittal, bgPipeBuilder.Build());
+        ImageOrthogonalSliceViewModel labelSagittalVm = new(SliceOrientation.Sagittal, labelMapPipeBuilder.Build());
         SagittalVms = [sagittalVm, labelSagittalVm];
 
         // Add brushes that render on top of the image
@@ -85,11 +83,10 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(sagittalVm.Actor);
 
         // Overlay VMs: Crosshair and Brush
-        var bounds = _background.GetBounds();
-
-        _axialCrosshairVm = new CrosshairOrthoViewModel(SliceOrientation.Axial, bounds);
-        _coronalCrosshairVm = new CrosshairOrthoViewModel(SliceOrientation.Coronal, bounds);
-        _sagittalCrosshairVm = new CrosshairOrthoViewModel(SliceOrientation.Sagittal, bounds);
+        var bounds = Bounds.FromArray(_background.GetBounds()); 
+        _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
+        _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
+        _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
         AxialOverlayVms = [BrushVm, _axialCrosshairVm];
         CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
         SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];

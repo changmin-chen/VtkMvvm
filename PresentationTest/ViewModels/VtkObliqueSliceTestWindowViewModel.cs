@@ -30,30 +30,28 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
     public VtkObliqueSliceTestWindowViewModel()
     {
         UpdateSliceOrientationCommand = new DelegateCommand(UpdateSliceOrientation);
-        
+
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
 
         var bgBuilder = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
             .WithLinearInterpolation(true);
-        
-        ColoredImagePipeline pipe = bgBuilder.Build();
 
         var sliceOrientation = Quaternion.CreateFromYawPitchRoll(
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
-        var obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, pipe);
-        
+        var obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgBuilder.Build());
+
         // Pick list
         _picker.SetTolerance(0.005);
         _picker.PickFromListOn();
         _picker.AddPickList(obliqueVm.Actor);
-        
+
         // Initialize ViewModels
         ObliqueImageVm = obliqueVm;
         var lineBounds = obliqueVm.GetSliceBounds();
-        CrosshairVm = new CrosshairViewModel(Double3.UnitX, Double3.UnitY, lineBounds);
+        CrosshairVm = CrosshairViewModel.Create(Double3.UnitX, Double3.UnitY, lineBounds);
     }
 
     public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
