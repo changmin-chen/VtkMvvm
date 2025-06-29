@@ -22,8 +22,7 @@ public sealed class CrosshairViewModel : VtkElementViewModel
 
     private Double3 _focalPoint;
     private float _lineWidth = 1.5F;
-
-
+    
     private CrosshairViewModel(
         Double3 uDir,
         Double3 vDir,
@@ -39,11 +38,11 @@ public sealed class CrosshairViewModel : VtkElementViewModel
         _append.AddInputConnection(_lineV.GetOutputPort());
         _mapper.SetInputConnection(_append.GetOutputPort());
 
-        vtkActor act = vtkActor.New();
-        act.SetMapper(_mapper);
-        act.GetProperty().SetColor(1, 0, 0); // red
-        act.GetProperty().SetLineWidth(_lineWidth);
-        Actor = act;
+        vtkActor actor = vtkActor.New();
+        actor.SetMapper(_mapper);
+        actor.GetProperty().SetColor(1, 0, 0); // red
+        actor.GetProperty().SetLineWidth(_lineWidth);
+        Actor = actor;
 
         // Initialize the focal point to bounds center
         FocalPoint = lineBounds.Center;
