@@ -9,6 +9,11 @@ namespace VtkMvvm.ViewModels;
 /// Call <see cref="UpdateFromDirectionCosines"/> every time the slice
 /// orientation changes (e.g., user rotates an oblique view).
 /// </summary>
+/// <remarks>
+/// This class assumes the VTK RAS orientation scene setup.
+/// If you set the vtkCamera to have negative ViewUp value or looking from opposite direction,
+/// the label currently won't sync with camera and will be placed at wrong opposite side!!! 
+/// </remarks>
 public sealed class OrientationLabelsViewModel : VtkElementViewModel
 {
     private readonly vtkPropAssembly _assembly = vtkPropAssembly.New();
@@ -116,11 +121,12 @@ public sealed class OrientationLabelsViewModel : VtkElementViewModel
             majorAxis = 2;
         }
 
+        // Note that VTK use RAS system
         return majorAxis switch
         {
-            0 => n.X > 0 ? "R" : "L",
-            1 => n.Y > 0 ? "A" : "P",
-            _ => n.Z > 0 ? "H" : "F"
+            0 => n.X > 0 ? "R" : "L", // +X = Right
+            1 => n.Y > 0 ? "A" : "P", // +Y = Anterior
+            _ => n.Z > 0 ? "H" : "F" 
         };
     }
 

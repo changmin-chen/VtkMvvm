@@ -57,6 +57,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
+    public vtkCamera Camera => MainRenderer.GetActiveCamera();
 
     public void Dispose()
     {
