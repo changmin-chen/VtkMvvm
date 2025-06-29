@@ -11,7 +11,7 @@ using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
 
-namespace PresentationTest;
+namespace PresentationTest.ViewModels;
 
 public class VtkMvvmTestWindowViewModel : ReactiveObject
 {
@@ -83,10 +83,10 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(sagittalVm.Actor);
 
         // Overlay VMs: Crosshair and Brush
-        double[]? bounds = _background.GetBounds();
-        _axialCrosshairVm = new CrosshairViewModel(SliceOrientation.Axial, bounds);
-        _coronalCrosshairVm = new CrosshairViewModel(SliceOrientation.Coronal, bounds);
-        _sagittalCrosshairVm = new CrosshairViewModel(SliceOrientation.Sagittal, bounds);
+        var bounds = Bounds.FromArray(_background.GetBounds());
+        _axialCrosshairVm =  CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
+        _coronalCrosshairVm =  CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
+        _sagittalCrosshairVm =  CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
         AxialOverlayVms = [BrushVm, _axialCrosshairVm];
         CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
         SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];

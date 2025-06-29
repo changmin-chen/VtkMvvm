@@ -2,12 +2,13 @@
 using System.Reactive.Linq;
 using System.Windows;
 using Kitware.VTK;
+using PresentationTest.ViewModels;
 using ReactiveUI;
 using VtkMvvm.Controls;
 using VtkMvvm.Features.InteractorBehavior;
 using VtkMvvm.Models;
 
-namespace PresentationTest;
+namespace PresentationTest.Views;
 
 public partial class VtkMvvmTestWindow : Window
 {

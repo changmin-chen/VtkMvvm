@@ -1,17 +1,17 @@
-﻿<Window x:Class="PresentationTest.VtkObliqueSliceTestWindow"
+﻿<Window x:Class="PresentationTest.Views.VtkObliqueSliceTestWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:local="clr-namespace:PresentationTest"
         xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
+        xmlns:viewModels="clr-namespace:PresentationTest.ViewModels"
         Title="VtkObliqueSliceTestWindow"
         Width="1200"
         Height="1000"
         mc:Ignorable="d">
 
     <d:Window.DataContext>
-        <local:VtkObliqueSliceTestWindowViewModel />
+        <viewModels:VtkObliqueSliceTestWindowViewModel />
     </d:Window.DataContext>
 
 
@@ -22,15 +22,21 @@
         </Grid.ColumnDefinitions>
 
         <Grid Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.Resources>
+                <Style TargetType="TextBox">
+                    <Setter Property="Width" Value="80" />
+                </Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Width" Value="80" />
+                </Style>
+            </Grid.Resources>
+
+            <!--  Change slice orientation  -->
             <StackPanel>
-                <StackPanel.Resources>
-                    <Style TargetType="TextBox">
-                        <Setter Property="Width" Value="80" />
-                    </Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Width" Value="80" />
-                    </Style>
-                </StackPanel.Resources>
 
                 <TextBlock Width="240"
                            HorizontalAlignment="Left"
@@ -50,8 +56,25 @@
                     <TextBlock Text="Roll: " />
                     <TextBox Text="{Binding RollDegrees}" />
                 </StackPanel>
-                <Button Content="Update Angle" Command="{Binding UpdateSlicingAngleCommand}" />
+                <Button Content="Update Angle" Command="{Binding UpdateSliceOrientationCommand}" />
             </StackPanel>
+            
+            <!-- Setting cross hair visuals -->
+            <StackPanel Grid.Row="1" Margin="0 32">
+
+                <TextBlock Width="240"
+                           HorizontalAlignment="Left"
+                           Text="Cross hair setting"
+                           FontWeight="Bold"
+                           FontSize="12" />
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Width: " />
+                    <TextBox Text="{Binding CrosshairVm.LineWidth}" />
+                </StackPanel>
+                
+            </StackPanel>
+            
         </Grid>
 
         <Grid Column="1">
@@ -61,7 +84,8 @@
             </Grid.RowDefinitions>
             <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
                                                   Grid.Row="0"
-                                                  SceneObjects="{Binding ImageVms}" />
+                                                  SceneObjects="{Binding ObliqueImageVms}"
+                                                  OverlayObjects="{Binding ObliqueOverlayVms}" />
             <StackPanel Grid.Row="1"
                         Margin="5"
                         VerticalAlignment="Top"
@@ -71,8 +95,8 @@
                            Text="Slice:"
                            Foreground="White" />
                 <Slider Width="200"
-                        Minimum="{Binding ImageVms[0].MinSliceIndex}"
-                        Maximum="{Binding ImageVms[0].MaxSliceIndex}"
+                        Minimum="{Binding ObliqueImageVms[0].MinSliceIndex}"
+                        Maximum="{Binding ObliqueImageVms[0].MaxSliceIndex}"
                         IsSnapToTickEnabled="True"
                         Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
 
@@ -88,13 +112,13 @@
                                Text="Min:"
                                Foreground="White" />
                     <TextBlock Margin="0,5,5,0"
-                               Text="{Binding ImageVms[0].MinSliceIndex}"
+                               Text="{Binding ObliqueImageVms[0].MinSliceIndex}"
                                Foreground="White" />
                     <TextBlock Margin="0,5,5,0"
                                Text="Max:"
                                Foreground="White" />
                     <TextBlock Margin="0,5,5,0"
-                               Text="{Binding ImageVms[0].MaxSliceIndex}"
+                               Text="{Binding ObliqueImageVms[0].MaxSliceIndex}"
                                Foreground="White" />
                 </StackPanel>
 

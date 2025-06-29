@@ -14,7 +14,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 {
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
-        typeof(IList<VtkElementViewModel>),
+        typeof(IList<ImageObliqueSliceViewModel>),
         typeof(VtkObliqueImageSceneControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
@@ -90,6 +90,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         // Render overlays onto the main renderer
         MainRenderer.SetLayer(0);
         OverlayRenderer.SetLayer(1);
+        OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
         RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
@@ -128,17 +129,17 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
-        control.UpdateSlices((IList<VtkElementViewModel>)e.OldValue, (IList<VtkElementViewModel>)e.NewValue);
+        control.UpdateSlices((IList<ImageObliqueSliceViewModel>)e.OldValue, (IList<ImageObliqueSliceViewModel>)e.NewValue);
     }
 
     private void UpdateSlices(
-        IList<VtkElementViewModel>? oldSceneObjects,
-        IList<VtkElementViewModel>? newSceneObjects)
+        IList<ImageObliqueSliceViewModel>? oldSceneObjects,
+        IList<ImageObliqueSliceViewModel>? newSceneObjects)
     {
         // ----- 1. Remove & unsubscribe old stuff -----
         if (oldSceneObjects != null)
         {
-            foreach (VtkElementViewModel item in oldSceneObjects)
+            foreach (ImageObliqueSliceViewModel item in oldSceneObjects)
                 UnHookActor(MainRenderer, item);
         }
 
@@ -149,7 +150,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         }
 
         // ----- 2. Add & subscribe new stuff -----
-        foreach (VtkElementViewModel item in newSceneObjects)
+        foreach (ImageObliqueSliceViewModel item in newSceneObjects)
             HookActor(MainRenderer, item);
 
         // ----- 3. Camera magic (use the first slice as reference) -----

@@ -20,18 +20,7 @@
         <IsPublishable>True</IsPublishable>
     </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Activiz.NET.x64" />
-        <PackageReference Include="Prism.DryIoc" />
-        <PackageReference Include="Prism.Wpf" />
-        <PackageReference Include="ReactiveUI.Fody" />
-        <PackageReference Include="ReactiveUI.Validation" />
-        <PackageReference Include="ReactiveUI.WPF" />
-        <PackageReference Include="SimpleITK-win64-CSharp-x64"/>
-    </ItemGroup>
-
     
-
     <ItemGroup>
         <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
     </ItemGroup>
@@ -42,6 +31,30 @@
         <None Update="TestData\CT_Abdo.nii.gz">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+
+    
+
+    <ItemGroup>
+      <Page Update="Views\VtkMvvmTestWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+      <Page Update="Views\VtkObliqueSliceTestWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+    </ItemGroup>
+
+    
+
+    <ItemGroup>
+      <PackageReference Include="Prism.DryIoc" Version="9.0.537" />
+      <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
+      <PackageReference Include="ReactiveUI.WPF" Version="20.4.1" />
+      <PackageReference Include="SimpleITK-win64-CSharp-x64" Version="1.0.0.1" />
     </ItemGroup>
 
 
