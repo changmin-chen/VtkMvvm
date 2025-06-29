@@ -20,7 +20,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
     private int _obliqueSliceIndex;
     public ImageObliqueSliceViewModel ObliqueImageVm { get; private set; }
-    public CrosshairWorldViewModel CrosshairVm { get; }
+    public CrosshairViewModel CrosshairVm { get; }
     public ImmutableList<ImageObliqueSliceViewModel> ObliqueImageVms => [ObliqueImageVm];
     public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [CrosshairVm];
     [Reactive] public float YawDegrees { get; set; } = -20;
@@ -54,7 +54,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         // Initialize ViewModels
         ObliqueImageVm = obliqueVm;
         var lineBounds = obliqueVm.GetSliceBounds();
-        CrosshairVm = new CrosshairWorldViewModel(Double3.UnitX, Double3.UnitY, lineBounds);
+        CrosshairVm = new CrosshairViewModel(Double3.UnitX, Double3.UnitY, lineBounds);
     }
 
     public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
