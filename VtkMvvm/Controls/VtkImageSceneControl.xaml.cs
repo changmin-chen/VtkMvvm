@@ -94,6 +94,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     public void Dispose()
     {
+        _orientationBehaviour?.Dispose();
+        
         if (SceneObjects is { } objects)
         {
             foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
