@@ -19,11 +19,10 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly vtkImageData _background;
     private readonly int[] _backgroundDims;
 
-    // Cross hair overlay
-    private readonly CrosshairViewModel _axialCrosshairVm;
-    private readonly CrosshairViewModel _coronalCrosshairVm;
-    private readonly CrosshairViewModel _sagittalCrosshairVm;
-
+    // Overlay: crosshairs, slice-labels, brush
+    private readonly CrosshairViewModel _axialCrosshairVm, _coronalCrosshairVm, _sagittalCrosshairVm;
+    private readonly OrientationLabelsViewModel _axialSliceLabel, _coronalSliceLabel, _sagittalSliceLabel;
+    
     // Brush
     private readonly vtkImageData _labelMap;
     private readonly vtkLookupTable _labelMapLut = LabelMapLookupTable.NewTable();
@@ -47,7 +46,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             .WithSharedImage(_background)
             .WithLinearInterpolation(true)
             .Build();
-        
+
         // Build the shared labelmap image pipeline
         _labelMap = CreateLabelMap(_background);
         var labelMapPipe = ColoredImagePipelineBuilder
@@ -84,14 +83,20 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(coronalVm.Actor);
         _picker.AddPickList(sagittalVm.Actor);
 
-        // Overlay VMs: Crosshair and Brush
+        // Overlay ViewModels: Crosshair and Brush
         var bounds = Bounds.FromArray(_background.GetBounds());
         _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
         _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
-        AxialOverlayVms = [BrushVm, _axialCrosshairVm];
-        CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
-        SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];
+        _axialSliceLabel = OrientationLabelsViewModel.Create();
+        _coronalSliceLabel = OrientationLabelsViewModel.Create();
+        _sagittalSliceLabel = OrientationLabelsViewModel.Create();
+        _axialSliceLabel.UpdateFromOrientation(SliceOrientation.Axial);
+        _coronalSliceLabel.UpdateFromOrientation(SliceOrientation.Coronal);
+        _sagittalSliceLabel.UpdateFromOrientation(SliceOrientation.Sagittal);
+        AxialOverlayVms = [BrushVm, _axialCrosshairVm, _axialSliceLabel];
+        CoronalOverlayVms = [BrushVm, _coronalCrosshairVm, _coronalSliceLabel];
+        SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm, _sagittalSliceLabel];
 
         // Commands
         SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
