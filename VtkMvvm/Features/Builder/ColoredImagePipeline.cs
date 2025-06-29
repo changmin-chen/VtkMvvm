@@ -5,10 +5,10 @@ namespace VtkMvvm.Features.Builder;
 
 /// <summary>
 /// DTO for the shared vtk image pipeline with color mapping.
-/// The components may be shared across multiple <see cref="VtkElementViewModel"/>.
+/// The image data may be shared across multiple <see cref="VtkElementViewModel"/>.
 /// So the ViewModel should not dispose them. 
 /// </summary>
-public record ColoredImagePipeline(
+public sealed record ColoredImagePipeline(
     vtkImageData Image,
     vtkLookupTable LookupTable,
     bool IsRgba,
@@ -21,7 +21,7 @@ public record ColoredImagePipeline(
     internal void Connect(vtkImageMapToColors mapToColors, vtkImageActor actor)
     {
         ConfigureColormap(mapToColors);
-        
+
         mapToColors.SetInput(Image);
         actor.SetInput(mapToColors.GetOutput());
 
@@ -35,7 +35,7 @@ public record ColoredImagePipeline(
     internal void ConnectWithReslice(vtkImageMapToColors mapToColors, vtkImageReslice reslice, vtkImageActor actor)
     {
         ConfigureColormap(mapToColors);
-        
+
         reslice.SetInput(Image);
         mapToColors.SetInputConnection(reslice.GetOutputPort());
         actor.SetInput(mapToColors.GetOutput());
