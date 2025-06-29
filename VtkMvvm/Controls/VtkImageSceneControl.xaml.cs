@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Numerics;
 using System.Windows;
 using System.Windows.Threading;
 using Kitware.VTK;
@@ -64,28 +63,10 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         // ── orientation labels (Option 1) ───────────────────────────────
         _orientationBehaviour = new OrientationLabelBehaviour(
             OverlayRenderer, // render layer 1
-            MainRenderer.GetActiveCamera(), // same camera
-            RowDirFor(Orientation), // see helpers below
-            ColDirFor(Orientation));
+            MainRenderer.GetActiveCamera());
 
         _isLoaded = true;
     }
-
-    private static Vector3 RowDirFor(SliceOrientation o) => o switch
-    {
-        SliceOrientation.Axial => Vector3.UnitX,
-        SliceOrientation.Coronal => Vector3.UnitX,
-        SliceOrientation.Sagittal => Vector3.UnitY,
-        _ => throw new ArgumentOutOfRangeException(nameof(o))
-    };
-
-    private static Vector3 ColDirFor(SliceOrientation o) => o switch
-    {
-        SliceOrientation.Axial => Vector3.UnitY,
-        SliceOrientation.Coronal => Vector3.UnitZ,
-        SliceOrientation.Sagittal => Vector3.UnitZ,
-        _ => throw new ArgumentOutOfRangeException(nameof(o))
-    };
 
 
     public IList<ImageOrthogonalSliceViewModel>? SceneObjects

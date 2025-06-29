@@ -4,39 +4,46 @@ using Kitware.VTK;
 namespace VtkMvvm.Controls;
 
 /// <summary>
-/// Pure-view helper that adds R/L/A/P/S/I labels to an overlay renderer
-/// and keeps them in sync with the camera roll / flip.
+/// Draws four orientation labels (R / L / A / P / S / I) on
+/// overlay renderer and keeps them aligned with the
+/// patient axes for any camera roll / flip. Uses LPS convention.
 /// </summary>
 public sealed class OrientationLabelBehaviour : IDisposable
 {
     private readonly vtkRenderer _overlay;
-    private readonly vtkTextActor _rowPos, _rowNeg, _colPos, _colNeg;
-    private readonly Vector3 _rowDir, _colDir; // slice axes (+u, +v) in world
     private readonly vtkCamera _cam;
 
-    public OrientationLabelBehaviour(
-        vtkRenderer overlay,
-        vtkCamera cam,
-        Vector3 rowDir, // +u axis   (e.g. +X on axial)
-        Vector3 colDir) // +v axis   (e.g. +Y on axial)
+    private readonly vtkTextActor _lblRight;
+    private readonly vtkTextActor _lblLeft;
+    private readonly vtkTextActor _lblTop;
+    private readonly vtkTextActor _lblBottom;
+
+    // 6 patient-axis unit vectors.
+    // Assume image come from DICOM (LPS): +X=L, +Y=P, +Z=S
+    private static readonly (string Tag, Vector3 Dir)[] PatientAxes =
+    [
+        ("L", Vector3.UnitX),
+        ("R", -Vector3.UnitX),
+        ("P", Vector3.UnitY),
+        ("A", -Vector3.UnitY),
+        ("S", Vector3.UnitZ),
+        ("I", -Vector3.UnitZ)
+    ];
+
+    public OrientationLabelBehaviour(vtkRenderer overlay, vtkCamera cam)
     {
         _overlay = overlay ?? throw new ArgumentNullException(nameof(overlay));
         _cam = cam ?? throw new ArgumentNullException(nameof(cam));
 
-        _rowDir = Vector3.Normalize(rowDir);
-        _colDir = Vector3.Normalize(colDir);
-
-        (_rowPos, _rowNeg, _colPos, _colNeg) = CreateActors();
-        UpdateLabels();
-        UpdatePlacement(null, null); // initial
-
-        _cam.ModifiedEvt += UpdatePlacement; // react to rolls / flips
+        (_lblRight, _lblLeft, _lblTop, _lblBottom) = MakeActors();
+        UpdateLabels(null, null); // initial placement
+        _cam.ModifiedEvt += UpdateLabels; // follow every roll / flip
     }
 
     public void Dispose()
     {
-        _cam.ModifiedEvt -= UpdatePlacement;
-        foreach (var a in new[] { _rowPos, _rowNeg, _colPos, _colNeg })
+        _cam.ModifiedEvt -= UpdateLabels;
+        foreach (var a in new[] { _lblRight, _lblLeft, _lblTop, _lblBottom })
             a.Dispose();
     }
 
@@ -44,14 +51,14 @@ public sealed class OrientationLabelBehaviour : IDisposable
 
     #region helpers
 
-    private (vtkTextActor, vtkTextActor, vtkTextActor, vtkTextActor) CreateActors()
+    private (vtkTextActor, vtkTextActor, vtkTextActor, vtkTextActor) MakeActors()
     {
         vtkTextActor Make()
         {
             var t = vtkTextActor.New();
             t.GetTextProperty().SetFontFamilyToCourier();
-            t.GetTextProperty().SetFontSize(18);
-            t.GetTextProperty().SetColor(1, 1, 1); // white text on viewer
+            t.GetTextProperty().SetFontSize(24);
+            t.GetTextProperty().SetColor(1, 0, 0); // red
             _overlay.AddActor2D(t);
             return t;
         }
@@ -59,63 +66,50 @@ public sealed class OrientationLabelBehaviour : IDisposable
         return (Make(), Make(), Make(), Make());
     }
 
-    private void UpdateLabels()
+    /// Re-positions every label after ANY camera change.
+    private void UpdateLabels(vtkObject? s, vtkObjectEventArgs? e)
     {
-        _rowPos.SetInput(TagFor(_rowDir)); // e.g. "R"
-        _rowNeg.SetInput(TagFor(-_rowDir)); // e.g. "L"
-        _colPos.SetInput(TagFor(_colDir)); // e.g. "A"
-        _colNeg.SetInput(TagFor(-_colDir)); // e.g. "P"
-    }
+        // 1.  Display coords of the slice centre (focal point)
+        double[] f = _cam.GetFocalPoint();
+        var dispCentre = WorldToDisplay(f);
 
-    /// <summary>
-    /// Re-home every label whenever the camera rolls / flips.
-    /// Works for any oblique view because we project axes into
-    /// screen-space and decide *per axis* whether it is “more
-    /// horizontal” or “more vertical”.
-    /// </summary>
-    private void UpdatePlacement(vtkObject? sender, vtkObjectEventArgs? e)
-    {
-        // --- screen basis ------------------------------------------------
-        Vector3 vpn = ToV3(_cam.GetViewPlaneNormal()); // toward viewer
-        Vector3 vup = Vector3.Normalize(ToV3(_cam.GetViewUp()));
-        Vector3 right = Vector3.Normalize(Vector3.Cross(vpn, vup));
+        // 2.  Map each patient axis to screen Δ(x,y)
+        var screenVectors = PatientAxes.Select(ax =>
+        {
+            var p = new[] { f[0] + ax.Dir.X, f[1] + ax.Dir.Y, f[2] + ax.Dir.Z };
+            var d = WorldToDisplay(p);
 
-        // --- decide which axis is horizontal vs vertical -----------------
-        bool rowIsHoriz = Math.Abs(Vector3.Dot(_rowDir, right)) >=
-                          Math.Abs(Vector3.Dot(_rowDir, vup));
+            return (ax.Tag,
+                dx: d.X - dispCentre.X,
+                dy: d.Y - dispCentre.Y);
+        }).ToArray();
 
-        // place row-axis labels
-        PlaceAxis(_rowDir, _rowPos, _rowNeg, rowIsHoriz, right, vup);
+        // 3.  Pick ONE tag per edge (max |Δ| wins)
+        string tagRight = screenVectors.MaxBy(v => v.dx).Tag;
+        string tagLeft = screenVectors.MinBy(v => v.dx).Tag;
+        string tagTop = screenVectors.MaxBy(v => v.dy).Tag;
+        string tagBottom = screenVectors.MinBy(v => v.dy).Tag;
 
-        // col-axis is orthogonal → if row is horiz, col is vert, and vice-versa
-        bool colIsHoriz = !rowIsHoriz;
-        PlaceAxis(_colDir, _colPos, _colNeg, colIsHoriz, right, vup);
+        _lblRight.SetInput(tagRight);
+        _lblLeft.SetInput(tagLeft);
+        _lblTop.SetInput(tagTop);
+        _lblBottom.SetInput(tagBottom);
+
+        // 4.  Update positions (normalised viewport)
+        Place(_lblRight, 0.97, 0.50);
+        Place(_lblLeft, 0.03, 0.50);
+        Place(_lblTop, 0.50, 0.97);
+        Place(_lblBottom, 0.50, 0.03);
 
         _overlay.Modified(); // redraw overlay only
     }
 
-    /// Places the “positive” / “negative” label pair of ONE axis
-    private static void PlaceAxis(
-        Vector3 axisDir,
-        vtkTextActor posLabel,
-        vtkTextActor negLabel,
-        bool axisIsHoriz,
-        Vector3 right,
-        Vector3 up)
+    private Vector3 WorldToDisplay(IReadOnlyList<double> world)
     {
-        double mid = 0.50;
-        if (axisIsHoriz)
-        {
-            bool posGoesRight = Vector3.Dot(axisDir, right) >= 0;
-            Place(posGoesRight ? posLabel : negLabel, 0.97, mid);
-            Place(posGoesRight ? negLabel : posLabel, 0.03, mid);
-        }
-        else
-        {
-            bool posGoesUp = Vector3.Dot(axisDir, up) >= 0;
-            Place(posGoesUp ? posLabel : negLabel, mid, 0.97);
-            Place(posGoesUp ? negLabel : posLabel, mid, 0.03);
-        }
+        _overlay.SetWorldPoint(world[0], world[1], world[2], 1.0);
+        _overlay.WorldToDisplay();
+        double[] d = _overlay.GetDisplayPoint();
+        return new Vector3((float)d[0], (float)d[1], (float)d[2]);
     }
 
     private static void Place(vtkTextActor a, double u, double v)
@@ -123,29 +117,6 @@ public sealed class OrientationLabelBehaviour : IDisposable
         var c = a.GetPositionCoordinate();
         c.SetCoordinateSystemToNormalizedViewport();
         c.SetValue(u, v);
-    }
-
-    private static Vector3 ToV3(double[] d) => new((float)d[0], (float)d[1], (float)d[2]);
-
-    // RAS mapping  (+X=R, –X=L, +Y=A, –Y=P, +Z=S, –Z=I)
-    private static string TagFor(Vector3 v)
-    {
-        v = Vector3.Normalize(v);
-        int axis = 0;
-        float max = Math.Abs(v.X);
-        if (Math.Abs(v.Y) > max)
-        {
-            axis = 1;
-            max = Math.Abs(v.Y);
-        }
-        if (Math.Abs(v.Z) > max) axis = 2;
-
-        return axis switch
-        {
-            0 => v.X > 0 ? "R" : "L",
-            1 => v.Y > 0 ? "A" : "P",
-            _ => v.Z > 0 ? "S" : "I"
-        };
     }
 
     #endregion
