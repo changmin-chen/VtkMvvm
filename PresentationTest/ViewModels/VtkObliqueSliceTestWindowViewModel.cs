@@ -19,12 +19,19 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
     private readonly vtkCellPicker _picker = new();
 
     private int _obliqueSliceIndex;
-    public ImageObliqueSliceViewModel ObliqueImageVm { get; private set; }
-    public CrosshairViewModel CrosshairVm { get; }
-    public ImmutableList<ImageObliqueSliceViewModel> ObliqueImageVms => [ObliqueImageVm];
-    public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [CrosshairVm];
-    [Reactive] public float YawDegrees { get; set; } = -20;
-    [Reactive] public float PitchDegrees { get; set; } = -20;
+
+    // Underlay: background image
+    private readonly ImageObliqueSliceViewModel _obliqueImageVm;
+
+    // Overlay: crosshair
+    private readonly CrosshairViewModel _crosshair;
+    public CrosshairViewModel CrosshairVm => _crosshair;
+
+    // Collection of VtkElementViewModel binds to VTK scene control
+    public ImmutableList<ImageObliqueSliceViewModel> ObliqueImageVms => [_obliqueImageVm];
+    public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [_crosshair];
+    [Reactive] public float YawDegrees { get; set; } = 0;
+    [Reactive] public float PitchDegrees { get; set; } = 0;
     [Reactive] public float RollDegrees { get; set; } = 45;
 
     public VtkObliqueSliceTestWindowViewModel()
@@ -36,12 +43,13 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         var bgPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
             .Build();
-        
+
         var sliceOrientation = Quaternion.CreateFromYawPitchRoll(
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
         var obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgPipe);
+
 
         // Pick list
         _picker.SetTolerance(0.005);
@@ -49,9 +57,11 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         _picker.AddPickList(obliqueVm.Actor);
 
         // Initialize ViewModels
-        ObliqueImageVm = obliqueVm;
-        var lineBounds = obliqueVm.GetSliceBounds();
-        CrosshairVm = CrosshairViewModel.Create(Double3.UnitX, Double3.UnitY, lineBounds);
+        _obliqueImageVm = obliqueVm;
+        _crosshair = CrosshairViewModel.Create(
+            obliqueVm.PlaneAxisU,
+            obliqueVm.PlaneAxisV,
+            obliqueVm.GetSliceBounds());
     }
 
     public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
@@ -81,11 +91,13 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
 
-        ObliqueImageVm.SliceOrientation = sliceOrientation;
+        _obliqueImageVm.SliceOrientation = sliceOrientation;
 
-        Bounds b = ObliqueImageVm.GetSliceBounds();
-        CrosshairVm.UpdateBounds(b);
-        Debug.WriteLine($"Slice bounds: {b}");
+        // let crosshair always being plotted onto the resliced plane
+        Bounds bounds = _obliqueImageVm.GetSliceBounds();
+        _crosshair.SetBounds(bounds);
+        Debug.WriteLine($"Slice bounds: {bounds}");
+        _crosshair.SetPlaneAxes(_obliqueImageVm.PlaneAxisU, _obliqueImageVm.PlaneAxisV);
     }
 
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)

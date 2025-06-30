@@ -21,6 +21,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     // Overlay: crosshairs, slice-labels, brush
     private readonly CrosshairViewModel _axialCrosshairVm, _coronalCrosshairVm, _sagittalCrosshairVm;
+    private readonly OrientationCubeViewModel _cubeVm = OrientationCubeViewModel.Create();
 
     // Brush
     private readonly vtkImageData _labelMap;
@@ -87,7 +88,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
         _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
-        AxialOverlayVms = [BrushVm, _axialCrosshairVm];
+        AxialOverlayVms = [BrushVm, _axialCrosshairVm, _cubeVm];
         CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
         SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];
 

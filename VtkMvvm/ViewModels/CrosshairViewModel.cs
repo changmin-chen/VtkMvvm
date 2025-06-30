@@ -1,4 +1,6 @@
-﻿using Kitware.VTK;
+﻿using System.Diagnostics;
+using System.Numerics;
+using Kitware.VTK;
 using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels;
@@ -12,8 +14,8 @@ public sealed class CrosshairViewModel : VtkElementViewModel
 {
     // ── geometry helpers ───────────────────────────────────────────
     private Bounds _bounds; // xmin, xmax, ymin, ymax, zmin, zmax
-    private Double3 _u; // first in-plane axis (unit)
-    private Double3 _v; // second in-plane axis (unit)
+    private Vector3 _u; // first in-plane axis (unit)
+    private Vector3 _v; // second in-plane axis (unit)
 
     private readonly vtkLineSource _lineU = vtkLineSource.New();
     private readonly vtkLineSource _lineV = vtkLineSource.New();
@@ -24,14 +26,14 @@ public sealed class CrosshairViewModel : VtkElementViewModel
     private float _lineWidth = 1.5F;
     
     private CrosshairViewModel(
-        Double3 uDir,
-        Double3 vDir,
+        Vector3 uDir,
+        Vector3 vDir,
         Bounds lineBounds)
     {
         _bounds = lineBounds;
 
-        _u = uDir.Normalized();
-        _v = vDir.Normalized();
+        _u = Vector3.Normalize(uDir);
+        _v = Vector3.Normalize(vDir);
 
         // VTK plumbing: U-line + V-line → append → mapper → actor
         _append.AddInputConnection(_lineU.GetOutputPort());
@@ -57,9 +59,9 @@ public sealed class CrosshairViewModel : VtkElementViewModel
     {
         return orientation switch
         {
-            SliceOrientation.Axial => new CrosshairViewModel(Double3.UnitX, Double3.UnitY, lineBounds),
-            SliceOrientation.Sagittal => new CrosshairViewModel(Double3.UnitY, Double3.UnitZ, lineBounds),
-            SliceOrientation.Coronal => new CrosshairViewModel(Double3.UnitX, Double3.UnitZ, lineBounds),
+            SliceOrientation.Axial => new CrosshairViewModel(Vector3.UnitX, Vector3.UnitY, lineBounds),
+            SliceOrientation.Sagittal => new CrosshairViewModel(Vector3.UnitY, Vector3.UnitZ, lineBounds),
+            SliceOrientation.Coronal => new CrosshairViewModel(Vector3.UnitX, Vector3.UnitZ, lineBounds),
             _ => throw new ArgumentOutOfRangeException(nameof(orientation))
         };
     }
@@ -72,7 +74,7 @@ public sealed class CrosshairViewModel : VtkElementViewModel
     /// <param name="uDir">Plane X-axis (unit)</param>
     /// <param name="vDir">Plane Y-axis (unit)</param>
     /// <param name="lineBounds">Boundary of the crosshair lines. xmin,xmax, ymin,ymax, zmin,zmax</param>
-    public static CrosshairViewModel Create(Double3 uDir, Double3 vDir, Bounds lineBounds) => new(uDir, vDir, lineBounds);
+    public static CrosshairViewModel Create(Vector3 uDir, Vector3 vDir, Bounds lineBounds) => new(uDir, vDir, lineBounds);
 
     public override vtkActor Actor { get; }
 
@@ -120,15 +122,18 @@ public sealed class CrosshairViewModel : VtkElementViewModel
     /// Change the plane orientation on-the-fly (e.g. user rotates oblique view).
     /// Provide the *new* orthonormal basis.
     /// </summary>
-    public void UpdatePlaneAxes(Double3 uDir, Double3 vDir)
+    public void SetPlaneAxes(Vector3 uDir, Vector3 vDir)
     {
-        _u = uDir.Normalized();
-        _v = vDir.Normalized();
+        _u = Vector3.Normalize(uDir);
+        _v =  Vector3.Normalize(vDir);
         RebuildLines();
         OnModified();
     }
 
-    public void UpdateBounds(Bounds lineBounds)
+    /// <summary>
+    /// Set the boundary of the crosshair bounds. 
+    /// </summary>
+    public void SetBounds(Bounds lineBounds)
     {
         _bounds = lineBounds;
         RebuildLines();
@@ -143,7 +148,7 @@ public sealed class CrosshairViewModel : VtkElementViewModel
     }
 
     private static void SetLineToBox(vtkLineSource ls,
-        in Double3 dir,
+        in Vector3 dir,
         in Double3 focal,
         Bounds bounds /* xmin,xmax,ymin,ymax,zmin,zmax */)
     {
@@ -180,7 +185,11 @@ public sealed class CrosshairViewModel : VtkElementViewModel
         Slab(fy, dy, bounds.YMin, bounds.YMax);
         Slab(fz, dz, bounds.ZMin, bounds.ZMax);
 
-        if (tMin > tMax) return; // line misses the box
+        if (tMin > tMax)
+        {
+            Debug.WriteLine($"Line misses the bounds: {bounds}. Ignore updates");
+            return;
+        }
 
         ls.SetPoint1(fx + dx * tMin, fy + dy * tMin, fz + dz * tMin);
         ls.SetPoint2(fx + dx * tMax, fy + dy * tMax, fz + dz * tMax);

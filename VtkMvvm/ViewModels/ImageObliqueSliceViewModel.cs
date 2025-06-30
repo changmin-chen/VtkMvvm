@@ -1,82 +1,68 @@
 ﻿using System.Numerics;
 using Kitware.VTK;
-using VtkMvvm.Extensions.Internal;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels;
 
-public class ImageObliqueSliceViewModel : VtkElementViewModel
+/// <summary>
+/// Oblique slice that really sits in 3-D.  Works with ActiViz/VTK 5.8
+/// (vtkImageActor + vtkTransform) and keeps the public surface identical
+/// to the original implementation so existing bindings continue to work.
+/// </summary>
+public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
 {
+    // ── VTK pipeline ────────────────────────────────────────────────
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
     private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
-    private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New();
+    private readonly vtkTransform _xfm = vtkTransform.New(); // NEW
+    private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
+    private readonly vtkImageActor _actor = vtkImageActor.New();
+
     private readonly double[] _imgCentre;
     private readonly double[] _imgBounds;
+    private readonly double[] _spacing;
 
-    /// <summary>
-    ///     distance in mm between two adjacent native slices along the chosen normal. For isotropic volumes you can just pass
-    ///     volume.GetSpacing()[0].
-    /// </summary>
-    private double _step; // Δ (mm per SliceIndex)
-
-    private int _minSliceIdx; // slider bound (-)
-    private int _maxSliceIdx; // slider bound (+)
+    // ── cached values for slider & step ─────────────────────────────
+    private double _step; // Δ mm per slice index
+    private int _minSliceIdx;
+    private int _maxSliceIdx;
     private int _sliceIndex = int.MinValue;
     private Quaternion _sliceOrientation = Quaternion.Identity;
+
 
     public ImageObliqueSliceViewModel(
         Quaternion orientation,
         ColoredImagePipeline pipeline)
     {
-        vtkImageData image = pipeline.Image;
-        ImageModel = ImageModel.Create(pipeline.Image);
-        _imgCentre = image.GetCenter();
-        _imgBounds = image.GetBounds();
+        vtkImageData volume = pipeline.Image;
 
-        // Configure reslice
-        _reslice.SetInput(image);
+        ImageModel = ImageModel.Create(volume);
+        _imgCentre = volume.GetCenter();
+        _imgBounds = volume.GetBounds();
+        _spacing = volume.GetSpacing();
+
+        // -------- reslice: 2-D image in its own XY coord system -----
+        _reslice.SetInput(volume);
         _reslice.SetInterpolationModeToLinear();
-        _reslice.AutoCropOutputOn(); // trims black borders
-        _reslice.SetOutputDimensionality(2); // 2-D slice
-        _reslice.SetBackgroundLevel(image.GetScalarRange()[0]); // fill the background with min scalar value
+        _reslice.SetOutputDimensionality(2);
+        _reslice.AutoCropOutputOn();
+        _reslice.SetBackgroundLevel(volume.GetScalarRange()[0]);
+        _reslice.SetResliceAxes(_axes); // we will fill it below
 
-        // Connect pipeline: Reslice → ColorMap → Actor. 
-        vtkImageActor actor = vtkImageActor.New();
-        Actor = actor;
-        pipeline.ConnectWithReslice(_cmap, _reslice, actor);
+        // -------- connect full display pipeline ---------------------
+        _actor.SetUserTransform(_xfm); // ***positions slice in 3-D***
+        pipeline.ConnectWithReslice(_cmap, _reslice, _actor);
+        Actor = _actor;
 
-        // orientation also sets step size and slider limits
-        SliceOrientation = orientation;
-
-        // initialise at centre slice.  
-        SliceIndex = 0;
+        // -------- initialise orientation & index --------------------
+        SliceOrientation = orientation; // sets step & slider limits
+        SliceIndex = 0; // central slice
     }
 
-    // ── Public surface identical to orthogonal VM ──
+    // ── public surface identical to the old VM ─────────────────────
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
-
-    public Bounds GetSliceBounds() 
-    {
-        _reslice.Update();
-        vtkImageData img = _reslice.GetOutput();
-        return Bounds.FromArray(img.GetBounds());
-    }
-    
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _reslice.Dispose();
-            _axes.Dispose();
-            _cmap.Dispose();
-        }
-        base.Dispose(disposing);
-    }
-
-
-    #region Bindable Properties
 
     public int SliceIndex
     {
@@ -84,11 +70,9 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         set
         {
             value = Math.Clamp(value, _minSliceIdx, _maxSliceIdx);
-            if (SetField(ref _sliceIndex, value))
-            {
-                SetSliceIndex(value);
-                OnModified();
-            }
+            if (!SetField(ref _sliceIndex, value)) return;
+            SetSliceIndex(value);
+            OnModified();
         }
     }
 
@@ -97,107 +81,150 @@ public class ImageObliqueSliceViewModel : VtkElementViewModel
         get => _sliceOrientation;
         set
         {
-            if (SetField(ref _sliceOrientation, value))
-            {
-                SetOrientation(value);
-                OnModified();
-            }
+            if (!SetField(ref _sliceOrientation, value)) return;
+            SetOrientation(value);
+            OnModified();
         }
     }
 
     public int MinSliceIndex => _minSliceIdx;
     public int MaxSliceIndex => _maxSliceIdx;
 
-    /// <summary>
-    /// vtkImageReslice expects a world → slice matrix in ResliceAxes. So we extract from row instead of column, which is mathematically inversed.
-    /// </summary>
-    public Double3 PlaneAxisU // slice X-axis in world coords
-        => new(_axes.GetElement(0, 0),
-            _axes.GetElement(0, 1),
-            _axes.GetElement(0, 2));
-
-    public Double3 PlaneAxisV // slice Y-axis in world coords
-        => new(_axes.GetElement(1, 0),
-            _axes.GetElement(1, 1),
-            _axes.GetElement(1, 2));
-
-    public Double3 PlaneNormal // slice Z-axis (normal) in world coords
-        => new(_axes.GetElement(2, 0),
-            _axes.GetElement(2, 1),
-            _axes.GetElement(2, 2));
-
-    #endregion
-
-
-    /// <summary>
-    /// Update the orientation of the reslicing quaternion and recompute the allowed slice index boundary.
-    /// </summary>
-    private void SetOrientation(Quaternion q)
+    /// <summary>World bounds of the **current** oblique slice.</summary>
+    public Bounds GetSliceBounds()
     {
-        // 1) apply the quaternion to the reslicing grid
-        using var tf = vtkTransform.New();
-        tf.Identity();
-        tf.RotateWithQuaternion(q);
+        // ── 1. Make sure the reslice knows its output geometry ─────
+        //     UpdateInformation() is cheap – no voxels are copied.
+        _reslice.UpdateInformation();
+        vtkImageData slice = _reslice.GetOutput();
 
-        vtkMatrix4x4 rot = tf.GetMatrix();
-        for (int r = 0; r < 3; ++r)
+        // ── 2. Size of the 2-D slice in its own (u,v) frame ────────
+        int[] ext = slice.GetExtent(); // (xmin,xmax, ymin,ymax, 0,0)
+        double[] sp = slice.GetSpacing(); // pixel size in mm
+        if (ext[0] > ext[1]) // still empty -> execute now
         {
-            for (int c = 0; c < 3; ++c)
-            {
-                _axes.SetElement(r, c, rot.GetElement(r, c));
-            }
+            _reslice.Update();
+            ext = slice.GetExtent();
         }
 
-        _axes.SetElement(3, 0, 0);
-        _axes.SetElement(3, 1, 0);
-        _axes.SetElement(3, 2, 0);
-        _axes.SetElement(3, 3, 1);
-        _reslice.SetResliceAxes(_axes);
-        _reslice.Modified();
+        double w = (ext[1] - ext[0] + 1) * sp[0]; // width  in mm
+        double h = (ext[3] - ext[2] + 1) * sp[1]; // height in mm
 
-        // 2) derive step Δ (mm per index) ------------------------------
-        double[] sp = ImageModel.Spacing; // (sx, sy, sz)
-        double nx = Math.Abs(_axes.GetElement(0, 2));
-        double ny = Math.Abs(_axes.GetElement(1, 2));
-        double nz = Math.Abs(_axes.GetElement(2, 2));
-        _step = nx * sp[0] + ny * sp[1] + nz * sp[2];
+        // ── 3. Four in-plane corners around the slice centre ───────
+        Double3[] local =
+        [
+            new(-w * 0.5, -h * 0.5, 0), // lower-left
+            new(w * 0.5, -h * 0.5, 0), // lower-right
+            new(w * 0.5, h * 0.5, 0), // upper-right
+            new(-w * 0.5, h * 0.5, 0) // upper-left
+        ];
 
-        // 3) support-function distance to box --------------------------
+        // ── 4. Same matrix the actor uses (slice → world) ──────────
+        vtkMatrix4x4 m = _xfm.GetMatrix();
+
+        var min = new Vector3(float.MaxValue);
+        var max = new Vector3(float.MinValue);
+
+        foreach (var p in local)
+        {
+            double x = m.GetElement(0, 0) * p.X + m.GetElement(0, 1) * p.Y + m.GetElement(0, 2) * p.Z + m.GetElement(0, 3);
+            double y = m.GetElement(1, 0) * p.X + m.GetElement(1, 1) * p.Y + m.GetElement(1, 2) * p.Z + m.GetElement(1, 3);
+            double z = m.GetElement(2, 0) * p.X + m.GetElement(2, 1) * p.Y + m.GetElement(2, 2) * p.Z + m.GetElement(2, 3);
+
+            var v = new Vector3((float)x, (float)y, (float)z);
+            min = Vector3.Min(min, v);
+            max = Vector3.Max(max, v);
+        }
+
+        return new Bounds(min.X, max.X,
+            min.Y, max.Y,
+            min.Z, max.Z);
+    }
+
+    // convenience accessors for the plane axes (unchanged API)
+    public Vector3 PlaneAxisU { get; private set; }
+    public Vector3 PlaneAxisV { get; private set; }
+    public Vector3 PlaneNormal { get; private set; }
+
+    //----------------------------------------------------------------
+    /// <summary>Apply a new orientation: updates reslice axes, step, slider range.</summary>
+    private void SetOrientation(Quaternion q)
+    {
+        q = Quaternion.Normalize(q);
+
+        // ----- raw orthonormal frame ---------------------------------
+        PlaneAxisU = Vector3.Transform(Vector3.UnitX, q); // +slice X (u)
+        PlaneAxisV = Vector3.Transform(Vector3.UnitY, q); // +slice Y (v / view-up)
+        PlaneNormal = Vector3.Transform(Vector3.UnitZ, q); // +slice Z (normal)
+
+        // -- scaled copy for reslice axes (cols = u v n) --------------
+        Vector3 u = PlaneAxisU * (float)_spacing[0];
+        Vector3 v = PlaneAxisV * (float)_spacing[1];
+        Vector3 n = PlaneNormal; // n needn’t be scaled
+
+        // ---- rotation part of 4×4 (columns = u v n) ----------------
+        for (int i = 0; i < 3; ++i)
+        {
+            _axes.SetElement(i, 0, u[i]);
+            _axes.SetElement(i, 1, v[i]);
+            _axes.SetElement(i, 2, n[i]);
+        }
+
+        // ---- distance per slice index (Δ) --------------------------
+        _step = Math.Abs(n.X) * _spacing[0] +
+                Math.Abs(n.Y) * _spacing[1] +
+                Math.Abs(n.Z) * _spacing[2];
+
+        // ---- slider limits via support-function distance -----------
         double hx = 0.5 * (_imgBounds[1] - _imgBounds[0]);
         double hy = 0.5 * (_imgBounds[3] - _imgBounds[2]);
         double hz = 0.5 * (_imgBounds[5] - _imgBounds[4]);
-        double maxDist = nx * hx + ny * hy + nz * hz;
 
+        double maxDist = Math.Abs(n.X) * hx + Math.Abs(n.Y) * hy + Math.Abs(n.Z) * hz;
         int maxIdx = (int)Math.Floor(maxDist / _step);
         _minSliceIdx = -maxIdx;
         _maxSliceIdx = maxIdx;
-
-        // notify bindings
         OnPropertyChanged(nameof(MinSliceIndex));
         OnPropertyChanged(nameof(MaxSliceIndex));
 
-        // keep the current slice index within the new range
-        SliceIndex = Math.Clamp(_sliceIndex, _minSliceIdx, _maxSliceIdx);
+        // ----- keep current index inside the new range --------------
+        _sliceIndex = Math.Clamp(_sliceIndex, _minSliceIdx, _maxSliceIdx);
+        SetSliceIndex(_sliceIndex); // ★ always update transform
     }
 
-    /// <summary>
-    /// We define 'sliceOrigin(i) = centre + n · (i · Δ)'
-    /// centre: the dataset centre (GetCenter) we chose as index 0
-    /// n: unit normal of the reslice plane (third column of the axes matrix)
-    /// Δ: physical step per index
-    /// </summary>
+    /// <summary>Move the slice plane along its normal by idx · Δ.</summary>
     private void SetSliceIndex(int idx)
     {
+        // current normal (3rd column) …
         double nx = _axes.GetElement(0, 2);
         double ny = _axes.GetElement(1, 2);
         double nz = _axes.GetElement(2, 2);
 
+        // … times step, gives translation from dataset centre
         _axes.SetElement(0, 3, _imgCentre[0] + nx * idx * _step);
         _axes.SetElement(1, 3, _imgCentre[1] + ny * idx * _step);
         _axes.SetElement(2, 3, _imgCentre[2] + nz * idx * _step);
+        _axes.SetElement(3, 3, 1);
 
+        // apply to reslice and to actor transform (so the slice shows up in 3-D)
         _reslice.SetResliceAxes(_axes);
         _reslice.Modified();
-        Actor.Modified();
+
+        _xfm.SetMatrix(_axes); // same 4×4 = slice → world
+        _xfm.Modified();
+        _actor.Modified();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _actor.Dispose();
+            _cmap.Dispose();
+            _reslice.Dispose();
+            _xfm.Dispose();
+            _axes.Dispose();
+        }
+        base.Dispose(disposing);
     }
 }

@@ -30,7 +30,7 @@ public sealed record ColoredImagePipeline(
     }
 
     /// <summary>
-    /// Connect pipeline: Reslice → ColorMap → Actor
+    /// Connect pipeline: Image -> Reslice Image → ColorMap → Actor
     /// </summary>
     internal void ConnectWithReslice(vtkImageMapToColors mapToColors, vtkImageReslice reslice, vtkImageActor actor)
     {
