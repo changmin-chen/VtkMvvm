@@ -19,14 +19,14 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
     private readonly vtkCellPicker _picker = new();
 
     private int _obliqueSliceIndex;
-    
+
     // Underlay: background image
     private readonly ImageObliqueSliceViewModel _obliqueImageVm;
-    
+
     // Overlay: crosshair
     private readonly CrosshairViewModel _crosshair;
     public CrosshairViewModel CrosshairVm => _crosshair;
-    
+
     // Collection of VtkElementViewModel binds to VTK scene control
     public ImmutableList<ImageObliqueSliceViewModel> ObliqueImageVms => [_obliqueImageVm];
     public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [_crosshair];
@@ -43,13 +43,13 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         var bgPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
             .Build();
-        
+
         var sliceOrientation = Quaternion.CreateFromYawPitchRoll(
             DegreesToRadius(YawDegrees),
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
         var obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgPipe);
-        
+
 
         // Pick list
         _picker.SetTolerance(0.005);
@@ -58,8 +58,10 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
         // Initialize ViewModels
         _obliqueImageVm = obliqueVm;
-        var lineBounds = obliqueVm.GetSliceBounds();
-        _crosshair = CrosshairViewModel.Create(Double3.UnitX, Double3.UnitY, lineBounds);
+        _crosshair = CrosshairViewModel.Create(
+            obliqueVm.PlaneAxisU,
+            obliqueVm.PlaneAxisV,
+            obliqueVm.GetSliceBounds());
     }
 
     public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
@@ -91,9 +93,11 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
         _obliqueImageVm.SliceOrientation = sliceOrientation;
 
-        Bounds b = _obliqueImageVm.GetSliceBounds();
-        _crosshair.UpdateBounds(b);
-        Debug.WriteLine($"Slice bounds: {b}");
+        // let crosshair always being plotted onto the resliced plane
+        Bounds bounds = _obliqueImageVm.GetSliceBounds();
+        _crosshair.UpdateBounds(bounds);
+        Debug.WriteLine($"Slice bounds: {bounds}");
+        _crosshair.UpdatePlaneAxes(_obliqueImageVm.PlaneAxisU, _obliqueImageVm.PlaneAxisV);
     }
 
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)
