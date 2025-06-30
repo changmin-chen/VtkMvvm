@@ -12,36 +12,42 @@ public sealed class OrientationCubeBehavior : IDisposable
     private readonly vtkAnnotatedCubeActor _cube = vtkAnnotatedCubeActor.New();
     private readonly vtkOrientationMarkerWidget _widget = vtkOrientationMarkerWidget.New();
 
-    /// <param name="renderWindow">
-    /// The window that hosts your main & overlay renderers
-    /// (e.g. <c>RenderWindowControl.RenderWindow</c>).
-    /// </param>
     public OrientationCubeBehavior(vtkRenderWindow renderWindow)
     {
-        // ── 1. Cube cosmetics ──────────────────────────────────────────────
-        _cube.SetXPlusFaceText("L"); // +X Left
-        _cube.SetXMinusFaceText("R"); // -X Right
-        _cube.SetYPlusFaceText("P"); // +Y Posterior
-        _cube.SetYMinusFaceText("A"); // -Y Anterior
-        _cube.SetZPlusFaceText("S"); // +Z Superior
-        _cube.SetZMinusFaceText("I"); // -Z Inferior
+        // ── labels ─────────────────────────────────────────────
+        _cube.SetXPlusFaceText("L");
+        _cube.SetXMinusFaceText("R");
+        _cube.SetYPlusFaceText("P");
+        _cube.SetYMinusFaceText("A");
+        _cube.SetZPlusFaceText("S");
+        _cube.SetZMinusFaceText("I");
 
-        _cube.GetTextEdgesProperty().SetColor(1, 1, 1);     // white outline
-        _cube.GetCubeProperty().SetColor(0.25, 0.25, 0.25); // dark grey
+        _cube.SetFaceTextScale(0.6);
+        _cube.GetCubeProperty().SetColor(0.25, 0.25, 0.25);
+
+        // white letters + outline
+        foreach (var prop in new[]
+                 {
+                     _cube.GetXPlusFaceProperty(), _cube.GetXMinusFaceProperty(),
+                     _cube.GetYPlusFaceProperty(), _cube.GetYMinusFaceProperty(),
+                     _cube.GetZPlusFaceProperty(), _cube.GetZMinusFaceProperty()
+                 })
+            prop.SetColor(1, 1, 1);
+
+        _cube.GetTextEdgesProperty().SetColor(1, 1, 1);
         _cube.SetTextEdgesVisibility(1);
 
-        // ── 2. Widget setup ────────────────────────────────────────────────
-        _widget.SetOrientationMarker(_cube);
+        // ── widget ─────────────────────────────────────────────
         _widget.SetInteractor(renderWindow.GetInteractor());
-        _widget.SetViewport(0.00, 0.00, 0.15, 0.15); // bottom-left 15 % of screen
-        _widget.InteractiveOff();                    // fixed in place
-        _widget.SetEnabled(1);                       // show it
+        _widget.SetOrientationMarker(_cube);
+        _widget.SetViewport(0.00, 0.00, 0.15, 0.15); // bottom-left corner
+        _widget.SetEnabled(1); // enable first!
+        _widget.InteractiveOff(); // then lock
     }
 
-    /// <summary> Uniformly scales the cube. 1 = original size. </summary>
     public double Scale
     {
-        get => _cube.GetScale()[0];        // any axis is fine – all three equal
+        get => _cube.GetScale()[0];
         set
         {
             _cube.SetScale(value);
