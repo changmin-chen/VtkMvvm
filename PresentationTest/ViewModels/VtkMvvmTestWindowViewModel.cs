@@ -1,9 +1,7 @@
-﻿using itk.simple;
-using Kitware.VTK;
-using MedXtend;
-using MedXtend.Itk;
+﻿using Kitware.VTK;
 using PresentationTest.Constants;
 using PresentationTest.Extensions;
+using PresentationTest.TestData;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using VtkMvvm.Controls;
@@ -39,12 +37,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     public VtkMvvmTestWindowViewModel()
     {
-        // _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
-        using var itkImage = SimpleITK.ReadImage(@"TestData\CT_Abdo.nii.gz");
-        using var itkOriented = itkImage.ReorientToIdentityPhysicalEquivalent();
-        var vtkOriented = itkOriented.ToOrientedVtk();
-        _background = vtkOriented;
-
+        _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
         _backgroundDims = _background.GetDimensions();
 
         // Build the shared background image pipeline
