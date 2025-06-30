@@ -14,7 +14,7 @@ namespace VtkMvvm.Controls;
 /// </summary>
 public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 {
-    private ImageObliqueSliceViewModel? _referenceSlice;
+    private ImageObliqueSliceViewModel? _referenceSlice;  // use first oblique slice as reference to place and rotate the camera
 
     // ---------- Plugins --------------------------------------- 
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
