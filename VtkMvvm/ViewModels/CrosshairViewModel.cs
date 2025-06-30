@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 using Kitware.VTK;
 using VtkMvvm.Models;
 
@@ -121,7 +122,7 @@ public sealed class CrosshairViewModel : VtkElementViewModel
     /// Change the plane orientation on-the-fly (e.g. user rotates oblique view).
     /// Provide the *new* orthonormal basis.
     /// </summary>
-    public void UpdatePlaneAxes(Vector3 uDir, Vector3 vDir)
+    public void SetPlaneAxes(Vector3 uDir, Vector3 vDir)
     {
         _u = Vector3.Normalize(uDir);
         _v =  Vector3.Normalize(vDir);
@@ -129,7 +130,10 @@ public sealed class CrosshairViewModel : VtkElementViewModel
         OnModified();
     }
 
-    public void UpdateBounds(Bounds lineBounds)
+    /// <summary>
+    /// Set the boundary of the crosshair bounds. 
+    /// </summary>
+    public void SetBounds(Bounds lineBounds)
     {
         _bounds = lineBounds;
         RebuildLines();
@@ -181,7 +185,11 @@ public sealed class CrosshairViewModel : VtkElementViewModel
         Slab(fy, dy, bounds.YMin, bounds.YMax);
         Slab(fz, dz, bounds.ZMin, bounds.ZMax);
 
-        if (tMin > tMax) return; // line misses the box
+        if (tMin > tMax)
+        {
+            Debug.WriteLine($"Line misses the bounds: {bounds}. Ignore updates");
+            return;
+        }
 
         ls.SetPoint1(fx + dx * tMin, fy + dy * tMin, fz + dz * tMin);
         ls.SetPoint2(fx + dx * tMax, fy + dy * tMax, fz + dz * tMax);

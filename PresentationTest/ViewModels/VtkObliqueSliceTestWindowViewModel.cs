@@ -95,9 +95,9 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 
         // let crosshair always being plotted onto the resliced plane
         Bounds bounds = _obliqueImageVm.GetSliceBounds();
-        _crosshair.UpdateBounds(bounds);
+        _crosshair.SetBounds(bounds);
         Debug.WriteLine($"Slice bounds: {bounds}");
-        _crosshair.UpdatePlaneAxes(_obliqueImageVm.PlaneAxisU, _obliqueImageVm.PlaneAxisV);
+        _crosshair.SetPlaneAxes(_obliqueImageVm.PlaneAxisU, _obliqueImageVm.PlaneAxisV);
     }
 
     private static void SetSliceIndex(IList<ImageObliqueSliceViewModel> vms, int sliceIndex)

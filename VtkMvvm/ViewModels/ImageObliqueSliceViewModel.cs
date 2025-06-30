@@ -101,6 +101,11 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
         // ── 2. Size of the 2-D slice in its own (u,v) frame ────────
         int[] ext = slice.GetExtent(); // (xmin,xmax, ymin,ymax, 0,0)
         double[] sp = slice.GetSpacing(); // pixel size in mm
+        if (ext[0] > ext[1]) // still empty -> execute now
+        {
+            _reslice.Update();
+            ext = slice.GetExtent();
+        }
 
         double w = (ext[1] - ext[0] + 1) * sp[0]; // width  in mm
         double h = (ext[3] - ext[2] + 1) * sp[1]; // height in mm
