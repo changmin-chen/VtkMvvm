@@ -18,7 +18,6 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
     // ---------- Plugins --------------------------------------- 
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
-    private OrientationLabelBehavior? _orientationLabels; // L,R,P,A,S,I text labels on screen edges
 
 
     // --------------------------------------------------------- 
@@ -73,11 +72,6 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
         // ── orientation cube ───────────────────────────────
         _orientationCube = new OrientationCubeBehavior(renderWindow);
-
-        // ── orientation labels ───────────────────────────────
-        _orientationLabels = new OrientationLabelBehavior(
-            OverlayRenderer,
-            MainRenderer.GetActiveCamera());
 
         _isLoaded = true;
     }
