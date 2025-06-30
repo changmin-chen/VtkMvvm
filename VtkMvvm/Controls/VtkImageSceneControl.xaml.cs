@@ -13,6 +13,9 @@ namespace VtkMvvm.Controls;
 /// </summary>
 public partial class VtkImageSceneControl : UserControl, IDisposable
 {
+    // ---------- Plugins --------------------------------------- 
+    private OrientationLabelBehavior? _orientationBehaviour;
+
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IList<ImageOrthogonalSliceViewModel>),
@@ -42,6 +45,30 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         Loaded += OnLoadedOnce;
     }
 
+    private void OnLoadedOnce(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoadedOnce;
+
+        RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
+        MainRenderer.SetBackground(0.0, 0.0, 0.0);
+
+        // Render overlays onto the main renderer
+        MainRenderer.SetLayer(0);
+        OverlayRenderer.SetLayer(1);
+        OverlayRenderer.PreserveDepthBufferOff();
+        OverlayRenderer.InteractiveOff();
+        OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
+        RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
+        RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
+
+        // ── orientation labels ───────────────────────────────
+        _orientationBehaviour = new OrientationLabelBehavior(
+            OverlayRenderer, // render layer 1
+            MainRenderer.GetActiveCamera());
+
+        _isLoaded = true;
+    }
+
 
     public IList<ImageOrthogonalSliceViewModel>? SceneObjects
     {
@@ -58,6 +85,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
+    public vtkCamera Camera => MainRenderer.GetActiveCamera();
 
     /// <summary>
     ///     Indicates the orientation of the slices so that the camera can be set up correctly.
@@ -67,6 +95,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     public void Dispose()
     {
+        _orientationBehaviour?.Dispose();
+        
         if (SceneObjects is { } objects)
         {
             foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
@@ -85,25 +115,6 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         RenderWindowControl.Dispose();
         MainRenderer.Dispose();
         OverlayRenderer.Dispose();
-    }
-
-    private void OnLoadedOnce(object sender, RoutedEventArgs e)
-    {
-        Loaded -= OnLoadedOnce;
-
-        RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
-        MainRenderer.SetBackground(0.0, 0.0, 0.0);
-
-        // Render overlays onto the main renderer
-        MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1);
-        OverlayRenderer.PreserveDepthBufferOff();
-        OverlayRenderer.InteractiveOff();
-        OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
-        RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
-        RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
-
-        _isLoaded = true;
     }
 
     private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
@@ -204,8 +215,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
                 cx = 0.5 * (b[0] + b[1]);
                 cy = 0.5 * (b[2] + b[3]);
                 cz = b[4]; // zmin == zmax
-                cam.SetPosition(cx, cy, cz + camDist);
-                cam.SetViewUp(0, -1, 0);
+                cam.SetPosition(cx, cy, cz - camDist); // feet → head (+Z)
+                cam.SetViewUp(0, -1, 0); // anterior (-Y) to up
                 break;
 
             case SliceOrientation.Coronal: // XZ live, Y flat
@@ -214,8 +225,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
                 cx = 0.5 * (b[0] + b[1]);
                 cy = b[2]; // ymin == ymax
                 cz = 0.5 * (b[4] + b[5]);
-                cam.SetPosition(cx, cy + camDist, cz);
-                cam.SetViewUp(0, 0, 1);
+                cam.SetPosition(cx, cy - camDist, cz); // front → back (-Y)
+                cam.SetViewUp(0, 0, 1); // superior (+Z) to up
                 break;
 
             case SliceOrientation.Sagittal: // YZ live, X flat
@@ -224,8 +235,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
                 cx = b[0]; // xmin == xmax
                 cy = 0.5 * (b[2] + b[3]);
                 cz = 0.5 * (b[4] + b[5]);
-                cam.SetPosition(cx + camDist, cy, cz);
-                cam.SetViewUp(0, 0, 1);
+                cam.SetPosition(cx - camDist, cy, cz); // left → right (-X)
+                cam.SetViewUp(0, 0, 1); // superior (+Z) to up
                 break;
 
             default:

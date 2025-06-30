@@ -19,10 +19,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly vtkImageData _background;
     private readonly int[] _backgroundDims;
 
-    // Cross hair overlay
-    private readonly CrosshairViewModel _axialCrosshairVm;
-    private readonly CrosshairViewModel _coronalCrosshairVm;
-    private readonly CrosshairViewModel _sagittalCrosshairVm;
+    // Overlay: crosshairs, slice-labels, brush
+    private readonly CrosshairViewModel _axialCrosshairVm, _coronalCrosshairVm, _sagittalCrosshairVm;
 
     // Brush
     private readonly vtkImageData _labelMap;
@@ -47,7 +45,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             .WithSharedImage(_background)
             .WithLinearInterpolation(true)
             .Build();
-        
+
         // Build the shared labelmap image pipeline
         _labelMap = CreateLabelMap(_background);
         var labelMapPipe = ColoredImagePipelineBuilder
@@ -84,7 +82,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(coronalVm.Actor);
         _picker.AddPickList(sagittalVm.Actor);
 
-        // Overlay VMs: Crosshair and Brush
+        // Overlay ViewModels: Crosshair and Brush
         var bounds = Bounds.FromArray(_background.GetBounds());
         _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);

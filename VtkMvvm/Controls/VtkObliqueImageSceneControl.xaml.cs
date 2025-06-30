@@ -57,6 +57,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
+    public vtkCamera Camera => MainRenderer.GetActiveCamera();
 
     public void Dispose()
     {
@@ -190,8 +191,8 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         double cx = 0.5 * (b[0] + b[1]);
         double cy = 0.5 * (b[2] + b[3]);
         double cz = b[4]; // zmin == zmax
-        cam.SetPosition(cx, cy, cz + camDist);
-        cam.SetViewUp(0, -1, 0);
+        cam.SetPosition(cx, cy, cz - camDist);  // feet → head (+Z)
+        cam.SetViewUp(0, -1, 0);  // anterior (-Y) to up
 
         cam.SetFocalPoint(cx, cy, cz);
         cam.SetParallelScale(0.5 * Math.Max(width, height)); // <= **key line**

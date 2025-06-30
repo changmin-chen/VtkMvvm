@@ -1,4 +1,6 @@
-﻿using System.Reactive.Disposables;
+﻿using System.Diagnostics;
+using System.Numerics;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using Kitware.VTK;
@@ -15,6 +17,8 @@ public partial class VtkMvvmTestWindow : Window
     private readonly CompositeDisposable _disposables = new();
     private VtkMvvmTestWindowViewModel _vm;
 
+    private vtkCamera _camera;
+    
     public VtkMvvmTestWindow()
     {
         InitializeComponent();
@@ -32,6 +36,18 @@ public partial class VtkMvvmTestWindow : Window
 
         InitializeFreehandInteractor([AxialControl, CoronalControl, SagittalControl]);
     }
+
+    private void HandleCamera(vtkObject sender, vtkObjectEventArgs e)
+    {
+        Vector3 vpn = ToVector3(_camera.GetViewPlaneNormal());  // points *towards* camera
+        Vector3 vup = Vector3.Normalize(ToVector3(_camera.GetViewUp()));
+        Vector3 right = Vector3.Normalize(Vector3.Cross(vpn, vup));   // screen-right
+   
+        Debug.WriteLine($"vpn: {vpn}, vup: {vup}, right: {right}");
+    }
+    
+    private static Vector3 ToVector3(double[] da) => new Vector3((float)da[0], (float)da[1], (float)da[2]);
+    
 
     /// <summary>
     /// Each controls has their own instance of freehand interactor
