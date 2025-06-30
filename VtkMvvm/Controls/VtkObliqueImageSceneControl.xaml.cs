@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Threading;
 using Kitware.VTK;
@@ -13,8 +14,12 @@ namespace VtkMvvm.Controls;
 /// </summary>
 public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 {
+    private ImageObliqueSliceViewModel? _referenceSlice;
+
     // ---------- Plugins --------------------------------------- 
-    private OrientationCubeBehavior? _orientationCube;  // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
+    private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
+    private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
+    
 
     // --------------------------------------------------------- 
 
@@ -68,6 +73,11 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
         // ── orientation cube ───────────────────────────────
         _orientationCube = new OrientationCubeBehavior(renderWindow);
+        
+        // ── orientation labels ───────────────────────────────
+        _orientationLabels = new OrientationLabelBehavior(
+            OverlayRenderer, 
+            MainRenderer.GetActiveCamera());
 
         _isLoaded = true;
     }
@@ -75,7 +85,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     public void Dispose()
     {
         _orientationCube?.Dispose();
-        
+
         if (SceneObjects is { } objects)
         {
             foreach (VtkElementViewModel sceneObj in objects)
@@ -126,6 +136,16 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         viewModel.Modified -= OnSceneObjectsModified;
     }
 
+    // internal render request
+    private void RequestRender()
+    {
+        if (_isLoaded)
+            OnSceneObjectsModified(this, EventArgs.Empty);
+        else
+            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty),
+                DispatcherPriority.Loaded);
+    }
+
     /// <summary>
     ///     Render the scene when the actors are modified.
     ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
@@ -133,6 +153,16 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     private void OnSceneObjectsModified(object? sender, EventArgs args)
     {
         if (!_isLoaded) return;
+
+        // Only re-aim if the reference slice itself changed
+        if (sender == _referenceSlice && _referenceSlice != null)
+        {
+            FitObliqueSlice(
+                MainRenderer.GetActiveCamera(),
+                _referenceSlice.Actor,
+                _referenceSlice.PlaneNormal,
+                _referenceSlice.PlaneAxisV);
+        }
 
         MainRenderer.ResetCameraClippingRange();
         RenderWindowControl.RenderWindow.Render();
@@ -151,65 +181,62 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         IList<ImageObliqueSliceViewModel>? oldSceneObjects,
         IList<ImageObliqueSliceViewModel>? newSceneObjects)
     {
-        // ----- 1. Remove & unsubscribe old stuff -----
+        // ----- detach old -----
         if (oldSceneObjects != null)
         {
-            foreach (ImageObliqueSliceViewModel item in oldSceneObjects)
-                UnHookActor(MainRenderer, item);
+            foreach (ImageObliqueSliceViewModel item in oldSceneObjects) UnHookActor(MainRenderer, item);
         }
 
-        // Bail early if we have nothing new
+        //  bail if empty ------------------------
         if (newSceneObjects == null || newSceneObjects.Count == 0)
         {
+            _referenceSlice = null;
             return;
         }
 
-        // ----- 2. Add & subscribe new stuff -----
-        foreach (ImageObliqueSliceViewModel item in newSceneObjects)
-            HookActor(MainRenderer, item);
+        // ----- attach new -----
+        foreach (ImageObliqueSliceViewModel item in newSceneObjects) HookActor(MainRenderer, item);
 
-        // ----- 3. Camera magic (use the first slice as reference) -----
-        var first = newSceneObjects[0];
-        FitAxialSlice(first.Actor);
+        // choose the slice that defines the view
+        _referenceSlice = newSceneObjects[0];
 
-        // ----- 4. Render the scene to show the new stuff-----
-        if (_isLoaded)
-        {
-            OnSceneObjectsModified(this, EventArgs.Empty);
-        }
-        else
-        {
-            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
-        }
+        // initial camera placement
+        FitObliqueSlice(
+            MainRenderer.GetActiveCamera(),
+            _referenceSlice.Actor,
+            _referenceSlice.PlaneNormal,
+            _referenceSlice.PlaneAxisV);
+
+        // ----- render the scene to show the new stuff-----
+        RequestRender();
     }
 
-    /// <summary>
-    /// Unlike <see cref="VtkImageSceneControl"/> that decide which two axes to measure.
-    /// We assume axial slice orientation (XY live, Z flat), which can fit to the vtkImageReslice output.
-    /// </summary>
-    private void FitAxialSlice(vtkProp slice)
+    private const double CamDist = 500; // mm
+
+    private static void FitObliqueSlice(
+        vtkCamera cam,
+        vtkProp   sliceActor,
+        Vector3   normal,   // = vm.PlaneNormal
+        Vector3   vAxis)    // = vm.PlaneAxisV  (camera “up”)
     {
-        ArgumentNullException.ThrowIfNull(slice);
+        double[] b  = sliceActor.GetBounds();         // world AABB
+        double   cx = 0.5*(b[0]+b[1]);
+        double   cy = 0.5*(b[2]+b[3]);
+        double   cz = 0.5*(b[4]+b[5]);
+        double   w  =  b[1]-b[0];
+        double   h  =  b[3]-b[2];
 
-        const double camDist = 500;
+        normal = Vector3.Normalize(normal);
+        vAxis  = Vector3.Normalize(vAxis);
 
-        vtkCamera? cam = MainRenderer.GetActiveCamera();
-        cam.ParallelProjectionOn(); // orthographic, no perspective
-        cam.SetClippingRange(0.1, 5000);
-
-        double[] b = slice.GetBounds(); // xmin xmax ymin ymax zmin zmax
-
-        // Assume XY live, Z flat. 
-        double width = b[1] - b[0]; // xmax - xmin
-        double height = b[3] - b[2]; // ymax - ymin
-        double cx = 0.5 * (b[0] + b[1]);
-        double cy = 0.5 * (b[2] + b[3]);
-        double cz = b[4]; // zmin == zmax
-        cam.SetPosition(cx, cy, cz - camDist); // feet → head (+Z)
-        cam.SetViewUp(0, -1, 0); // anterior (-Y) to up
-
+        cam.ParallelProjectionOn();
         cam.SetFocalPoint(cx, cy, cz);
-        cam.SetParallelScale(0.5 * Math.Max(width, height)); // <= **key line**
+        cam.SetPosition(cx - normal.X*CamDist,
+            cy - normal.Y*CamDist,
+            cz - normal.Z*CamDist);
+        cam.SetViewUp(vAxis.X, vAxis.Y, vAxis.Z);
+        cam.SetParallelScale(0.5*Math.Max(w, h));
+        cam.SetClippingRange(0.1, 5000);
     }
 
     #endregion
@@ -239,14 +266,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
             HookActor(OverlayRenderer, item);
 
         // ----- 3. Render the scene to show the new stuff-----
-        if (_isLoaded)
-        {
-            OnSceneObjectsModified(this, EventArgs.Empty);
-        }
-        else
-        {
-            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
-        }
+        RequestRender();
     }
 
     #endregion

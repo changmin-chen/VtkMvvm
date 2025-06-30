@@ -30,8 +30,8 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
     // Collection of VtkElementViewModel binds to VTK scene control
     public ImmutableList<ImageObliqueSliceViewModel> ObliqueImageVms => [_obliqueImageVm];
     public ImmutableList<VtkElementViewModel> ObliqueOverlayVms => [_crosshair];
-    [Reactive] public float YawDegrees { get; set; } = -20;
-    [Reactive] public float PitchDegrees { get; set; } = -20;
+    [Reactive] public float YawDegrees { get; set; } = 0;
+    [Reactive] public float PitchDegrees { get; set; } = 0;
     [Reactive] public float RollDegrees { get; set; } = 45;
 
     public VtkObliqueSliceTestWindowViewModel()
@@ -49,6 +49,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
         var obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgPipe);
+        
 
         // Pick list
         _picker.SetTolerance(0.005);
