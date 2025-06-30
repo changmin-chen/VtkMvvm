@@ -21,13 +21,13 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
-        typeof(IList<ImageOrthogonalSliceViewModel>),
+        typeof(IReadOnlyList<ImageOrthogonalSliceViewModel>),
         typeof(VtkImageSceneControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
         nameof(OverlayObjects),
-        typeof(IList<VtkElementViewModel>),
+        typeof(IReadOnlyList<VtkElementViewModel>),
         typeof(VtkImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
@@ -76,15 +76,15 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     }
 
 
-    public IList<ImageOrthogonalSliceViewModel>? SceneObjects
+    public IReadOnlyList<ImageOrthogonalSliceViewModel>? SceneObjects
     {
-        get => (IList<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
+        get => (IReadOnlyList<ImageOrthogonalSliceViewModel>)GetValue(SceneObjectsProperty);
         set => SetValue(SceneObjectsProperty, value);
     }
 
-    public IList<VtkElementViewModel>? OverlayObjects
+    public IReadOnlyList<VtkElementViewModel>? OverlayObjects
     {
-        get => (IList<VtkElementViewModel>)GetValue(OverlayObjectsProperty);
+        get => (IReadOnlyList<VtkElementViewModel>)GetValue(OverlayObjectsProperty);
         set => SetValue(OverlayObjectsProperty, value);
     }
 
@@ -154,12 +154,12 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkImageSceneControl control = (VtkImageSceneControl)d;
-        control.UpdateSlices((IList<ImageOrthogonalSliceViewModel>)e.OldValue, (IList<ImageOrthogonalSliceViewModel>)e.NewValue);
+        control.UpdateSlices((IReadOnlyList<ImageOrthogonalSliceViewModel>)e.OldValue, (IReadOnlyList<ImageOrthogonalSliceViewModel>)e.NewValue);
     }
 
     private void UpdateSlices(
-        IList<ImageOrthogonalSliceViewModel>? oldSceneObjects,
-        IList<ImageOrthogonalSliceViewModel>? newSceneObjects)
+        IReadOnlyList<ImageOrthogonalSliceViewModel>? oldSceneObjects,
+        IReadOnlyList<ImageOrthogonalSliceViewModel>? newSceneObjects)
     {
         // ----- 1. Remove & unsubscribe old stuff -----
         if (oldSceneObjects != null)
@@ -261,12 +261,12 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     private static void OnOverlayObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkImageSceneControl control = (VtkImageSceneControl)d;
-        control.UpdateOverlays((IList<VtkElementViewModel>)e.OldValue, (IList<VtkElementViewModel>)e.NewValue);
+        control.UpdateOverlays((IReadOnlyList<VtkElementViewModel>)e.OldValue, (IReadOnlyList<VtkElementViewModel>)e.NewValue);
     }
 
     private void UpdateOverlays(
-        IList<VtkElementViewModel>? oldOverlayObjects,
-        IList<VtkElementViewModel>? newOverlayObjects)
+        IReadOnlyList<VtkElementViewModel>? oldOverlayObjects,
+        IReadOnlyList<VtkElementViewModel>? newOverlayObjects)
     {
         if (oldOverlayObjects != null)
         {
