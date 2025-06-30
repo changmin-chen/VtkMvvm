@@ -17,11 +17,11 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
     private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly vtkTransform _xfm = vtkTransform.New(); // NEW
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
+    private readonly vtkImageActor _actor = vtkImageActor.New();
 
     private readonly double[] _imgCentre;
     private readonly double[] _imgBounds;
     private readonly double[] _spacing;
-    private readonly vtkImageActor _actor;
 
     // ── cached values for slider & step ─────────────────────────────
     private double _step; // Δ mm per slice index
@@ -29,6 +29,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
     private int _maxSliceIdx;
     private int _sliceIndex = int.MinValue;
     private Quaternion _sliceOrientation = Quaternion.Identity;
+
 
     public ImageObliqueSliceViewModel(
         Quaternion orientation,
@@ -50,7 +51,6 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
         _reslice.SetResliceAxes(_axes); // we will fill it below
 
         // -------- connect full display pipeline ---------------------
-        _actor = vtkImageActor.New();
         _actor.SetUserTransform(_xfm); // ***positions slice in 3-D***
         pipeline.ConnectWithReslice(_cmap, _reslice, _actor);
         Actor = _actor;
@@ -98,18 +98,9 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
     }
 
     // convenience accessors for the plane axes (unchanged API)
-    public Vector3 PlaneAxisU => new(
-        (float)_axes.GetElement(0, 0), 
-        (float)_axes.GetElement(1, 0), 
-        (float)_axes.GetElement(2, 0));
-    public Vector3 PlaneAxisV => new(
-        (float)_axes.GetElement(0, 1),
-        (float)_axes.GetElement(1, 1), 
-        (float)_axes.GetElement(2, 1));
-    public Vector3 PlaneNormal => new(
-        (float)_axes.GetElement(0, 2), 
-        (float)_axes.GetElement(1, 2), 
-        (float)_axes.GetElement(2, 2));
+    public Vector3 PlaneAxisU { get; private set; }
+    public Vector3 PlaneAxisV { get; private set; }
+    public Vector3 PlaneNormal { get; private set; }
 
     //----------------------------------------------------------------
     /// <summary>Apply a new orientation: updates reslice axes, step, slider range.</summary>
@@ -117,14 +108,15 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
     {
         q = Quaternion.Normalize(q);
 
-        // --- unit in-plane axes & normal in WORLD coordinates -------
-        Vector3 u = Vector3.Transform(Vector3.UnitX, q); // +X axis
-        Vector3 v = Vector3.Transform(Vector3.UnitY, q); // +Y axis
-        Vector3 n = Vector3.Transform(Vector3.UnitZ, q); // +Z axis (normal)
+        // ----- raw orthonormal frame ---------------------------------
+        PlaneAxisU = Vector3.Transform(Vector3.UnitX, q); // +slice X (u)
+        PlaneAxisV = Vector3.Transform(Vector3.UnitY, q); // +slice Y (v / view-up)
+        PlaneNormal = Vector3.Transform(Vector3.UnitZ, q); // +slice Z (normal)
 
-        // scale u / v by in-plane spacing so one pixel == one mm
-        u *= (float)_spacing[0];
-        v *= (float)_spacing[1];
+        // -- scaled copy for reslice axes (cols = u v n) --------------
+        Vector3 u = PlaneAxisU * (float)_spacing[0];
+        Vector3 v = PlaneAxisV * (float)_spacing[1];
+        Vector3 n = PlaneNormal; // n needn’t be scaled
 
         // ---- rotation part of 4×4 (columns = u v n) ----------------
         for (int i = 0; i < 3; ++i)
@@ -148,13 +140,12 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
         int maxIdx = (int)Math.Floor(maxDist / _step);
         _minSliceIdx = -maxIdx;
         _maxSliceIdx = maxIdx;
-
         OnPropertyChanged(nameof(MinSliceIndex));
         OnPropertyChanged(nameof(MaxSliceIndex));
 
         // ----- keep current index inside the new range --------------
         _sliceIndex = Math.Clamp(_sliceIndex, _minSliceIdx, _maxSliceIdx);
-        SetSliceIndex(_sliceIndex);          // ★ always update transform
+        SetSliceIndex(_sliceIndex); // ★ always update transform
     }
 
     /// <summary>Move the slice plane along its normal by idx · Δ.</summary>

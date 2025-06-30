@@ -18,8 +18,8 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
     // ---------- Plugins --------------------------------------- 
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
-    private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
-    
+    private OrientationLabelBehavior? _orientationLabels; // L,R,P,A,S,I text labels on screen edges
+
 
     // --------------------------------------------------------- 
 
@@ -73,10 +73,10 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
         // ── orientation cube ───────────────────────────────
         _orientationCube = new OrientationCubeBehavior(renderWindow);
-        
+
         // ── orientation labels ───────────────────────────────
         _orientationLabels = new OrientationLabelBehavior(
-            OverlayRenderer, 
+            OverlayRenderer,
             MainRenderer.GetActiveCamera());
 
         _isLoaded = true;
@@ -215,27 +215,27 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
     private static void FitObliqueSlice(
         vtkCamera cam,
-        vtkProp   sliceActor,
-        Vector3   normal,   // = vm.PlaneNormal
-        Vector3   vAxis)    // = vm.PlaneAxisV  (camera “up”)
+        vtkProp sliceActor,
+        Vector3 normal, // = vm.PlaneNormal
+        Vector3 vAxis) // = vm.PlaneAxisV  (camera “up”)
     {
-        double[] b  = sliceActor.GetBounds();         // world AABB
-        double   cx = 0.5*(b[0]+b[1]);
-        double   cy = 0.5*(b[2]+b[3]);
-        double   cz = 0.5*(b[4]+b[5]);
-        double   w  =  b[1]-b[0];
-        double   h  =  b[3]-b[2];
+        double[] b = sliceActor.GetBounds(); // world AABB
+        double cx = 0.5 * (b[0] + b[1]);
+        double cy = 0.5 * (b[2] + b[3]);
+        double cz = 0.5 * (b[4] + b[5]);
+        double w = b[1] - b[0];
+        double h = b[3] - b[2];
 
         normal = Vector3.Normalize(normal);
-        vAxis  = Vector3.Normalize(vAxis);
+        vAxis = Vector3.Normalize(vAxis);
 
         cam.ParallelProjectionOn();
         cam.SetFocalPoint(cx, cy, cz);
-        cam.SetPosition(cx - normal.X*CamDist,
-            cy - normal.Y*CamDist,
-            cz - normal.Z*CamDist);
+        cam.SetPosition(cx - normal.X * CamDist,
+            cy - normal.Y * CamDist,
+            cz - normal.Z * CamDist);
         cam.SetViewUp(vAxis.X, vAxis.Y, vAxis.Z);
-        cam.SetParallelScale(0.5*Math.Max(w, h));
+        cam.SetParallelScale(0.5 * Math.Max(w, h));
         cam.SetClippingRange(0.1, 5000);
     }
 
