@@ -13,7 +13,8 @@ namespace VtkMvvm.Controls;
 /// </summary>
 public partial class VtkImageSceneControl : UserControl, IDisposable
 {
-    private OrientationLabelBehaviour? _orientationBehaviour;
+    // ---------- Plugins --------------------------------------- 
+    private OrientationLabelBehavior? _orientationBehaviour;
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
@@ -60,8 +61,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
         RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
 
-        // ── orientation labels (Option 1) ───────────────────────────────
-        _orientationBehaviour = new OrientationLabelBehaviour(
+        // ── orientation labels ───────────────────────────────
+        _orientationBehaviour = new OrientationLabelBehavior(
             OverlayRenderer, // render layer 1
             MainRenderer.GetActiveCamera());
 

@@ -8,7 +8,7 @@ namespace VtkMvvm.Controls;
 /// overlay renderer and keeps them aligned with the
 /// patient axes for any camera roll / flip. Uses LPS convention.
 /// </summary>
-public sealed class OrientationLabelBehaviour : IDisposable
+public sealed class OrientationLabelBehavior : IDisposable
 {
     private readonly vtkRenderer _overlay;
     private readonly vtkCamera _cam;
@@ -30,7 +30,7 @@ public sealed class OrientationLabelBehaviour : IDisposable
         ("I", -Vector3.UnitZ)
     ];
 
-    public OrientationLabelBehaviour(vtkRenderer overlay, vtkCamera cam)
+    public OrientationLabelBehavior(vtkRenderer overlay, vtkCamera cam)
     {
         _overlay = overlay ?? throw new ArgumentNullException(nameof(overlay));
         _cam = cam ?? throw new ArgumentNullException(nameof(cam));
