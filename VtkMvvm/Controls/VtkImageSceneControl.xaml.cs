@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using Kitware.VTK;
+using VtkMvvm.Controls.Plugins;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
 using UserControl = System.Windows.Controls.UserControl;
@@ -14,7 +15,9 @@ namespace VtkMvvm.Controls;
 public partial class VtkImageSceneControl : UserControl, IDisposable
 {
     // ---------- Plugins --------------------------------------- 
-    private OrientationLabelBehavior? _orientationBehaviour;
+    private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
+    
+    // --------------------------------------------------------- 
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
@@ -62,7 +65,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
 
         // ── orientation labels ───────────────────────────────
-        _orientationBehaviour = new OrientationLabelBehavior(
+        _orientationLabels = new OrientationLabelBehavior(
             OverlayRenderer, // render layer 1
             MainRenderer.GetActiveCamera());
 
@@ -95,8 +98,10 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     public void Dispose()
     {
-        _orientationBehaviour?.Dispose();
+        // ── dispose plugins ───────────────────────────────
+        _orientationLabels?.Dispose();
         
+        // ── dispose controls vtk components ───────────────────────────────
         if (SceneObjects is { } objects)
         {
             foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
@@ -111,7 +116,6 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
         WFHost.Child = null;
         WFHost?.Dispose();
-
         RenderWindowControl.Dispose();
         MainRenderer.Dispose();
         OverlayRenderer.Dispose();

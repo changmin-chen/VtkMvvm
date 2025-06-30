@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using Kitware.VTK;
 
-namespace VtkMvvm.Controls;
+namespace VtkMvvm.Controls.Plugins;
 
 /// <summary>
 /// Draws four orientation labels (R / L / A / P / S / I) on

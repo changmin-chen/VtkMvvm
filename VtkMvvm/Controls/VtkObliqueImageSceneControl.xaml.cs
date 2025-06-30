@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using Kitware.VTK;
+using VtkMvvm.Controls.Plugins;
 using VtkMvvm.ViewModels;
 using UserControl = System.Windows.Controls.UserControl;
 
@@ -12,6 +13,11 @@ namespace VtkMvvm.Controls;
 /// </summary>
 public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 {
+    // ---------- Plugins --------------------------------------- 
+    private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I text labels on screen edges
+
+    // --------------------------------------------------------- 
+
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IList<ImageObliqueSliceViewModel>),
@@ -41,6 +47,54 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         Loaded += OnLoadedOnce;
     }
 
+    private void OnLoadedOnce(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoadedOnce;
+
+        var renderWindow = RenderWindowControl.RenderWindow;
+        if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
+
+        renderWindow.AddRenderer(MainRenderer);
+        MainRenderer.SetBackground(0.0, 0.0, 0.0);
+
+        // Render overlays onto the main renderer
+        MainRenderer.SetLayer(0);
+        OverlayRenderer.SetLayer(1);
+        OverlayRenderer.PreserveDepthBufferOff();
+        OverlayRenderer.InteractiveOff();
+        OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
+        renderWindow.SetNumberOfLayers(2);
+        renderWindow.AddRenderer(OverlayRenderer);
+
+        // ── orientation cube ───────────────────────────────
+        _orientationCube = new OrientationCubeBehavior(renderWindow);
+
+        _isLoaded = true;
+    }
+
+    public void Dispose()
+    {
+        _orientationCube?.Dispose();
+        
+        if (SceneObjects is { } objects)
+        {
+            foreach (VtkElementViewModel sceneObj in objects)
+                sceneObj.Modified -= OnSceneObjectsModified;
+        }
+
+        if (OverlayObjects is { } overlays)
+        {
+            foreach (VtkElementViewModel overlayObj in overlays)
+                overlayObj.Modified -= OnSceneObjectsModified;
+        }
+
+        WFHost.Child = null;
+        WFHost?.Dispose();
+        RenderWindowControl.Dispose();
+        MainRenderer.Dispose();
+        OverlayRenderer.Dispose();
+    }
+
 
     public IList<VtkElementViewModel>? SceneObjects
     {
@@ -59,46 +113,6 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkCamera Camera => MainRenderer.GetActiveCamera();
 
-    public void Dispose()
-    {
-        if (SceneObjects is { } objects)
-        {
-            foreach (VtkElementViewModel sceneObj in objects)
-                sceneObj.Modified -= OnSceneObjectsModified;
-        }
-
-        if (OverlayObjects is { } overlays)
-        {
-            foreach (VtkElementViewModel overlayObj in overlays)
-                overlayObj.Modified -= OnSceneObjectsModified;
-        }
-
-        WFHost.Child = null;
-        WFHost?.Dispose();
-
-        RenderWindowControl.Dispose();
-        MainRenderer.Dispose();
-        OverlayRenderer.Dispose();
-    }
-
-    private void OnLoadedOnce(object sender, RoutedEventArgs e)
-    {
-        Loaded -= OnLoadedOnce;
-
-        RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
-        MainRenderer.SetBackground(0.0, 0.0, 0.0);
-
-        // Render overlays onto the main renderer
-        MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1);
-        OverlayRenderer.PreserveDepthBufferOff();
-        OverlayRenderer.InteractiveOff();
-        OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
-        RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
-        RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
-
-        _isLoaded = true;
-    }
 
     private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
@@ -191,8 +205,8 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         double cx = 0.5 * (b[0] + b[1]);
         double cy = 0.5 * (b[2] + b[3]);
         double cz = b[4]; // zmin == zmax
-        cam.SetPosition(cx, cy, cz - camDist);  // feet → head (+Z)
-        cam.SetViewUp(0, -1, 0);  // anterior (-Y) to up
+        cam.SetPosition(cx, cy, cz - camDist); // feet → head (+Z)
+        cam.SetViewUp(0, -1, 0); // anterior (-Y) to up
 
         cam.SetFocalPoint(cx, cy, cz);
         cam.SetParallelScale(0.5 * Math.Max(width, height)); // <= **key line**
