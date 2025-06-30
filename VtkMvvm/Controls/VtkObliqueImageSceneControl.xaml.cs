@@ -14,7 +14,7 @@ namespace VtkMvvm.Controls;
 public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 {
     // ---------- Plugins --------------------------------------- 
-    private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I text labels on screen edges
+    private OrientationCubeBehavior? _orientationCube;  // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
 
     // --------------------------------------------------------- 
 

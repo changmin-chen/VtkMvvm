@@ -51,8 +51,11 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     private void OnLoadedOnce(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoadedOnce;
+        
+        var renderWindow = RenderWindowControl.RenderWindow;
+        if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
 
-        RenderWindowControl.RenderWindow.AddRenderer(MainRenderer);
+        renderWindow.AddRenderer(MainRenderer);
         MainRenderer.SetBackground(0.0, 0.0, 0.0);
 
         // Render overlays onto the main renderer
@@ -61,8 +64,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
         OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
-        RenderWindowControl.RenderWindow.SetNumberOfLayers(2);
-        RenderWindowControl.RenderWindow.AddRenderer(OverlayRenderer);
+        renderWindow.SetNumberOfLayers(2);
+        renderWindow.AddRenderer(OverlayRenderer);
 
         // ── orientation labels ───────────────────────────────
         _orientationLabels = new OrientationLabelBehavior(
