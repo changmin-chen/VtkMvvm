@@ -15,7 +15,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
     // ── VTK pipeline ────────────────────────────────────────────────
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
     private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
-    private readonly vtkTransform _xfm = vtkTransform.New(); // NEW
+    private readonly vtkTransform _sliceTransform = vtkTransform.New(); // NEW
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
     private readonly vtkImageActor _actor = vtkImageActor.New();
 
@@ -51,7 +51,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
         _reslice.SetResliceAxes(_axes); // we will fill it below
 
         // -------- connect full display pipeline ---------------------
-        _actor.SetUserTransform(_xfm); // ***positions slice in 3-D***
+        _actor.SetUserTransform(_sliceTransform); // ***positions slice in 3-D***
         pipeline.ConnectWithReslice(_cmap, _reslice, _actor);
         Actor = _actor;
 
@@ -93,7 +93,6 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
     /// <summary>World bounds of the **current** oblique slice.</summary>
     public Bounds GetSliceBounds()
     {
-        // _actor.UpdateInformation();          // ensure user-transform is applied
         return Bounds.FromArray(_actor.GetBounds());
     }
 
@@ -166,8 +165,8 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
         _reslice.SetResliceAxes(_axes);
         _reslice.Modified();
 
-        _xfm.SetMatrix(_axes); // same 4×4 = slice → world
-        _xfm.Modified();
+        _sliceTransform.SetMatrix(_axes); // same 4×4 = slice → world
+        _sliceTransform.Modified();
         _actor.Modified();
     }
 
@@ -178,7 +177,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
             _actor.Dispose();
             _cmap.Dispose();
             _reslice.Dispose();
-            _xfm.Dispose();
+            _sliceTransform.Dispose();
             _axes.Dispose();
         }
         base.Dispose(disposing);
