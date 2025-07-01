@@ -10,7 +10,7 @@ namespace VtkMvvm.ViewModels;
 public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
 {
     public abstract vtkProp Actor { get; }
-
+    
     public bool Visible
     {
         get => Actor.GetVisibility() == 1;

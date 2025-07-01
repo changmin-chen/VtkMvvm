@@ -7,6 +7,7 @@ namespace VtkMvvm.ViewModels;
 /// OrientationMarkerWidget **or** added to a secondary renderer.
 /// Assume LPS radiological convention.
 /// </summary>
+[Obsolete("The oblique ViewModel implemented the cube already", true)]
 public sealed class OrientationCubeViewModel : VtkElementViewModel
 {
     private readonly vtkAnnotatedCubeActor _cube = vtkAnnotatedCubeActor.New();

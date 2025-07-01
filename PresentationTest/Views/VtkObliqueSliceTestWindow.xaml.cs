@@ -1,5 +1,4 @@
 ﻿using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using System.Windows;
 using Kitware.VTK;
 using PresentationTest.ViewModels;
@@ -39,13 +38,10 @@ public partial class VtkObliqueSliceTestWindow : Window
         vtkInteractorStyleImage style = new();
         vtkRenderWindowInteractor? iren = control.RenderWindowControl.RenderWindow.GetInteractor();
 
-        var leftBehavior = new MouseInteractorBehavior(TriggerMouseButton.Left);
-        leftBehavior.AttachTo(style);
-        iren.SetInteractorStyle(style);
-        iren.Initialize();
-
-        leftBehavior.Moves.Where(_ => leftBehavior.IsPressing)
-            .Subscribe(pos => { _vm.OnControlGetMouseDisplayPosition(control, pos.x, pos.y); })
+        MouseInteractorBuilder.Create(iren, style)
+            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y))
+            .Scroll(forward => _vm.ObliqueSliceIndex += forward ? 1 : -1)
+            .Build()
             .DisposeWith(_disposables);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Kitware.VTK;
+﻿using System.Numerics;
+using Kitware.VTK;
 using PresentationTest.Constants;
 using PresentationTest.Extensions;
 using PresentationTest.TestData;
@@ -21,7 +22,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     // Overlay: crosshairs, slice-labels, brush
     private readonly CrosshairViewModel _axialCrosshairVm, _coronalCrosshairVm, _sagittalCrosshairVm;
-    private readonly OrientationCubeViewModel _cubeVm = OrientationCubeViewModel.Create();
+    private readonly BullseyeViewModel _axialBullseyeVm;
 
     // Brush
     private readonly vtkImageData _labelMap;
@@ -83,12 +84,13 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _picker.AddPickList(coronalVm.Actor);
         _picker.AddPickList(sagittalVm.Actor);
 
-        // Overlay ViewModels: Crosshair and Brush
+        // Overlay ViewModels -----------------------------------------
         var bounds = Bounds.FromArray(_background.GetBounds());
         _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
         _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
-        AxialOverlayVms = [BrushVm, _axialCrosshairVm, _cubeVm];
+        _axialBullseyeVm = BullseyeViewModel.Create(Double3.Zero, Vector3.UnitZ);
+        AxialOverlayVms = [BrushVm, _axialCrosshairVm, _axialBullseyeVm];
         CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
         SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];
 
@@ -171,6 +173,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             _axialCrosshairVm.FocalPoint = clickWorldPos;
             _coronalCrosshairVm.FocalPoint = clickWorldPos;
             _sagittalCrosshairVm.FocalPoint = clickWorldPos;
+            
+            _axialBullseyeVm.FocalPoint = clickWorldPos;
         }
     }
 
