@@ -1,5 +1,6 @@
 ﻿using Kitware.VTK;
 using VtkMvvm.Models;
+using VtkMvvm.ViewModels.Base;
 
 namespace VtkMvvm.ViewModels;
 
@@ -8,17 +9,18 @@ namespace VtkMvvm.ViewModels;
 /// </summary>
 public class BrushViewModel : VtkElementViewModel
 {
-    private readonly vtkPolyDataNormals _brushSmoother = new();
-
-    // Brush shape
     private readonly vtkCylinderSource _brushSource = new();
-
-    // Display
+    private readonly vtkPolyDataNormals _brushSmoother = new();
     private readonly vtkPolyDataMapper _mapper = vtkPolyDataMapper.New();
     private readonly vtkTransform _orient = new();
     private readonly vtkTransformPolyDataFilter _orientFilter = new();
     private readonly vtkTransform _position = new();
     private readonly vtkTransformPolyDataFilter _positionFilter = new();
+
+    private double _diameter = 2.0;
+    private double _height = 2.0;
+    private SliceOrientation _orientation = SliceOrientation.Axial;
+    private Double3 _center = Double3.Zero;
 
     public BrushViewModel()
     {
@@ -86,11 +88,6 @@ public class BrushViewModel : VtkElementViewModel
 
     #region Binable properties
 
-    private double _diameter = 2.0;
-    private double _height = 2.0;
-    private SliceOrientation _orientation = SliceOrientation.Axial;
-    private Double3 _center = Double3.Zero;
-
     public double Diameter
     {
         get => _diameter;
@@ -145,21 +142,22 @@ public class BrushViewModel : VtkElementViewModel
         }
     }
 
-
-    public bool Visible
-    {
-        get => Actor.GetVisibility() == 1;
-        set
-        {
-            bool current = Actor.GetVisibility() == 1;
-            if (current == value) return;
-            Actor.SetVisibility(value ? 1 : 0);
-            Actor.Modified();
-
-            OnPropertyChanged();
-            OnModified();
-        }
-    }
-
     #endregion
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            // Dispose of the resource specific to this derived class
+            _brushSource.Dispose();
+            _brushSmoother.Dispose();
+            _mapper.Dispose();
+            _orient.Dispose();
+            _orientFilter.Dispose();
+            _position.Dispose();
+            _positionFilter.Dispose();
+        }
+        // IMPORTANT: Call the base class implementation
+        base.Dispose(disposing);
+    }
 }

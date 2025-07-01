@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using System.Runtime.CompilerServices;
 using Kitware.VTK;
 using VtkMvvm.Models;
 
@@ -14,6 +14,7 @@ public static class ComputeIjkExtensions
     /// <param name="ijk">Integer voxel indices (only valid when the method returns <c>true</c>).</param>
     /// <param name="pcoords">Barycentric coordinates inside that voxel.</param>
     /// <returns><c>true</c> if <paramref name="world" /> lies inside the volume.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe bool TryComputeStructuredCoordinates(
         this vtkImageData image,
         in Double3 world,
@@ -46,9 +47,10 @@ public static class ComputeIjkExtensions
     ///     Call this only *after* a successful <c>Pick(..)</c>/<c>Pick3DPoint(..)</c> –
     ///     otherwise the result is undefined (VTK never initialises the array for you).
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe Double3 GetPickWorldPosition(this vtkAbstractPicker picker)
     {
-        if (picker is null) throw new ArgumentNullException(nameof(picker));
+        ArgumentNullException.ThrowIfNull(picker);
 
         // Tiny, fixed-size scratch buffer on the stack → zero allocations.
         double* posPtr = stackalloc double[3];

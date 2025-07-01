@@ -1,17 +1,17 @@
-﻿<Window x:Class="PresentationTest.VtkMvvmTestWindow"
+﻿<Window x:Class="PresentationTest.Views.VtkMvvmTestWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:presentationTest="clr-namespace:PresentationTest"
         xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
+        xmlns:viewModels="clr-namespace:PresentationTest.ViewModels"
         Title="VtkMvvmTestWindow"
         Width="1600"
         Height="900"
         mc:Ignorable="d">
 
     <d:Window.DataContext>
-        <presentationTest:VtkMvvmTestWindowViewModel />
+        <viewModels:VtkMvvmTestWindowViewModel />
     </d:Window.DataContext>
 
     <Grid>
@@ -99,8 +99,11 @@
         </Grid>
 
         <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -114,7 +117,7 @@
                 <controls:VtkImageSceneControl x:Name="AxialControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding AxialVms}"
-                                               OverlayObjects="{Binding BrushSharedVms}" />
+                                               OverlayObjects="{Binding AxialOverlayVms}" />
                 <StackPanel Grid.Row="1"
                             Margin="5"
                             VerticalAlignment="Top"
@@ -145,7 +148,7 @@
             </Grid>
 
             <!--  Coronal  -->
-            <Grid Grid.Column="1">
+            <Grid Grid.Row="0" Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
@@ -154,7 +157,7 @@
                 <controls:VtkImageSceneControl x:Name="CoronalControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding CoronalVms}"
-                                               OverlayObjects="{Binding BrushSharedVms}" />
+                                               OverlayObjects="{Binding CoronalOverlayVms}" />
                 <StackPanel Grid.Row="1"
                             Margin="5"
                             VerticalAlignment="Top"
@@ -185,7 +188,7 @@
             </Grid>
 
             <!--  Sagittal  -->
-            <Grid Grid.Column="2">
+            <Grid Grid.Row="1" Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
@@ -194,7 +197,7 @@
                 <controls:VtkImageSceneControl x:Name="SagittalControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding SagittalVms}"
-                                               OverlayObjects="{Binding BrushSharedVms}" />
+                                               OverlayObjects="{Binding SagittalOverlayVms}" />
 
                 <StackPanel Grid.Row="1">
                     <!--  Slice adjust  -->

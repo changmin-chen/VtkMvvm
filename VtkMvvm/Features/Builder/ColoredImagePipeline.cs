@@ -1,20 +1,60 @@
 ﻿using Kitware.VTK;
+using VtkMvvm.ViewModels.Base;
 
 namespace VtkMvvm.Features.Builder;
 
 /// <summary>
-///     DTO for color-mapped image pipeline
+/// DTO for the shared vtk image pipeline with color mapping.
+/// The image data may be shared across multiple <see cref="VtkElementViewModel"/>.
+/// So the ViewModel should not dispose them. 
 /// </summary>
-public record ColoredImagePipeline(
+public sealed record ColoredImagePipeline(
     vtkImageData Image,
-    vtkImageMapToColors ColorMap,
-    vtkImageActor Actor
+    vtkLookupTable LookupTable,
+    bool IsRgba,
+    bool IsLinearInterpolationOn
 )
 {
-    public void Connect()
+    /// <summary>
+    ///     Connect pipeline: Image -> ColorMap -> Actor
+    /// </summary>
+    internal void Connect(vtkImageMapToColors mapToColors, vtkImageActor actor)
     {
-        ColorMap.SetInput(Image);
-        Actor.SetInput(ColorMap.GetOutput());
-        Actor.Modified();
+        ConfigureColormap(mapToColors);
+
+        mapToColors.SetInput(Image);
+        actor.SetInput(mapToColors.GetOutput());
+
+        if (IsLinearInterpolationOn) actor.InterpolateOn();
+        else actor.InterpolateOff();
+    }
+
+    /// <summary>
+    /// Connect pipeline: Image -> Reslice Image → ColorMap → Actor
+    /// </summary>
+    internal void ConnectWithReslice(vtkImageMapToColors mapToColors, vtkImageReslice reslice, vtkImageActor actor)
+    {
+        ConfigureColormap(mapToColors);
+
+        reslice.SetInput(Image);
+        mapToColors.SetInputConnection(reslice.GetOutputPort());
+        actor.SetInput(mapToColors.GetOutput());
+
+        if (IsLinearInterpolationOn) actor.InterpolateOn();
+        else actor.InterpolateOff();
+    }
+
+    private void ConfigureColormap(vtkImageMapToColors mapToColors)
+    {
+        mapToColors.SetLookupTable(LookupTable);
+
+        if (IsRgba)
+        {
+            mapToColors.SetOutputFormatToRGBA();
+        }
+        else
+        {
+            mapToColors.SetOutputFormatToLuminance();
+        }
     }
 }
