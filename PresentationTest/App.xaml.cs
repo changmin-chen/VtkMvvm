@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using PresentationTest.Views;
 
 namespace PresentationTest;
 
@@ -9,11 +10,9 @@ public partial class App : PrismApplication
 {
     protected override void RegisterTypes(IContainerRegistry containerRegistry)
     {
-        
     }
 
-    protected override Window CreateShell()
-    {
-        return Container.Resolve<VtkMvvmTestWindow>();
-    }
+    protected override Window CreateShell() =>
+         // Container.Resolve<VtkMvvmTestWindow>();
+        Container.Resolve<VtkObliqueSliceTestWindow>();
 }

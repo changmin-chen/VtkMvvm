@@ -21,29 +21,44 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Activiz.NET.x64" />
-        <PackageReference Include="Prism.DryIoc" />
-        <PackageReference Include="Prism.Wpf" />
-        <PackageReference Include="ReactiveUI.Fody" />
-        <PackageReference Include="ReactiveUI.Validation" />
-        <PackageReference Include="ReactiveUI.WPF" />
-        <PackageReference Include="SimpleITK-win64-CSharp-x64"/>
-    </ItemGroup>
-
-    
-
-    <ItemGroup>
-        <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
-    </ItemGroup>
-
-    
-
-    <ItemGroup>
         <None Update="TestData\CT_Abdo.nii.gz">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <Page Update="Views\VtkMvvmTestWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <XamlRuntime>Wpf</XamlRuntime>
+            <SubType>Designer</SubType>
+        </Page>
+        <Page Update="Views\VtkObliqueSliceTestWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <XamlRuntime>Wpf</XamlRuntime>
+            <SubType>Designer</SubType>
+        </Page>
+    </ItemGroup>
+
+
+    <ItemGroup>
+        <PackageReference Include="MedXtend" Version="1.0.3.2"/>
+        <PackageReference Include="Prism.DryIoc" Version="9.0.537"/>
+        <PackageReference Include="ReactiveUI.Fody" Version="19.5.41"/>
+        <PackageReference Include="ReactiveUI.WPF" Version="20.4.1"/>
+    </ItemGroup>
+
+    <!-- Add reference to managed SimpleITK dll, should adjust to your path -->
+    <ItemGroup>
+        <Reference Include="SimpleITKCSharpManaged">
+            <HintPath>C:\Libs\CSharp\simpleitk-win64-csharp-x64\2.5.0\SimpleITKCSharpManaged.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <!-- Reference to library project for testing-->
+    <ItemGroup>
+        <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
+    </ItemGroup>
 
     <!-- Copy Native DLLs based on Platform -->
     <Target Name="CopyNativeDLLs" AfterTargets="Build">
@@ -55,10 +70,10 @@
         </PropertyGroup>
 
         <ItemGroup Condition="'$(PlatformFolder)' != ''">
-            <NativeVtkDlls Include="$(NuGetPackageRoot)activiz.net.$(PlatformFolder)\5.8.0\lib\net20\*.dll" />
-            <NativeVtkDlls Include="$(NuGetPackageRoot)simpleitk-win64-csharp-x64\1.0.0.1\lib\SimpleITKCSharpNative.dll"/>
+            <NativeVtkDlls Include="$(NuGetPackageRoot)activiz.net.$(PlatformFolder)\5.8.0\lib\net20\*.dll"/>
+            <NativeVtkDlls Include="C:\Libs\CSharp\simpleitk-win64-csharp-x64\2.5.0\SimpleITKCSharpNative.dll"/>
         </ItemGroup>
-        <Copy SourceFiles="@(NativeVtkDlls)" DestinationFolder="$(NativeDllPath)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(NativeVtkDlls)" DestinationFolder="$(NativeDllPath)" SkipUnchangedFiles="true"/>
     </Target>
 
 

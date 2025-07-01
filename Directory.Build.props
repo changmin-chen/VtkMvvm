@@ -1,6 +1,6 @@
 <Project>
     <ItemGroup>
-        <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="all" Condition="'$(MSBuildProjectExtension)' == '.csproj'"/>
+        <PackageReference Include="SonarAnalyzer.CSharp" Version="10.12.0.118525" PrivateAssets="all" Condition="'$(MSBuildProjectExtension)' == '.csproj'"/>
     </ItemGroup>
 
 </Project>
