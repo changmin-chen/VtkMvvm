@@ -9,7 +9,6 @@ public sealed class ScrollInteractorBehavior : IInteractorBehavior, IDisposable
     private readonly Subject<bool> _scrollSubject = new();
     private vtkInteractorStyle? _style;
     
-    
     /// <summary>
     /// Scroll forward emits true, scroll backward emits false
     /// </summary>
