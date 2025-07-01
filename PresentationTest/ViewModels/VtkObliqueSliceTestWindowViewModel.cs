@@ -83,6 +83,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         get => _obliqueSliceIndex;
         set
         {
+            value = Math.Clamp(value, _obliqueImageVm.MinSliceIndex, _obliqueImageVm.MaxSliceIndex);
             this.RaiseAndSetIfChanged(ref _obliqueSliceIndex, value);
             SetSliceIndex(ObliqueImageVms, value);
         }
@@ -98,13 +99,8 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         _obliqueImageVm.SliceOrientation = sliceOrientation;
         var (uDir, vDir, nDir) = (_obliqueImageVm.PlaneAxisU, _obliqueImageVm.PlaneAxisV, _obliqueImageVm.PlaneNormal);
 
-        // Adjust crosshair, so it can plot onto the resliced plane
-        // Bounds bounds = _obliqueImageVm.GetSliceBounds();
-        // _crosshair.SetBounds(bounds);
-        // Debug.WriteLine($"Slice bounds: {bounds}");
+        // Adjust overlays, so they can plot onto the resliced plane
         _crosshair.SetPlaneAxes(uDir, vDir);
-
-        // Adjust bullseye
         _bullseye.Normal = nDir;
     }
 
