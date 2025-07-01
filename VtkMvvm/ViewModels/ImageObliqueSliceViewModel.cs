@@ -25,7 +25,6 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
     private readonly double[] _spacing;
 
     // ── cached values for slider & step ─────────────────────────────
-    private double _step; // Δ mm per slice index
     private int _minSliceIdx;
     private int _maxSliceIdx;
     private int _sliceIndex = int.MinValue;
@@ -61,9 +60,14 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
         SliceIndex = 0; // central slice
     }
 
-    // ── public surface identical to the old VM ─────────────────────
+    // ── public surface  ─────────────────────
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
+    
+    /// <summary>
+    /// Δ mm per slice index
+    /// </summary>
+    public double Step { get; private set; }
 
     public int SliceIndex
     {
@@ -88,9 +92,17 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
         }
     }
 
-    public int MinSliceIndex => _minSliceIdx;
-    public int MaxSliceIndex => _maxSliceIdx;
+    public int MinSliceIndex
+    {
+        get => _minSliceIdx;
+        private set => SetField(ref _minSliceIdx, value);
+    }
 
+    public int MaxSliceIndex
+    {
+        get => _maxSliceIdx;
+        private set => SetField(ref _maxSliceIdx, value);
+    }
 
     // convenience accessors for the plane axes (unchanged API)
     public Vector3 PlaneAxisU { get; private set; }
@@ -123,7 +135,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
         }
 
         // ---- distance per slice index (Δ) --------------------------
-        _step = Math.Abs(n.X) * _spacing[0] +
+        Step = Math.Abs(n.X) * _spacing[0] +
                 Math.Abs(n.Y) * _spacing[1] +
                 Math.Abs(n.Z) * _spacing[2];
 
@@ -133,11 +145,9 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
         double hz = 0.5 * (_imgBounds[5] - _imgBounds[4]);
 
         double maxDist = Math.Abs(n.X) * hx + Math.Abs(n.Y) * hy + Math.Abs(n.Z) * hz;
-        int maxIdx = (int)Math.Floor(maxDist / _step);
-        _minSliceIdx = -maxIdx;
-        _maxSliceIdx = maxIdx;
-        OnPropertyChanged(nameof(MinSliceIndex));
-        OnPropertyChanged(nameof(MaxSliceIndex));
+        int maxIdx = (int)Math.Floor(maxDist / Step);
+        MinSliceIndex = -maxIdx;
+        MaxSliceIndex = maxIdx;
 
         // ----- keep current index inside the new range --------------
         _sliceIndex = Math.Clamp(_sliceIndex, _minSliceIdx, _maxSliceIdx);
@@ -153,14 +163,14 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
         double nz = _axes.GetElement(2, 2);
 
         // gives translation from dataset centre
-        double ox = _imgCentre[0] + nx * idx * _step;
-        double oy = _imgCentre[1] + ny * idx * _step;
-        double oz = _imgCentre[2] + nz * idx * _step;
+        double ox = _imgCentre[0] + nx * idx * Step;
+        double oy = _imgCentre[1] + ny * idx * Step;
+        double oz = _imgCentre[2] + nz * idx * Step;
         _axes.SetElement(0, 3, ox);
         _axes.SetElement(1, 3, oy);
         _axes.SetElement(2, 3, oz);
         _axes.SetElement(3, 3, 1);
-        
+
         // keep a copy of the current origin to callers
         PlaneOrigin = new Double3(ox, oy, oz);
         OnPropertyChanged(nameof(PlaneOrigin));

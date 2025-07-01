@@ -24,10 +24,10 @@
         <!--  Extra binding tests  -->
         <Grid>
             <StackPanel>
-                <TextBlock Text="Other binding tests"
+                <TextBlock Margin="0,16"
+                           Text="Other binding tests"
                            FontWeight="Bold"
-                           FontSize="32"
-                           Margin="0 16" />
+                           FontSize="32" />
 
                 <StackPanel Margin="0,4" Orientation="Horizontal">
                     <TextBlock Text="Brush diameter" />
@@ -79,17 +79,16 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Label map color -->
-                <StackPanel Margin="0 16">
+                <!--  Label map color  -->
+                <StackPanel Margin="0,16">
                     <TextBlock Text="LabelMap color" />
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Filling value: " />
-                        <TextBox Text="{Binding LabelMapFillingValue, UpdateSourceTrigger=PropertyChanged}" Width="40" />
+                        <TextBox Width="40" Text="{Binding LabelMapFillingValue, UpdateSourceTrigger=PropertyChanged}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal">
-                        <CheckBox Command="{Binding SetLabelOneVisibilityCommand }"
-                                  CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
+                        <CheckBox Command="{Binding SetLabelOneVisibilityCommand}" CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
                         <TextBlock Text="Set visibility of specific label value (1 in this case) " />
                     </StackPanel>
                 </StackPanel>
@@ -98,6 +97,7 @@
 
         </Grid>
 
+        <!--  TwoByTwo Image Grid  -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -107,7 +107,14 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <!--  Axial  -->
+
+            <Grid.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="White" />
+                </Style>
+            </Grid.Resources>
+
+            <!--  Axial Cell  -->
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -147,7 +154,7 @@
                 </StackPanel>
             </Grid>
 
-            <!--  Coronal  -->
+            <!--  Coronal Cell  -->
             <Grid Grid.Row="0" Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -187,7 +194,7 @@
                 </StackPanel>
             </Grid>
 
-            <!--  Sagittal  -->
+            <!--  Sagittal Cell  -->
             <Grid Grid.Row="1" Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -230,6 +237,61 @@
 
                 </StackPanel>
 
+            </Grid>
+
+            <!--  Oblique Cell  -->
+            <Grid Grid.Row="1" Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
+                                                      Grid.Row="0"
+                                                      SceneObjects="{Binding ObliqueVms}"
+                                                      OverlayObjects="{Binding ObliqueOverlayVms}" />
+                <Grid Grid.Row="1"
+                      Margin="5"
+                      VerticalAlignment="Top"
+                      Background="#80000000">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Slice:" />
+                        <Slider Width="200"
+                                Minimum="{Binding ObliqueVms[0].MinSliceIndex}"
+                                Maximum="{Binding ObliqueVms[0].MaxSliceIndex}"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
+
+                        <TextBlock Text="Slice Index:" />
+                        <TextBlock Text="{Binding ObliqueSliceIndex}" />
+                    </StackPanel>
+
+
+                    <!--  Slider value inforation  -->
+                    <StackPanel Grid.Column="1"
+                                Margin="8,0"
+                                Orientation="Horizontal">
+                        <TextBlock Text="Min:" />
+                        <TextBlock Text="{Binding ObliqueVms[0].MinSliceIndex}" />
+                        <TextBlock Text="Max:" />
+                        <TextBlock Text="{Binding ObliqueVms[0].MaxSliceIndex}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2"
+                                Margin="8,0"
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal">
+                        <TextBlock Text="Slice Origin: " />
+                        <TextBlock Text="{Binding ObliqueVms[0].PlaneOrigin}" />
+                    </StackPanel>
+
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

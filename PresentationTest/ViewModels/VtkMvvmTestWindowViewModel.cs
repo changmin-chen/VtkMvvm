@@ -21,7 +21,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly vtkImageData _background;
     private readonly int[] _backgroundDims;
 
+    // Underlay: image and labelmap
+    private readonly ImageOrthogonalSliceViewModel _axialVm, _coronalVm, _sagittalVm, _axialLabelVm, _coronalLabelVm, _sagittalLabelVm;
+    private readonly ImageObliqueSliceViewModel _obliqueVm, _obliqueLabelVm;
+
     // Overlay: crosshairs, slice-labels, brush
+    
     private readonly CrosshairViewModel _axialCrosshairVm, _coronalCrosshairVm, _sagittalCrosshairVm;
     private readonly BullseyeViewModel _axialBullseyeVm;
 
@@ -36,6 +41,19 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private int _axialSliceIndex;
     private int _coronalSliceIndex;
     private int _sagittalSliceIndex;
+    private int _obliqueSliceIndex;
+
+    // Background ViewModels: Axial, Coronal, Sagittal slice view models
+    public ImageOrthogonalSliceViewModel[] AxialVms => [_axialVm, _axialLabelVm];
+    public ImageOrthogonalSliceViewModel[] CoronalVms => [_coronalVm, _coronalLabelVm];
+    public ImageOrthogonalSliceViewModel[] SagittalVms => [_sagittalVm, _sagittalLabelVm];
+    public ImageObliqueSliceViewModel[] ObliqueVms => [_obliqueVm, _obliqueLabelVm];
+
+    // Overlay ViewModels
+    public BrushViewModel BrushVm { get; } = new(); // directly binds to slider for setting diameter
+    public VtkElementViewModel[] AxialOverlayVms { get; }
+    public VtkElementViewModel[] CoronalOverlayVms { get; }
+    public VtkElementViewModel[] SagittalOverlayVms { get; }
 
 
     public VtkMvvmTestWindowViewModel()
@@ -57,17 +75,18 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             .WithRgbaLookupTable(_labelMapLut)
             .Build();
 
-        var axialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipe);
-        var labelAxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipe);
-        AxialVms = [axialVm, labelAxialVm];
+        _axialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipe);
+        _axialLabelVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipe);
 
-        var coronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, bgPipe);
-        var labelCoronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, labelMapPipe);
-        CoronalVms = [coronalVm, labelCoronalVm];
+        _coronalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, bgPipe);
+        _coronalLabelVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Coronal, labelMapPipe);
 
-        var sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, bgPipe);
-        var labelSagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipe);
-        SagittalVms = [sagittalVm, labelSagittalVm];
+        _sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, bgPipe);
+        _sagittalLabelVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipe);
+        
+        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(Deg2Rad(0), Deg2Rad(45) ,Deg2Rad(45));
+        _obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgPipe);
+        _obliqueLabelVm = new ImageObliqueSliceViewModel(sliceOrientation, labelMapPipe);
 
         // Add brushes that render on top of the image
         BrushVm.Diameter = 3.0;
@@ -81,9 +100,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         // Pick list
         _picker.SetTolerance(0.005);
         _picker.PickFromListOn();
-        _picker.AddPickList(axialVm.Actor);
-        _picker.AddPickList(coronalVm.Actor);
-        _picker.AddPickList(sagittalVm.Actor);
+        _picker.AddPickList(_axialVm.Actor);
+        _picker.AddPickList(_coronalVm.Actor);
+        _picker.AddPickList(_sagittalVm.Actor);
 
         // Overlay ViewModels -----------------------------------------
         var bounds = Bounds.FromArray(_background.GetBounds());
@@ -99,17 +118,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
     }
 
-
-    // Background ViewModels: Axial, Coronal, Sagittal slice view models
-    public ImageOrthogonalSliceViewModel[] AxialVms { get; }
-    public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
-    public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
-
-    // Overlay ViewModels
-    public BrushViewModel BrushVm { get; } = new(); // directly binds to slider for setting diameter
-    public VtkElementViewModel[] AxialOverlayVms { get; }
-    public VtkElementViewModel[] CoronalOverlayVms { get; }
-    public VtkElementViewModel[] SagittalOverlayVms { get; }
 
     public int AxialSliceIndex
     {
@@ -143,6 +151,17 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             SetSliceIndex(SagittalVms, value);
         }
     }
+    
+    public int ObliqueSliceIndex
+    {
+        get => _obliqueSliceIndex;
+        set
+        {
+            value = Math.Clamp(value, _obliqueVm.MinSliceIndex, _obliqueVm.MaxSliceIndex);
+            this.RaiseAndSetIfChanged(ref _obliqueSliceIndex, value);
+            SetSliceIndex(ObliqueVms, value);
+        }
+    }
 
     [Reactive] public byte LabelMapFillingValue { get; set; } = 1;
 
@@ -174,7 +193,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             _axialCrosshairVm.FocalPoint = clickWorldPos;
             _coronalCrosshairVm.FocalPoint = clickWorldPos;
             _sagittalCrosshairVm.FocalPoint = clickWorldPos;
-            
+
             _axialBullseyeVm.FocalPoint = clickWorldPos;
         }
     }
@@ -200,9 +219,20 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         BrushVm.Orientation = sender.Orientation;
     }
 
-    private static void SetSliceIndex(IEnumerable<ImageOrthogonalSliceViewModel> vms, int sliceIndex)
+    private static void SetSliceIndex(IReadOnlyList<VtkElementViewModel> vms, int sliceIndex)
     {
-        foreach (ImageOrthogonalSliceViewModel vm in vms) vm.SliceIndex = sliceIndex;
+        foreach (var vm in vms)
+        {
+            switch (vm)
+            {
+                case ImageObliqueSliceViewModel obliqueVm:
+                    obliqueVm.SliceIndex = sliceIndex;
+                    break;
+                case ImageOrthogonalSliceViewModel orthogonalVm:
+                    orthogonalVm.SliceIndex = sliceIndex;
+                    break;
+            }
+        }
     }
 
     private static vtkImageData CreateLabelMap(vtkImageData refImage)
@@ -220,4 +250,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         labelMap.ZeroScalars();
         return labelMap;
     }
+    
+    private static float Deg2Rad(float degrees) => (float)(degrees * Math.PI / 180);
+    
 }
