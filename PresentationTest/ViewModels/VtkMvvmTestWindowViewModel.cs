@@ -11,6 +11,7 @@ using VtkMvvm.Features.BrushPainter;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
+using VtkMvvm.ViewModels.Base;
 
 namespace PresentationTest.ViewModels;
 

@@ -1,4 +1,5 @@
 ﻿using Kitware.VTK;
+using VtkMvvm.ViewModels.Base;
 
 namespace VtkMvvm.ViewModels;
 

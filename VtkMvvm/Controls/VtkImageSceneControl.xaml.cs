@@ -5,6 +5,7 @@ using Kitware.VTK;
 using VtkMvvm.Controls.Plugins;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
+using VtkMvvm.ViewModels.Base;
 using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;

@@ -9,6 +9,7 @@ using VtkMvvm.Extensions;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels;
+using VtkMvvm.ViewModels.Base;
 
 namespace PresentationTest.ViewModels;
 
