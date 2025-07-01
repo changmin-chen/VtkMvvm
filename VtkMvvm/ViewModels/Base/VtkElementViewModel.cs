@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Kitware.VTK;
 
-namespace VtkMvvm.ViewModels;
+namespace VtkMvvm.ViewModels.Base;
 
 /// <summary>
 ///     Abstract base ViewModel that can be put into RenderWindow control

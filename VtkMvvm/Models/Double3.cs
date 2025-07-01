@@ -96,14 +96,13 @@ public readonly record struct Double3(double X, double Y, double Z)
     public override string ToString() => $"({X:F3}, {Y:F3}, {Z:F3})";
 
     public string ToString(string format) => $"({X.ToString(format)}, {Y.ToString(format)}, {Z.ToString(format)})";
+    
+    // Conversions with Vector3
+    public static explicit operator Vector3(Double3 v) => new ((float)v.X, (float)v.Y, (float)v.Z);
+    public static implicit operator Double3(Vector3 v) => new(v.X, v.Y, v.Z);
 }
 
 public static class Double3Extensions
 {
     public static double[] ToArray(this Double3 d) => [d.X, d.Y, d.Z];
-
-    /// <summary>
-    /// Downcast to float precision. 
-    /// </summary>
-    public static Vector3 ToVector3(this Double3 d) => new((float)d.X, (float)d.Y, (float)d.Z);
 }
