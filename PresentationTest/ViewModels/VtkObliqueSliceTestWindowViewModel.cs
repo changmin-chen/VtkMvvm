@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Numerics;
 using Kitware.VTK;
 using PresentationTest.TestData;
@@ -50,8 +49,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
             DegreesToRadius(PitchDegrees),
             DegreesToRadius(RollDegrees));
         var obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgPipe);
-
-
+        
         // Pick list
         _picker.SetTolerance(0.005);
         _picker.PickFromListOn();
@@ -64,7 +62,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         _crosshair = CrosshairViewModel.Create(
             obliqueVm.PlaneAxisU,
             obliqueVm.PlaneAxisV,
-            obliqueVm.GetSliceBounds());
+            Bounds.FromArray(_background.GetBounds()));  // get volume bounds
 
         _bullseye = BullseyeViewModel.Create(Double3.Zero, obliqueVm.PlaneNormal);
     }
@@ -101,9 +99,9 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         var (uDir, vDir, nDir) = (_obliqueImageVm.PlaneAxisU, _obliqueImageVm.PlaneAxisV, _obliqueImageVm.PlaneNormal);
 
         // Adjust crosshair, so it can plot onto the resliced plane
-        Bounds bounds = _obliqueImageVm.GetSliceBounds();
-        _crosshair.SetBounds(bounds);
-        Debug.WriteLine($"Slice bounds: {bounds}");
+        // Bounds bounds = _obliqueImageVm.GetSliceBounds();
+        // _crosshair.SetBounds(bounds);
+        // Debug.WriteLine($"Slice bounds: {bounds}");
         _crosshair.SetPlaneAxes(uDir, vDir);
 
         // Adjust bullseye

@@ -15,7 +15,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
     // ── VTK pipeline ────────────────────────────────────────────────
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
     private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
-    private readonly vtkTransform _xfm = vtkTransform.New(); // NEW
+    private readonly vtkTransform _xfm = vtkTransform.New();
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
     private readonly vtkImageActor _actor = vtkImageActor.New();
 
@@ -89,57 +89,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel
 
     public int MinSliceIndex => _minSliceIdx;
     public int MaxSliceIndex => _maxSliceIdx;
-
-    /// <summary>World bounds of the **current** oblique slice.</summary>
-    public Bounds GetSliceBounds()
-    {
-        // ── 1. Make sure the reslice knows its output geometry ─────
-        //     UpdateInformation() is cheap – no voxels are copied.
-        _reslice.UpdateInformation();
-        vtkImageData slice = _reslice.GetOutput();
-
-        // ── 2. Size of the 2-D slice in its own (u,v) frame ────────
-        int[] ext = slice.GetExtent(); // (xmin,xmax, ymin,ymax, 0,0)
-        double[] sp = slice.GetSpacing(); // pixel size in mm
-        if (ext[0] > ext[1]) // still empty -> execute now
-        {
-            _reslice.Update();
-            ext = slice.GetExtent();
-        }
-
-        double w = (ext[1] - ext[0] + 1) * sp[0]; // width  in mm
-        double h = (ext[3] - ext[2] + 1) * sp[1]; // height in mm
-
-        // ── 3. Four in-plane corners around the slice centre ───────
-        Double3[] local =
-        [
-            new(-w * 0.5, -h * 0.5, 0), // lower-left
-            new(w * 0.5, -h * 0.5, 0), // lower-right
-            new(w * 0.5, h * 0.5, 0), // upper-right
-            new(-w * 0.5, h * 0.5, 0) // upper-left
-        ];
-
-        // ── 4. Same matrix the actor uses (slice → world) ──────────
-        vtkMatrix4x4 m = _xfm.GetMatrix();
-
-        var min = new Vector3(float.MaxValue);
-        var max = new Vector3(float.MinValue);
-
-        foreach (var p in local)
-        {
-            double x = m.GetElement(0, 0) * p.X + m.GetElement(0, 1) * p.Y + m.GetElement(0, 2) * p.Z + m.GetElement(0, 3);
-            double y = m.GetElement(1, 0) * p.X + m.GetElement(1, 1) * p.Y + m.GetElement(1, 2) * p.Z + m.GetElement(1, 3);
-            double z = m.GetElement(2, 0) * p.X + m.GetElement(2, 1) * p.Y + m.GetElement(2, 2) * p.Z + m.GetElement(2, 3);
-
-            var v = new Vector3((float)x, (float)y, (float)z);
-            min = Vector3.Min(min, v);
-            max = Vector3.Max(max, v);
-        }
-
-        return new Bounds(min.X, max.X,
-            min.Y, max.Y,
-            min.Z, max.Z);
-    }
+    
 
     // convenience accessors for the plane axes (unchanged API)
     public Vector3 PlaneAxisU { get; private set; }

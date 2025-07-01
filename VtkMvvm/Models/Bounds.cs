@@ -3,7 +3,7 @@
 /// <summary>
 /// Axis-aligned bounding box (AABB) bounds value object.
 /// </summary>
-public record Bounds(double XMin, double XMax, double YMin, double YMax, double ZMin, double ZMax)
+public readonly record struct Bounds(double XMin, double XMax, double YMin, double YMax, double ZMin, double ZMax)
 {
     public Double3 Center => new((XMax + XMin) / 2, (YMax + YMin) / 2, (ZMax + ZMin) / 2);
 
