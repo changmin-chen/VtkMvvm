@@ -84,7 +84,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, bgPipe);
         _sagittalLabelVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipe);
         
-        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(Deg2Rad(0), Deg2Rad(45) ,Deg2Rad(45));
+        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(Deg2Rad(0), 
+            Deg2Rad(0) ,
+            Deg2Rad(45));
         _obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgPipe);
         _obliqueLabelVm = new ImageObliqueSliceViewModel(sliceOrientation, labelMapPipe);
 
@@ -195,6 +197,10 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             _sagittalCrosshairVm.FocalPoint = clickWorldPos;
 
             _axialBullseyeVm.FocalPoint = clickWorldPos;
+        }
+        if (_obliqueVm.TryWorldToSlice(clickWorldPos, out int sliceIdx, out double _, out double _))
+        {
+            ObliqueSliceIndex = sliceIdx;
         }
     }
 

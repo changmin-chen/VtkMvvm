@@ -63,7 +63,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
     // ── public surface  ─────────────────────
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
-    
+
     /// <summary>
     /// Δ mm per slice index
     /// </summary>
@@ -110,6 +110,46 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
     public Vector3 PlaneNormal { get; private set; }
     public Double3 PlaneOrigin { get; private set; }
 
+    /// <summary>
+    /// Convert a world coordinate to the oblique slice stack:
+    ///   – <paramref name="idx"/>  : slice index along the normal
+    ///   – (<paramref name="i"/>,<paramref name="j"/>): in-plane pixel coords
+    /// Returns false if the point lies outside the volume.
+    /// </summary>
+    public bool TryWorldToSlice(Double3 w, out int idx, out double i, out double j)
+    {
+        // ---------- 1. signed distance along the rail -----------------
+        Vector3 d = new((float)(w.X - _imgCentre[0]),
+            (float)(w.Y - _imgCentre[1]),
+            (float)(w.Z - _imgCentre[2]));
+
+        double dist = Vector3.Dot(d, PlaneNormal); // mm
+        idx = (int)Math.Round(dist / Step); // your new slice index
+
+        if (idx < _minSliceIdx || idx > _maxSliceIdx)
+        {
+            i = j = double.NaN; // outside dataset
+            return false;
+        }
+
+        // ---------- 2. where is the origin of that slice? -------------
+        Vector3 origin = new Vector3((float)_imgCentre[0],
+                             (float)_imgCentre[1],
+                             (float)_imgCentre[2])
+                         + PlaneNormal * (float)(idx * Step);
+
+        // ---------- 3. in-plane pixel coordinates ---------------------
+        Vector3 rel = new((float)(w.X - origin.X),
+            (float)(w.Y - origin.Y),
+            (float)(w.Z - origin.Z));
+
+        // PlaneAxisU/V already hold unit vectors; divide by voxel pitch
+        i = Vector3.Dot(rel, PlaneAxisU) / _spacing[0]; // column
+        j = Vector3.Dot(rel, PlaneAxisV) / _spacing[1]; // row
+        return true;
+    }
+
+
     //----------------------------------------------------------------
     /// <summary>Apply a new orientation: updates reslice axes, step, slider range.</summary>
     private void SetOrientation(Quaternion q)
@@ -136,8 +176,8 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlan
 
         // ---- distance per slice index (Δ) --------------------------
         Step = Math.Abs(n.X) * _spacing[0] +
-                Math.Abs(n.Y) * _spacing[1] +
-                Math.Abs(n.Z) * _spacing[2];
+               Math.Abs(n.Y) * _spacing[1] +
+               Math.Abs(n.Z) * _spacing[2];
 
         // ---- slider limits via support-function distance -----------
         double hx = 0.5 * (_imgBounds[1] - _imgBounds[0]);
