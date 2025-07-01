@@ -16,15 +16,11 @@ public static class TestImageLoader
 {
     public static vtkImageData ReadNifti(string path)
     {
-        Image itkImage = SimpleITK.ReadImage(path);
-        itkImage = SimpleITK.DICOMOrient(itkImage, "LPS");   // RAS -> LPS
-        var vtkImage = itkImage.ToVtkIgnoreDirection();
-        
-        itkImage.Dispose();
-        return vtkImage;
+        using Image? itkImage = SimpleITK.ReadImage(path);
+        return itkImage.ToVtkNoDirections();
     }
 
-    private static vtkImageData ToVtkIgnoreDirection(this Image itkImage)
+    private static vtkImageData ToVtkNoDirections(this Image itkImage)
     {
         VectorDouble? spacing = itkImage.GetSpacing();
         VectorDouble? origin = itkImage.GetOrigin();

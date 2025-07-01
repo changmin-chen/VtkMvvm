@@ -1,69 +1,46 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
 using Kitware.VTK;
 using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
-using VtkMvvm.ViewModels.Base;
 
 namespace VtkMvvm.ViewModels;
 
 /// <summary>
 /// Leverage VTK image actor instead of reslicing the image. Simpler and suitable for orthogonal slices.
 /// </summary>
-public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, ISlicePlaneInfo
+public class ImageOrthogonalSliceViewModel : VtkElementViewModel
 {
-    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
-    private readonly double[] _origin;
-    private readonly double[] _spacing;
-    private int _sliceIndex = int.MinValue;
+    private readonly vtkImageMapToColors _colorMap;
+    private int _sliceIndex;
     private double _windowLevel;
     private double _windowWidth;
 
     public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline)
     {
         Orientation = orientation;
-        (PlaneAxisU, PlaneAxisV) = GetPlaneAxes(orientation);
-        PlaneNormal = Vector3.Normalize(Vector3.Cross(PlaneAxisU, PlaneAxisV));
+        Actor = pipeline.Actor;
+        ImageModel = ImageModel.Create(pipeline.Image);
 
-        vtkImageData image = pipeline.Image;
-        _origin = image.GetOrigin();
-        _spacing = image.GetSpacing();
+        _colorMap = pipeline.ColorMap;
+        pipeline.Connect();
 
-        vtkImageActor actor = vtkImageActor.New();
-        Actor = actor;
-        ImageModel = ImageModel.Create(image);
-        pipeline.Connect(_cmap, actor);
-
-        // SetSliceIndex here is necessary.
-        // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
-        SliceIndex = 0;
+        SetSliceIndex(0); // necessary. this not only affects which slice it initially displayed, but also the slicing dimension
     }
-
-    private static (Vector3 uDir, Vector3 vDir) GetPlaneAxes(SliceOrientation orientation) => orientation switch
-    {
-        SliceOrientation.Axial => (Vector3.UnitX, Vector3.UnitZ),
-        SliceOrientation.Coronal => (Vector3.UnitY, Vector3.UnitX),
-        SliceOrientation.Sagittal => (Vector3.UnitZ, Vector3.UnitY),
-        _ => throw new ArgumentOutOfRangeException(nameof(orientation), orientation, null)
-    };
 
     public SliceOrientation Orientation { get; }
     public ImageModel ImageModel { get; }
     public override vtkImageActor Actor { get; }
-
-    // --------- sliced plane information -----------------------------
-    public Vector3 PlaneNormal { get; }
-    public Vector3 PlaneAxisU { get; }
-    public Vector3 PlaneAxisV { get; }
-    public Double3 PlaneOrigin { get; private set; }
 
     public int SliceIndex
     {
         get => _sliceIndex;
         set
         {
-            if (!SetField(ref _sliceIndex, value)) return;
-            SetSliceIndex(value);
-            OnModified();
+            if (SetField(ref _sliceIndex, value))
+            {
+                SetSliceIndex(value);
+                OnModified();
+            }
         }
     }
 
@@ -72,9 +49,11 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, ISliceP
         get => _windowLevel;
         set
         {
-            if (!SetField(ref _windowLevel, value)) return;
-            SetWindowBand(value, WindowWidth);
-            OnModified();
+            if (SetField(ref _windowLevel, value))
+            {
+                SetWindowBand(value, WindowWidth);
+                OnModified();
+            }
         }
     }
 
@@ -83,9 +62,11 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, ISliceP
         get => _windowWidth;
         set
         {
-            if (!SetField(ref _windowWidth, value)) return;
-            SetWindowBand(WindowLevel, value);
-            OnModified();
+            if (SetField(ref _windowWidth, value))
+            {
+                SetWindowBand(WindowLevel, value);
+                OnModified();
+            }
         }
     }
 
@@ -97,26 +78,32 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, ISliceP
             if (Math.Abs(Actor.GetOpacity() - value) < 1e-3) return;
             Actor.SetOpacity(value);
             Actor.Modified();
+
             OnPropertyChanged();
             OnModified();
         }
     }
 
-
-    protected override void Dispose(bool disposing)
+    public bool Visible
     {
-        if (disposing)
+        get => Actor.GetVisibility() == 1;
+        set
         {
-            _cmap.Dispose();
+            bool current = Actor.GetVisibility() == 1;
+            if (current == value) return;
+            Actor.SetVisibility(value ? 1 : 0);
+            Actor.Modified();
+
+            OnPropertyChanged();
+            OnModified();
         }
-        base.Dispose(disposing);
     }
 
     private void SetSliceIndex(int sliceIndex)
     {
-        int[] dims = ImageModel.Dimensions;
+        Debug.WriteLine($"{Orientation}-SliceIndex: {sliceIndex}");
 
-        // --- tell the actor which slice to draw ----------------------
+        int[] dims = ImageModel.Dimensions;
         switch (Orientation)
         {
             case SliceOrientation.Axial:
@@ -130,19 +117,6 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, ISliceP
                 break;
         }
 
-        // --- compute world-space origin of that plane ----------------
-        double ox = _origin[0];
-        double oy = _origin[1];
-        double oz = _origin[2];
-        switch (Orientation)
-        {
-            case SliceOrientation.Axial: oz += sliceIndex * _spacing[2]; break;
-            case SliceOrientation.Coronal: oy += sliceIndex * _spacing[1]; break;
-            case SliceOrientation.Sagittal: ox += sliceIndex * _spacing[0]; break;
-        }
-        PlaneOrigin = new Double3(ox, oy, oz);
-        OnPropertyChanged(nameof(PlaneOrigin));
-
         Actor.Modified();
     }
 
@@ -151,12 +125,12 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, ISliceP
         double low = level - width * 0.5;
         double high = level + width * 0.5;
 
-        vtkScalarsToColors? lut = _cmap.GetLookupTable();
+        vtkScalarsToColors? lut = _colorMap.GetLookupTable();
         lut.SetRange(low, high);
         lut.Build();
-        _cmap.SetLookupTable(lut);
+        _colorMap.SetLookupTable(lut);
 
-        _cmap.Modified();
+        _colorMap.Modified();
         Actor.Modified();
     }
 }

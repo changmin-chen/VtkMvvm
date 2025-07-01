@@ -1,6 +1,6 @@
 ﻿using Kitware.VTK;
 
-namespace PresentationTest.Extensions;
+namespace PresentationTest;
 
 public static class VtkImageDataExtension
 {
