@@ -23,8 +23,8 @@
 
         <Grid Margin="12">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.Resources>
                 <Style TargetType="TextBox">
@@ -58,9 +58,9 @@
                 </StackPanel>
                 <Button Content="Update Angle" Command="{Binding UpdateSliceOrientationCommand}" />
             </StackPanel>
-            
-            <!-- Setting cross hair visuals -->
-            <StackPanel Grid.Row="1" Margin="0 32">
+
+            <!--  Setting cross hair visuals  -->
+            <StackPanel Grid.Row="1" Margin="0,32">
 
                 <TextBlock Width="240"
                            HorizontalAlignment="Left"
@@ -72,9 +72,9 @@
                     <TextBlock Text="Width: " />
                     <TextBox Text="{Binding CrosshairVm.LineWidth}" />
                 </StackPanel>
-                
+
             </StackPanel>
-            
+
         </Grid>
 
         <Grid Column="1">
@@ -86,43 +86,55 @@
                                                   Grid.Row="0"
                                                   SceneObjects="{Binding ObliqueImageVms}"
                                                   OverlayObjects="{Binding ObliqueOverlayVms}" />
-            <StackPanel Grid.Row="1"
-                        Margin="5"
-                        VerticalAlignment="Top"
-                        Orientation="Horizontal"
-                        Background="#80000000">
-                <TextBlock Margin="0,5,5,0"
-                           Text="Slice:"
-                           Foreground="White" />
-                <Slider Width="200"
-                        Minimum="{Binding ObliqueImageVms[0].MinSliceIndex}"
-                        Maximum="{Binding ObliqueImageVms[0].MaxSliceIndex}"
-                        IsSnapToTickEnabled="True"
-                        Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
+            <Grid Grid.Row="1"
+                  Margin="5"
+                  VerticalAlignment="Top"
+                  Background="#80000000">
 
-                <TextBlock Margin="0,5,5,0"
-                           Text="Slice Index:"
-                           Foreground="White" />
-                <TextBlock Margin="0,5,5,0"
-                           Text="{Binding ObliqueSliceIndex}"
-                           Foreground="White" />
+                <Grid.Resources>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="White" />
+                    </Style>
+                </Grid.Resources>
 
-                <StackPanel Margin="8,0" Orientation="Horizontal">
-                    <TextBlock Margin="0,5,5,0"
-                               Text="Min:"
-                               Foreground="White" />
-                    <TextBlock Margin="0,5,5,0"
-                               Text="{Binding ObliqueImageVms[0].MinSliceIndex}"
-                               Foreground="White" />
-                    <TextBlock Margin="0,5,5,0"
-                               Text="Max:"
-                               Foreground="White" />
-                    <TextBlock Margin="0,5,5,0"
-                               Text="{Binding ObliqueImageVms[0].MaxSliceIndex}"
-                               Foreground="White" />
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Slice:" />
+                    <Slider Width="200"
+                            Minimum="{Binding ObliqueImageVms[0].MinSliceIndex}"
+                            Maximum="{Binding ObliqueImageVms[0].MaxSliceIndex}"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding ObliqueSliceIndex, Mode=TwoWay}" />
+
+                    <TextBlock Text="Slice Index:" />
+                    <TextBlock Text="{Binding ObliqueSliceIndex}" />
                 </StackPanel>
 
-            </StackPanel>
+
+                <!--  Slider value inforation  -->
+                <StackPanel Grid.Column="1"
+                            Margin="8,0"
+                            Orientation="Horizontal">
+                    <TextBlock Text="Min:" />
+                    <TextBlock Text="{Binding ObliqueImageVms[0].MinSliceIndex}" />
+                    <TextBlock Text="Max:" />
+                    <TextBlock Text="{Binding ObliqueImageVms[0].MaxSliceIndex}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2"
+                            Margin="8,0"
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal">
+                    <TextBlock Text="Slice Origin: " />
+                    <TextBlock Text="{Binding ObliqueImageVms[0].PlaneOrigin}" />
+                </StackPanel>
+
+            </Grid>
         </Grid>
     </Grid>
 
