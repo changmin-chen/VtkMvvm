@@ -15,17 +15,26 @@
     </d:Window.DataContext>
 
     <Grid>
-
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!--  Extra binding tests  -->
+        <!--  Binding tests  -->
         <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.Resources>
+                <Style TargetType="TextBox">
+                    <Setter Property="Width" Value="80"/>
+                    <Setter Property="Margin" Value="8 0 "/>
+                </Style>
+            </Grid.Resources>
             <StackPanel>
                 <TextBlock Margin="0,16"
-                           Text="Other binding tests"
+                           Text="Binding tests"
                            FontWeight="Bold"
                            FontSize="32" />
 
@@ -93,6 +102,30 @@
                     </StackPanel>
                 </StackPanel>
 
+            </StackPanel>
+
+            <!--  Change slice orientation  -->
+            <StackPanel Grid.Row="1">
+
+                <TextBlock Width="240"
+                           HorizontalAlignment="Left"
+                           Text="Setting oblique slicing angle (degrees)"
+                           FontWeight="Bold"
+                           FontSize="12" />
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Yaw: " />
+                    <TextBox Text="{Binding YawDegrees}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Pitch: " />
+                    <TextBox Text="{Binding PitchDegrees}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Roll: " />
+                    <TextBox Text="{Binding RollDegrees}" />
+                </StackPanel>
+                <Button Content="Set Oblique Orientation" Command="{Binding SetSliceOrientationCommand}" />
             </StackPanel>
 
         </Grid>
