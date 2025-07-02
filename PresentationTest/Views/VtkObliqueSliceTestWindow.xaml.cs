@@ -7,6 +7,7 @@ using VtkMvvm.Features.InteractorBehavior;
 
 namespace PresentationTest.Views;
 
+[Obsolete("Content has been moved to VtkMvvmTestWindow")]
 public partial class VtkObliqueSliceTestWindow : Window
 {
     private readonly CompositeDisposable _disposables = new();
