@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Threading;
 using Kitware.VTK;
 using VtkMvvm.Controls.Plugins;
-using VtkMvvm.ViewModels;
 using VtkMvvm.ViewModels.Base;
 using UserControl = System.Windows.Controls.UserControl;
 
@@ -18,7 +17,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     private const double CamDist = 500; // mm
     private bool _isLoaded; // flag indicates the control is loaded.
 
-    private ImageObliqueSliceViewModel? _referenceSlice; // use first oblique slice as reference to place and rotate the camera
+    private ImageSliceViewModel? _referenceSlice; // use first oblique slice as reference to place and rotate the camera
 
     // ---------- Plugins --------------------------------------- 
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
@@ -28,9 +27,9 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
-        typeof(IReadOnlyList<ImageObliqueSliceViewModel>),
+        typeof(IReadOnlyList<ImageSliceViewModel>),
         typeof(VtkObliqueImageSceneControl),
-        new PropertyMetadata(null, OnSceneObjectsChanged));
+        new PropertyMetadata(null, OnImageObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
         nameof(OverlayObjects),
@@ -167,20 +166,20 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
     #region Scene objects changed
 
-    private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnImageObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
-        control.RehookSceneObjects((IReadOnlyList<ImageObliqueSliceViewModel>)e.OldValue, (IReadOnlyList<ImageObliqueSliceViewModel>)e.NewValue);
+        control.RehookImageObjects((IReadOnlyList<ImageSliceViewModel>)e.OldValue, (IReadOnlyList<ImageSliceViewModel>)e.NewValue);
     }
 
-    private void RehookSceneObjects(
-        IReadOnlyList<ImageObliqueSliceViewModel>? oldSceneObjects,
-        IReadOnlyList<ImageObliqueSliceViewModel>? newSceneObjects)
+    private void RehookImageObjects(
+        IReadOnlyList<ImageSliceViewModel>? oldSceneObjects,
+        IReadOnlyList<ImageSliceViewModel>? newSceneObjects)
     {
         // ----- detach old -----
         if (oldSceneObjects != null)
         {
-            foreach (ImageObliqueSliceViewModel item in oldSceneObjects) UnHookActor(MainRenderer, item);
+            foreach (ImageSliceViewModel item in oldSceneObjects) UnHookActor(MainRenderer, item);
         }
 
         //  bail if empty ------------------------
@@ -191,7 +190,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         }
 
         // ----- attach new -----
-        foreach (ImageObliqueSliceViewModel item in newSceneObjects) HookActor(MainRenderer, item);
+        foreach (ImageSliceViewModel item in newSceneObjects) HookActor(MainRenderer, item);
 
         // choose the slice that defines the view
         _referenceSlice = newSceneObjects[0];
