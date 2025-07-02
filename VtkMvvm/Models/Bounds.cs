@@ -12,6 +12,7 @@ public readonly record struct Bounds(double XMin, double XMax, double YMin, doub
         if (bounds.Length != 6) throw new ArgumentException("Bounds array must have 6 elements", nameof(bounds));
         return new(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]);
     }
+    public static explicit operator Bounds(double[] bounds) => FromArray(bounds);
     
     public override string ToString() => $"[{XMin:F3}, {XMax:F3}, {YMin:F3}, {YMax:F3}, {ZMin:F3}, {ZMax:F3}]";
 }

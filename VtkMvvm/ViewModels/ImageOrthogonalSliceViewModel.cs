@@ -9,12 +9,12 @@ namespace VtkMvvm.ViewModels;
 /// <summary>
 /// Leverage VTK image actor instead of reslicing the image. Simpler and suitable for orthogonal slices.
 /// </summary>
-public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, IImageSliceViewModel
+public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
 {
     private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly double[] _origin;
     private readonly double[] _spacing;
-    private int _sliceIndex = int.MinValue;
+
     private double _windowLevel;
     private double _windowWidth;
 
@@ -50,22 +50,6 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, IImageS
     public ImageModel ImageModel { get; }
     public override vtkImageActor Actor { get; }
 
-    // --------- sliced plane information -----------------------------
-    public Vector3 PlaneNormal { get; }
-    public Vector3 PlaneAxisU { get; }
-    public Vector3 PlaneAxisV { get; }
-    public Double3 PlaneOrigin { get; private set; }
-
-    public int SliceIndex
-    {
-        get => _sliceIndex;
-        set
-        {
-            if (!SetField(ref _sliceIndex, value)) return;
-            SetSliceIndex(value);
-            OnModified();
-        }
-    }
 
     public double WindowLevel
     {
@@ -112,7 +96,8 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, IImageS
         base.Dispose(disposing);
     }
 
-    private void SetSliceIndex(int sliceIndex)
+
+    protected override void ApplySliceIndex(int idx)
     {
         int[] dims = ImageModel.Dimensions;
 
@@ -120,13 +105,16 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, IImageS
         switch (Orientation)
         {
             case SliceOrientation.Axial:
-                Actor.SetDisplayExtent(0, dims[0] - 1, 0, dims[1] - 1, sliceIndex, sliceIndex);
+                idx = Math.Clamp(idx, 0, dims[2] - 1);
+                Actor.SetDisplayExtent(0, dims[0] - 1, 0, dims[1] - 1, idx, idx);
                 break;
             case SliceOrientation.Coronal:
-                Actor.SetDisplayExtent(0, dims[0] - 1, sliceIndex, sliceIndex, 0, dims[2] - 1);
+                idx = Math.Clamp(idx, 0, dims[1] - 1);
+                Actor.SetDisplayExtent(0, dims[0] - 1, idx, idx, 0, dims[2] - 1);
                 break;
             case SliceOrientation.Sagittal:
-                Actor.SetDisplayExtent(sliceIndex, sliceIndex, 0, dims[1] - 1, 0, dims[2] - 1);
+                idx = Math.Clamp(idx, 0, dims[0] - 1);
+                Actor.SetDisplayExtent(idx, idx, 0, dims[1] - 1, 0, dims[2] - 1);
                 break;
         }
 
@@ -136,9 +124,9 @@ public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, IImageS
         double oz = _origin[2];
         switch (Orientation)
         {
-            case SliceOrientation.Axial: oz += sliceIndex * _spacing[2]; break;
-            case SliceOrientation.Coronal: oy += sliceIndex * _spacing[1]; break;
-            case SliceOrientation.Sagittal: ox += sliceIndex * _spacing[0]; break;
+            case SliceOrientation.Axial: oz += idx * _spacing[2]; break;
+            case SliceOrientation.Coronal: oy += idx * _spacing[1]; break;
+            case SliceOrientation.Sagittal: ox += idx * _spacing[0]; break;
         }
         PlaneOrigin = new Double3(ox, oy, oz);
         OnPropertyChanged(nameof(PlaneOrigin));
