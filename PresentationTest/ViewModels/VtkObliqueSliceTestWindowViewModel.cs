@@ -14,6 +14,7 @@ using VtkMvvm.ViewModels.Base;
 
 namespace PresentationTest.ViewModels;
 
+[Obsolete("Content has been moved to VtkMvvmTestWindowViewModel")]
 public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
 {
     private readonly vtkImageData _background;
