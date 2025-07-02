@@ -11,7 +11,7 @@ namespace VtkMvvm.ViewModels;
 /// (vtkImageActor + vtkTransform) and keeps the public surface identical
 /// to the original implementation so existing bindings continue to work.
 /// </summary>
-public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, IImageSliceViewModel
+public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 {
     // ── VTK pipeline ────────────────────────────────────────────────
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
@@ -27,7 +27,6 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, IImageSlic
     // ── cached values for slider & step ─────────────────────────────
     private int _minSliceIdx;
     private int _maxSliceIdx;
-    private int _sliceIndex = int.MinValue;
     private Quaternion _sliceOrientation = Quaternion.Identity;
 
 
@@ -64,22 +63,12 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, IImageSlic
     public override vtkImageActor Actor { get; }
     public ImageModel ImageModel { get; }
 
+
     /// <summary>
     /// Δ mm per slice index
     /// </summary>
     public double Step { get; private set; }
 
-    public int SliceIndex
-    {
-        get => _sliceIndex;
-        set
-        {
-            value = Math.Clamp(value, _minSliceIdx, _maxSliceIdx);
-            if (!SetField(ref _sliceIndex, value)) return;
-            SetSliceIndex(value);
-            OnModified();
-        }
-    }
 
     public Quaternion SliceOrientation
     {
@@ -103,12 +92,6 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, IImageSlic
         get => _maxSliceIdx;
         private set => SetField(ref _maxSliceIdx, value);
     }
-
-    // convenience accessors for the plane axes (unchanged API)
-    public Vector3 PlaneAxisU { get; private set; }
-    public Vector3 PlaneAxisV { get; private set; }
-    public Vector3 PlaneNormal { get; private set; }
-    public Double3 PlaneOrigin { get; private set; }
 
     /// <summary>
     /// Convert a world coordinate to the oblique slice stack:
@@ -190,12 +173,12 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, IImageSlic
         MaxSliceIndex = maxIdx;
 
         // ----- keep current index inside the new range --------------
-        _sliceIndex = Math.Clamp(_sliceIndex, _minSliceIdx, _maxSliceIdx);
-        SetSliceIndex(_sliceIndex); // ★ always update transform
+        SliceIndex = Math.Clamp(SliceIndex, _minSliceIdx, _maxSliceIdx);
+        ApplySliceIndex(SliceIndex); // ★ always update slice idx to fit the current transform
     }
 
     /// <summary>Move the slice plane along its normal by idx · Δ.</summary>
-    private void SetSliceIndex(int idx)
+    protected override void ApplySliceIndex(int idx)
     {
         // current normal (3rd column)
         double nx = _axes.GetElement(0, 2);
@@ -223,6 +206,7 @@ public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, IImageSlic
         _xfm.Modified();
         _actor.Modified();
     }
+
 
     protected override void Dispose(bool disposing)
     {

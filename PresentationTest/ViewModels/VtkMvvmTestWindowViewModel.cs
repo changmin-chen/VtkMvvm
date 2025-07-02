@@ -247,7 +247,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     }
 
     // ---- Helpers -----------------------------------------------
-    private static void SetSliceIndex(IReadOnlyList<IImageSliceViewModel> vms, int sliceIndex)
+    private static void SetSliceIndex(IReadOnlyList<ImageSliceViewModel> vms, int sliceIndex)
     {
         foreach (var vm in vms)
         {

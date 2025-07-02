@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
         xmlns:viewModels="clr-namespace:PresentationTest.ViewModels"
+        xmlns:plugins="clr-namespace:VtkMvvm.Controls.Plugins;assembly=VtkMvvm"
         Title="VtkMvvmTestWindow"
         Width="1600"
         Height="900"
@@ -281,7 +282,9 @@
                 <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
                                                       Grid.Row="0"
                                                       SceneObjects="{Binding ObliqueVms}"
-                                                      OverlayObjects="{Binding ObliqueOverlayVms}" />
+                                                      OverlayObjects="{Binding ObliqueOverlayVms}"
+                                                      plugins:ControlPlugin.OrientationCube="True"
+                                                      plugins:ControlPlugin.OrientationLabels="True"/>
                 <Grid Grid.Row="1"
                       Margin="5"
                       VerticalAlignment="Top"

@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Threading;
 using Kitware.VTK;
 using VtkMvvm.Controls.Plugins;
-using VtkMvvm.ViewModels;
 using VtkMvvm.ViewModels.Base;
 using UserControl = System.Windows.Controls.UserControl;
 
@@ -18,9 +17,10 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     private const double CamDist = 500; // mm
     private bool _isLoaded; // flag indicates the control is loaded.
 
-    private ImageObliqueSliceViewModel? _referenceSlice; // use first oblique slice as reference to place and rotate the camera
+    private ImageSliceViewModel? _referenceSlice; // use first oblique slice as reference to place and rotate the camera
 
     // ---------- Plugins --------------------------------------- 
+    private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
 
 
@@ -28,9 +28,9 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
-        typeof(IReadOnlyList<ImageObliqueSliceViewModel>),
+        typeof(IReadOnlyList<ImageSliceViewModel>),
         typeof(VtkObliqueImageSceneControl),
-        new PropertyMetadata(null, OnSceneObjectsChanged));
+        new PropertyMetadata(null, OnImageObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
         nameof(OverlayObjects),
@@ -81,45 +81,66 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 
         renderWindow.AddRenderer(MainRenderer);
         MainRenderer.SetBackground(0.0, 0.0, 0.0);
-
-        // Render overlays onto the main renderer
         MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1);
+        OverlayRenderer.SetLayer(1);  // render overlays onto the main renderer
         OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
         renderWindow.SetNumberOfLayers(2);
         renderWindow.AddRenderer(OverlayRenderer);
+        
+        _isLoaded = true;
 
         // ── orientation cube ───────────────────────────────
-        _orientationCube = new OrientationCubeBehavior(renderWindow);
-
-        _isLoaded = true;
+        // If the attached property was set before the control was loaded,
+        // this will ensure the cube is created now.
+        if (ControlPlugin.GetOrientationCube(this))
+        {
+            AddOrientationCube();
+        }
+        if (ControlPlugin.GetOrientationLabels(this))
+        {
+            AddOrientationLabels();
+        }
     }
-
-    public void Dispose()
+    
+    public void AddOrientationCube()
     {
-        _orientationCube?.Dispose();
-
-        if (SceneObjects is { } objects)
+        if (_isLoaded && _orientationCube == null)
         {
-            foreach (VtkElementViewModel sceneObj in objects)
-                sceneObj.Modified -= OnSceneObjectsModified;
+            _orientationCube = new OrientationCubeBehavior(RenderWindowControl.RenderWindow);
+            RequestRender(); // Render to show the cube
         }
-
-        if (OverlayObjects is { } overlays)
-        {
-            foreach (VtkElementViewModel overlayObj in overlays)
-                overlayObj.Modified -= OnSceneObjectsModified;
-        }
-
-        WFHost.Child = null;
-        WFHost?.Dispose();
-        RenderWindowControl.Dispose();
-        MainRenderer.Dispose();
-        OverlayRenderer.Dispose();
     }
 
+    public void RemoveOrientationCube()
+    {
+        if (_orientationCube != null)
+        {
+            _orientationCube.Dispose();
+            _orientationCube = null;
+            RequestRender(); // Render to reflect the removal
+        }
+    }
+
+    public void AddOrientationLabels()
+    {
+        if (_isLoaded && _orientationLabels == null)
+        {
+            _orientationLabels = new OrientationLabelBehavior(OverlayRenderer, MainRenderer.GetActiveCamera());
+            RequestRender(); 
+        }
+    }
+
+    public void RemoveOrientationLabels()
+    {
+        if (_orientationLabels != null)
+        {
+            _orientationLabels.Dispose();
+            _orientationLabels = null;
+            RequestRender(); 
+        }
+    }
 
     private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
@@ -163,24 +184,49 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         MainRenderer.ResetCameraClippingRange();
         RenderWindowControl.RenderWindow.Render();
     }
+    
+    // ---------- dispose resources ----------------------
+    public void Dispose()
+    {
+        _orientationCube?.Dispose();
+
+        if (SceneObjects is { } objects)
+        {
+            foreach (VtkElementViewModel sceneObj in objects)
+                sceneObj.Modified -= OnSceneObjectsModified;
+        }
+
+        if (OverlayObjects is { } overlays)
+        {
+            foreach (VtkElementViewModel overlayObj in overlays)
+                overlayObj.Modified -= OnSceneObjectsModified;
+        }
+
+        WFHost.Child = null;
+        WFHost?.Dispose();
+        RenderWindowControl.Dispose();
+        MainRenderer.Dispose();
+        OverlayRenderer.Dispose();
+    }
+
 
 
     #region Scene objects changed
 
-    private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnImageObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
-        control.RehookSceneObjects((IReadOnlyList<ImageObliqueSliceViewModel>)e.OldValue, (IReadOnlyList<ImageObliqueSliceViewModel>)e.NewValue);
+        control.RehookImageObjects((IReadOnlyList<ImageSliceViewModel>)e.OldValue, (IReadOnlyList<ImageSliceViewModel>)e.NewValue);
     }
 
-    private void RehookSceneObjects(
-        IReadOnlyList<ImageObliqueSliceViewModel>? oldSceneObjects,
-        IReadOnlyList<ImageObliqueSliceViewModel>? newSceneObjects)
+    private void RehookImageObjects(
+        IReadOnlyList<ImageSliceViewModel>? oldSceneObjects,
+        IReadOnlyList<ImageSliceViewModel>? newSceneObjects)
     {
         // ----- detach old -----
         if (oldSceneObjects != null)
         {
-            foreach (ImageObliqueSliceViewModel item in oldSceneObjects) UnHookActor(MainRenderer, item);
+            foreach (ImageSliceViewModel item in oldSceneObjects) UnHookActor(MainRenderer, item);
         }
 
         //  bail if empty ------------------------
@@ -191,7 +237,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         }
 
         // ----- attach new -----
-        foreach (ImageObliqueSliceViewModel item in newSceneObjects) HookActor(MainRenderer, item);
+        foreach (ImageSliceViewModel item in newSceneObjects) HookActor(MainRenderer, item);
 
         // choose the slice that defines the view
         _referenceSlice = newSceneObjects[0];
