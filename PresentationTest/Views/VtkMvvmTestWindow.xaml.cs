@@ -42,7 +42,7 @@ public partial class VtkMvvmTestWindow : Window
     private void InitializeFreehandInteractor(VtkImageSceneControl control)
     {
         vtkInteractorStyleImage style = new(); // 被attach的event會直接覆蓋
-        vtkRenderWindowInteractor? iren = control.RenderWindowControl.RenderWindow.GetInteractor();
+        vtkRenderWindowInteractor? iren = control.GetInteractor();
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftMove((x, y) => _vm.OnControlGetBrushPosition(control, x, y))
