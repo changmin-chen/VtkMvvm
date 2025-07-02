@@ -15,13 +15,16 @@ namespace VtkMvvm.Controls;
 /// </summary>
 public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
 {
-    private ImageObliqueSliceViewModel? _referenceSlice;  // use first oblique slice as reference to place and rotate the camera
+    private const double CamDist = 500; // mm
+    private bool _isLoaded; // flag indicates the control is loaded.
+
+    private ImageObliqueSliceViewModel? _referenceSlice; // use first oblique slice as reference to place and rotate the camera
 
     // ---------- Plugins --------------------------------------- 
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
 
 
-    // ----------------------------------------------------------- 
+    // --- Dependency Properties -------------------------------------------------------- 
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
@@ -35,10 +38,27 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         typeof(VtkObliqueImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
-    /// <summary>
-    ///     Indicates whether the control is loaded. Or else the RenderWindowControl.RenderWindow may be null.
-    /// </summary>
-    private bool _isLoaded;
+    public IReadOnlyList<VtkElementViewModel>? SceneObjects
+    {
+        get => (IReadOnlyList<VtkElementViewModel>)GetValue(SceneObjectsProperty);
+        set => SetValue(SceneObjectsProperty, value);
+    }
+
+    public IReadOnlyList<VtkElementViewModel>? OverlayObjects
+    {
+        get => (IReadOnlyList<VtkElementViewModel>)GetValue(OverlayObjectsProperty);
+        set => SetValue(OverlayObjectsProperty, value);
+    }
+
+    public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
+    public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
+    public RenderWindowControl RenderWindowControl { get; } = new();
+
+    public vtkCamera GetActiveCamera() => MainRenderer.GetActiveCamera();
+
+    public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
+
+    public void Render() => RenderWindowControl.RenderWindow.Render();
 
     public VtkObliqueImageSceneControl()
     {
@@ -101,26 +121,6 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     }
 
 
-    public IReadOnlyList<VtkElementViewModel>? SceneObjects
-    {
-        get => (IReadOnlyList<VtkElementViewModel>)GetValue(SceneObjectsProperty);
-        set => SetValue(SceneObjectsProperty, value);
-    }
-
-    public IReadOnlyList<VtkElementViewModel>? OverlayObjects
-    {
-        get => (IReadOnlyList<VtkElementViewModel>)GetValue(OverlayObjectsProperty);
-        set => SetValue(OverlayObjectsProperty, value);
-    }
-
-    public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
-    public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkCamera GetActiveCamera() => MainRenderer.GetActiveCamera();
-    public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
-    public void Render() => RenderWindowControl.RenderWindow.Render();
-
-
     private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
         renderer.AddActor(viewModel.Actor);
@@ -143,8 +143,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     }
 
     /// <summary>
-    ///     Render the scene when the actors are modified.
-    ///     Hook onto the Modified event of the binding <see cref="VtkElementViewModel" />
+    ///     Event handler. Render scene when the Modified event in <see cref="VtkElementViewModel" /> is raised.
     /// </summary>
     private void OnSceneObjectsModified(object? sender, EventArgs args)
     {
@@ -157,7 +156,8 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
                 MainRenderer.GetActiveCamera(),
                 _referenceSlice.Actor,
                 _referenceSlice.PlaneNormal,
-                _referenceSlice.PlaneAxisV);
+                _referenceSlice.PlaneAxisV,
+                resetParallelScale: false); // preserve camera zoom-in state
         }
 
         MainRenderer.ResetCameraClippingRange();
@@ -170,10 +170,10 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
-        control.UpdateSlices((IReadOnlyList<ImageObliqueSliceViewModel>)e.OldValue, (IReadOnlyList<ImageObliqueSliceViewModel>)e.NewValue);
+        control.RehookSceneObjects((IReadOnlyList<ImageObliqueSliceViewModel>)e.OldValue, (IReadOnlyList<ImageObliqueSliceViewModel>)e.NewValue);
     }
 
-    private void UpdateSlices(
+    private void RehookSceneObjects(
         IReadOnlyList<ImageObliqueSliceViewModel>? oldSceneObjects,
         IReadOnlyList<ImageObliqueSliceViewModel>? newSceneObjects)
     {
@@ -201,19 +201,20 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
             MainRenderer.GetActiveCamera(),
             _referenceSlice.Actor,
             _referenceSlice.PlaneNormal,
-            _referenceSlice.PlaneAxisV);
+            _referenceSlice.PlaneAxisV,
+            resetParallelScale: true);
 
         // ----- render the scene to show the new stuff-----
         RequestRender();
     }
 
-    private const double CamDist = 500; // mm
 
     private static void FitObliqueSlice(
         vtkCamera cam,
         vtkProp sliceActor,
         Vector3 normal, // = vm.PlaneNormal
-        Vector3 vAxis) // = vm.PlaneAxisV  (camera “up”)
+        Vector3 vAxis, // = vm.PlaneAxisV  (camera “up”)
+        bool resetParallelScale = true)
     {
         double[] b = sliceActor.GetBounds(); // world AABB
         double cx = 0.5 * (b[0] + b[1]);
@@ -231,8 +232,11 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
             cy - normal.Y * CamDist,
             cz - normal.Z * CamDist);
         cam.SetViewUp(vAxis.X, vAxis.Y, vAxis.Z);
-        cam.SetParallelScale(0.5 * Math.Max(w, h));
         cam.SetClippingRange(0.1, 5000);
+        if (resetParallelScale)
+        {
+            cam.SetParallelScale(0.5 * Math.Max(w, h));
+        }
     }
 
     #endregion
