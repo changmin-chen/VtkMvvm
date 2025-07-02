@@ -21,7 +21,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
 
 
-    // --------------------------------------------------------- 
+    // ----------------------------------------------------------- 
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
@@ -117,6 +117,8 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkCamera Camera => MainRenderer.GetActiveCamera();
+    
+    public void Render() => RenderWindowControl.RenderWindow.Render();
 
 
     private void HookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
@@ -137,8 +139,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
         if (_isLoaded)
             OnSceneObjectsModified(this, EventArgs.Empty);
         else
-            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty),
-                DispatcherPriority.Loaded);
+            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
     }
 
     /// <summary>

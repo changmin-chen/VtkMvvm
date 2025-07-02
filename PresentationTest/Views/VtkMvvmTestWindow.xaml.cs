@@ -75,8 +75,8 @@ public partial class VtkMvvmTestWindow : Window
 
     private void RenderControls()
     {
-        AxialControl.RenderWindowControl.RenderWindow.Render();
-        CoronalControl.RenderWindowControl.RenderWindow.Render();
-        SagittalControl.RenderWindowControl.RenderWindow.Render();
+        AxialControl.Render();
+        CoronalControl.Render();
+        SagittalControl.Render();
     }
 }

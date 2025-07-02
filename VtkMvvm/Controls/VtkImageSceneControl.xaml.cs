@@ -93,6 +93,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkCamera Camera => MainRenderer.GetActiveCamera();
+    public void Render() => RenderWindowControl.RenderWindow.Render();
 
     /// <summary>
     ///     Indicates the orientation of the slices so that the camera can be set up correctly.
