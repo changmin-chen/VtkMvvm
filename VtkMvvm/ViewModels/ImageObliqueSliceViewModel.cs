@@ -27,7 +27,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     // ── cached values for slider & step ─────────────────────────────
     private int _minSliceIdx;
     private int _maxSliceIdx;
-    private int _sliceIndex = int.MinValue;
     private Quaternion _sliceOrientation = Quaternion.Identity;
 
 
@@ -174,8 +173,8 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         MaxSliceIndex = maxIdx;
 
         // ----- keep current index inside the new range --------------
-        _sliceIndex = Math.Clamp(_sliceIndex, _minSliceIdx, _maxSliceIdx);
-        ApplySliceIndex(_sliceIndex); // ★ always update transform
+        SliceIndex = Math.Clamp(SliceIndex, _minSliceIdx, _maxSliceIdx);
+        ApplySliceIndex(SliceIndex); // ★ always update slice idx to fit the current transform
     }
 
     /// <summary>Move the slice plane along its normal by idx · Δ.</summary>
