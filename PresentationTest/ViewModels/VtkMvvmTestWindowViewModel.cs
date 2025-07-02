@@ -26,9 +26,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     private readonly ImageObliqueSliceViewModel _obliqueVm, _obliqueLabelVm;
 
     // Overlay: crosshairs, slice-labels, brush
-
     private readonly CrosshairViewModel _axialCrosshairVm, _coronalCrosshairVm, _sagittalCrosshairVm;
-    private readonly BullseyeViewModel _axialBullseyeVm;
+    private readonly BullseyeViewModel _obliqueBullseyeVm;
 
     // Brush
     private readonly vtkImageData _labelMap;
@@ -54,6 +53,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public VtkElementViewModel[] AxialOverlayVms { get; }
     public VtkElementViewModel[] CoronalOverlayVms { get; }
     public VtkElementViewModel[] SagittalOverlayVms { get; }
+    public VtkElementViewModel[] ObliqueOverlayVms => [_obliqueBullseyeVm];
 
     // -- Oblique slice orientation -------------------------
     [Reactive] public float YawDegrees { get; set; } = 0;
@@ -116,8 +116,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
         _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
-        _axialBullseyeVm = BullseyeViewModel.Create(Double3.Zero, Vector3.UnitZ);
-        AxialOverlayVms = [BrushVm, _axialCrosshairVm, _axialBullseyeVm];
+        _obliqueBullseyeVm = BullseyeViewModel.Create(Double3.Zero, _obliqueVm.PlaneNormal);
+        AxialOverlayVms = [BrushVm, _axialCrosshairVm];
         CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
         SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];
 
@@ -192,7 +192,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             _coronalCrosshairVm.FocalPoint = clickWorldPos;
             _sagittalCrosshairVm.FocalPoint = clickWorldPos;
 
-            _axialBullseyeVm.FocalPoint = clickWorldPos;
+            _obliqueBullseyeVm.FocalPoint = clickWorldPos;
         }
         if (_obliqueVm.TryWorldToSlice(clickWorldPos, out int sliceIdx, out double _, out double _))
         {
@@ -241,11 +241,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             Deg2Rad(RollDegrees));
 
         _obliqueVm.SliceOrientation = sliceOrientation;
-        var (uDir, vDir, nDir) = (_obliqueVm.PlaneAxisU, _obliqueVm.PlaneAxisV, _obliqueVm.PlaneNormal);
 
         // Adjust overlays, so they can plot onto the resliced plane
-        // _crosshair.SetPlaneAxes(uDir, vDir);
-        // _bullseye.Normal = nDir;
+        _obliqueBullseyeVm.Normal = _obliqueVm.PlaneNormal;
     }
 
     // ---- Helpers -----------------------------------------------
