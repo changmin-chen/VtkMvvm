@@ -11,7 +11,7 @@ namespace VtkMvvm.ViewModels;
 /// (vtkImageActor + vtkTransform) and keeps the public surface identical
 /// to the original implementation so existing bindings continue to work.
 /// </summary>
-public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, ISlicePlaneInfo
+public sealed class ImageObliqueSliceViewModel : VtkElementViewModel, IImageSliceViewModel
 {
     // ── VTK pipeline ────────────────────────────────────────────────
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();

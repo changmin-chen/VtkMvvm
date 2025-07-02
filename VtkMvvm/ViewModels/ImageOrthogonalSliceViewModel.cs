@@ -9,7 +9,7 @@ namespace VtkMvvm.ViewModels;
 /// <summary>
 /// Leverage VTK image actor instead of reslicing the image. Simpler and suitable for orthogonal slices.
 /// </summary>
-public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, ISlicePlaneInfo
+public sealed class ImageOrthogonalSliceViewModel : VtkElementViewModel, IImageSliceViewModel
 {
     private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly double[] _origin;

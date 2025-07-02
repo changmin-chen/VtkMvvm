@@ -249,19 +249,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     }
 
     // ---- Helpers -----------------------------------------------
-    private static void SetSliceIndex(IReadOnlyList<VtkElementViewModel> vms, int sliceIndex)
+    private static void SetSliceIndex(IReadOnlyList<IImageSliceViewModel> vms, int sliceIndex)
     {
         foreach (var vm in vms)
         {
-            switch (vm)
-            {
-                case ImageObliqueSliceViewModel obliqueVm:
-                    obliqueVm.SliceIndex = sliceIndex;
-                    break;
-                case ImageOrthogonalSliceViewModel orthogonalVm:
-                    orthogonalVm.SliceIndex = sliceIndex;
-                    break;
-            }
+            vm.SliceIndex = sliceIndex;
         }
     }
 
