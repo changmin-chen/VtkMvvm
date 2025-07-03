@@ -13,12 +13,16 @@ namespace VtkMvvm.Controls;
 /// <summary>
 ///     Displaying orthogonal slices of an image volume as the background image, while putting overlay objects onto it.
 /// </summary>
-[Obsolete("If you wants generalized usage that adapts to the slices with any orientation, use VtkImageSliceSceneControl instead.")]
-public partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkSceneControl
+/// <remarks>
+/// This control adjusts the camera so that image was displayed with radiological convention.
+/// Though <see cref="VtkImageSliceSceneControl"/> adapts to the slices with any orientation,
+/// the displayed image is not further flipped to fit the convention.
+/// </remarks>
+public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     // ---------- Plugins --------------------------------------- 
-    private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
-    
+    private OrientationLabelBehavior? _orientationLabels; // L,R,P,A,S,I text labels on screen edges
+
     // --------------------------------------------------------- 
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
@@ -53,7 +57,7 @@ public partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkS
     private void OnLoadedOnce(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoadedOnce;
-        
+
         var renderWindow = RenderWindowControl.RenderWindow;
         if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
 
@@ -94,6 +98,7 @@ public partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkS
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     private RenderWindowControl RenderWindowControl { get; } = new();
     public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
+
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     /// <summary>
@@ -106,7 +111,7 @@ public partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkS
     {
         // ── dispose plugins ───────────────────────────────
         _orientationLabels?.Dispose();
-        
+
         // ── dispose controls vtk components ───────────────────────────────
         if (SceneObjects is { } objects)
         {

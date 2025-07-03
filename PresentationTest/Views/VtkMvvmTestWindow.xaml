@@ -155,7 +155,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSliceSceneControl x:Name="AxialControl"
+                <controls:VtkOrthoImageSceneControl x:Name="AxialControl"
                                                     Grid.Row="0"
                                                     plugins:ControlPlugin.OrientationLabels="True"
                                                     SceneObjects="{Binding AxialVms}"
@@ -196,7 +196,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSliceSceneControl x:Name="CoronalControl"
+                <controls:VtkOrthoImageSceneControl x:Name="CoronalControl"
                                                     Grid.Row="0"
                                                     plugins:ControlPlugin.OrientationLabels="True"
                                                     SceneObjects="{Binding CoronalVms}"
@@ -237,7 +237,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSliceSceneControl x:Name="SagittalControl"
+                <controls:VtkOrthoImageSceneControl x:Name="SagittalControl"
                                                     Grid.Row="0"
                                                     plugins:ControlPlugin.OrientationLabels="True"
                                                     SceneObjects="{Binding SagittalVms}"
