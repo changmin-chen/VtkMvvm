@@ -105,7 +105,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         Vector3 d = new((float)(w.X - _imgCentre[0]),
             (float)(w.Y - _imgCentre[1]),
             (float)(w.Z - _imgCentre[2]));
-
+        
         double dist = Vector3.Dot(d, PlaneNormal); // mm
         idx = (int)Math.Round(dist / Step); // your new slice index
 
