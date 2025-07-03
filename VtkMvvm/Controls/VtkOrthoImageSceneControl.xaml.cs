@@ -13,7 +13,8 @@ namespace VtkMvvm.Controls;
 /// <summary>
 ///     Displaying orthogonal slices of an image volume as the background image, while putting overlay objects onto it.
 /// </summary>
-public partial class VtkImageSceneControl : UserControl, IDisposable
+[Obsolete("If you wants generalized usage that adapts to the slices with any orientation, use VtkImageSliceSceneControl instead.")]
+public partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     // ---------- Plugins --------------------------------------- 
     private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
@@ -23,13 +24,13 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IReadOnlyList<ImageOrthogonalSliceViewModel>),
-        typeof(VtkImageSceneControl),
+        typeof(VtkOrthoImageSceneControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
         nameof(OverlayObjects),
         typeof(IReadOnlyList<VtkElementViewModel>),
-        typeof(VtkImageSceneControl),
+        typeof(VtkOrthoImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
     /// <summary>
@@ -37,7 +38,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     /// </summary>
     private bool _isLoaded;
 
-    public VtkImageSceneControl()
+    public VtkOrthoImageSceneControl()
     {
         InitializeComponent();
         if (DesignerProperties.GetIsInDesignMode(this)) return;
@@ -91,9 +92,8 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkCamera GetActiveCamera() => MainRenderer.GetActiveCamera();
-    public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
+    private RenderWindowControl RenderWindowControl { get; } = new();
+    public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     /// <summary>
@@ -156,7 +156,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkImageSceneControl control = (VtkImageSceneControl)d;
+        VtkOrthoImageSceneControl control = (VtkOrthoImageSceneControl)d;
         control.UpdateSlices((IReadOnlyList<ImageOrthogonalSliceViewModel>)e.OldValue, (IReadOnlyList<ImageOrthogonalSliceViewModel>)e.NewValue);
     }
 
@@ -263,7 +263,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     private static void OnOverlayObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkImageSceneControl control = (VtkImageSceneControl)d;
+        VtkOrthoImageSceneControl control = (VtkOrthoImageSceneControl)d;
         control.UpdateOverlays((IReadOnlyList<VtkElementViewModel>)e.OldValue, (IReadOnlyList<VtkElementViewModel>)e.NewValue);
     }
 

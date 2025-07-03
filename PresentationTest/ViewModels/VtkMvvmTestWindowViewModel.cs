@@ -56,8 +56,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public VtkElementViewModel[] ObliqueOverlayVms => [_obliqueBullseyeVm];
 
     // -- Oblique slice orientation -------------------------
-    [Reactive] public float YawDegrees { get; set; } = 0;
-    [Reactive] public float PitchDegrees { get; set; } = 0;
+    [Reactive] public float YawDegrees { get; set; }
+    [Reactive] public float PitchDegrees { get; set; }
     [Reactive] public float RollDegrees { get; set; } = 45;
 
 
@@ -177,7 +177,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public DelegateCommand SetSliceOrientationCommand { get; }
 
 
-    public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
+    public void OnControlGetMouseDisplayPosition(IVtkSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
@@ -200,7 +200,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         }
     }
 
-    public void OnControlGetMousePaintPosition(VtkImageSceneControl sender, int x, int y)
+    public void OnControlGetMousePaintPosition(IVtkSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
@@ -211,14 +211,14 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _painter.PaintLinear(_labelMap, activeOffsets, clickWorldPos, fillingValue);
     }
 
-    public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)
+    public void OnControlGetBrushPosition(IVtkSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
 
         BrushVm.Center = clickWorldPos;
-        BrushVm.Orientation = sender.Orientation;
+        BrushVm.Normal = sender.GetViewPlaneNormal();
     }
 
     private void SetLabelOneVisibility(bool? isVisible)

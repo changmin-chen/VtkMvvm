@@ -82,7 +82,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
+            <controls:VtkImageSliceSceneControl x:Name="ObliqueControl"
                                                   Grid.Row="0"
                                                   SceneObjects="{Binding ObliqueImageVms}"
                                                   OverlayObjects="{Binding ObliqueOverlayVms}" />

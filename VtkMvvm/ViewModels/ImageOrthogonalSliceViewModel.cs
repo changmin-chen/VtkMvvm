@@ -40,9 +40,9 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
 
     private static (Vector3 uDir, Vector3 vDir) GetPlaneAxes(SliceOrientation orientation) => orientation switch
     {
-        SliceOrientation.Axial => (Vector3.UnitX, Vector3.UnitZ),
-        SliceOrientation.Coronal => (Vector3.UnitY, Vector3.UnitX),
-        SliceOrientation.Sagittal => (Vector3.UnitZ, Vector3.UnitY),
+        SliceOrientation.Axial => (Vector3.UnitX, Vector3.UnitY),
+        SliceOrientation.Coronal => (Vector3.UnitX, Vector3.UnitZ),
+        SliceOrientation.Sagittal => (Vector3.UnitY, Vector3.UnitZ),
         _ => throw new ArgumentOutOfRangeException(nameof(orientation), orientation, null)
     };
 

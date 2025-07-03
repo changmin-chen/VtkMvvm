@@ -29,8 +29,8 @@
             </Grid.RowDefinitions>
             <Grid.Resources>
                 <Style TargetType="TextBox">
-                    <Setter Property="Width" Value="80"/>
-                    <Setter Property="Margin" Value="8 0 "/>
+                    <Setter Property="Width" Value="80" />
+                    <Setter Property="Margin" Value="8,0" />
                 </Style>
             </Grid.Resources>
             <StackPanel>
@@ -155,10 +155,11 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSceneControl x:Name="AxialControl"
-                                               Grid.Row="0"
-                                               SceneObjects="{Binding AxialVms}"
-                                               OverlayObjects="{Binding AxialOverlayVms}" />
+                <controls:VtkImageSliceSceneControl x:Name="AxialControl"
+                                                    Grid.Row="0"
+                                                    plugins:ControlPlugin.OrientationLabels="True"
+                                                    SceneObjects="{Binding AxialVms}"
+                                                    OverlayObjects="{Binding AxialOverlayVms}" />
                 <StackPanel Grid.Row="1"
                             Margin="5"
                             VerticalAlignment="Top"
@@ -195,10 +196,11 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSceneControl x:Name="CoronalControl"
-                                               Grid.Row="0"
-                                               SceneObjects="{Binding CoronalVms}"
-                                               OverlayObjects="{Binding CoronalOverlayVms}" />
+                <controls:VtkImageSliceSceneControl x:Name="CoronalControl"
+                                                    Grid.Row="0"
+                                                    plugins:ControlPlugin.OrientationLabels="True"
+                                                    SceneObjects="{Binding CoronalVms}"
+                                                    OverlayObjects="{Binding CoronalOverlayVms}" />
                 <StackPanel Grid.Row="1"
                             Margin="5"
                             VerticalAlignment="Top"
@@ -235,10 +237,11 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSceneControl x:Name="SagittalControl"
-                                               Grid.Row="0"
-                                               SceneObjects="{Binding SagittalVms}"
-                                               OverlayObjects="{Binding SagittalOverlayVms}" />
+                <controls:VtkImageSliceSceneControl x:Name="SagittalControl"
+                                                    Grid.Row="0"
+                                                    plugins:ControlPlugin.OrientationLabels="True"
+                                                    SceneObjects="{Binding SagittalVms}"
+                                                    OverlayObjects="{Binding SagittalOverlayVms}" />
 
                 <StackPanel Grid.Row="1">
                     <!--  Slice adjust  -->
@@ -279,12 +282,11 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <controls:VtkObliqueImageSceneControl x:Name="ObliqueControl"
-                                                      Grid.Row="0"
-                                                      SceneObjects="{Binding ObliqueVms}"
-                                                      OverlayObjects="{Binding ObliqueOverlayVms}"
-                                                      plugins:ControlPlugin.OrientationCube="True"
-                                                      plugins:ControlPlugin.OrientationLabels="True"/>
+                <controls:VtkImageSliceSceneControl x:Name="ObliqueControl"
+                                                    Grid.Row="0"
+                                                    plugins:ControlPlugin.OrientationCube="True"
+                                                    SceneObjects="{Binding ObliqueVms}"
+                                                    OverlayObjects="{Binding ObliqueOverlayVms}" />
                 <Grid Grid.Row="1"
                       Margin="5"
                       VerticalAlignment="Top"

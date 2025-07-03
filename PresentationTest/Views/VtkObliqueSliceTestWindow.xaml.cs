@@ -34,7 +34,7 @@ public partial class VtkObliqueSliceTestWindow : Window
     /// <summary>
     /// Each controls has their own instance of freehand interactor
     /// </summary>
-    private void InitializeInteractor(VtkObliqueImageSceneControl control)
+    private void InitializeInteractor(VtkImageSliceSceneControl control)
     {
         vtkInteractorStyleImage style = new();
         vtkRenderWindowInteractor? iren = control.RenderWindowControl.RenderWindow.GetInteractor();
