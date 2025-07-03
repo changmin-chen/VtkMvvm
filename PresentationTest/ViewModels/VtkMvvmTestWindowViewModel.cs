@@ -177,7 +177,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public DelegateCommand SetSliceOrientationCommand { get; }
 
 
-    public void OnControlGetMouseDisplayPosition(VtkImageSceneControl sender, int x, int y)
+    public void OnControlGetMouseDisplayPosition(IVtkSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
@@ -200,7 +200,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         }
     }
 
-    public void OnControlGetMousePaintPosition(VtkImageSceneControl sender, int x, int y)
+    public void OnControlGetMousePaintPosition(IVtkSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 

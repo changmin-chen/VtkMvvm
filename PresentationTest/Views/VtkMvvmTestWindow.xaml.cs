@@ -6,7 +6,6 @@ using PresentationTest.ViewModels;
 using ReactiveUI;
 using VtkMvvm.Controls;
 using VtkMvvm.Features.InteractorBehavior;
-using VtkMvvm.Models;
 
 namespace PresentationTest.Views;
 
@@ -30,7 +29,7 @@ public partial class VtkMvvmTestWindow : Window
             _vm = vm;
         }
 
-        foreach (var ctrl in new[] { AxialControl, CoronalControl, SagittalControl })
+        foreach (var ctrl in new IVtkSceneControl[] { AxialControl, CoronalControl, SagittalControl })
         {
             InitializeFreehandInteractor(ctrl);
         }
@@ -39,10 +38,10 @@ public partial class VtkMvvmTestWindow : Window
     /// <summary>
     /// Each controls has their own instance of freehand interactor
     /// </summary>
-    private void InitializeFreehandInteractor(VtkImageSceneControl control)
+    private void InitializeFreehandInteractor(IVtkSceneControl control)
     {
         vtkInteractorStyleImage style = new(); // 被attach的event會直接覆蓋
-        vtkRenderWindowInteractor? iren = control.GetInteractor();
+        vtkRenderWindowInteractor iren = control.Interactor;
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftMove((x, y) => _vm.OnControlGetBrushPosition(control, x, y))
@@ -55,17 +54,17 @@ public partial class VtkMvvmTestWindow : Window
             .Scroll(forward =>
             {
                 int increment = forward ? 1 : -1;
-                switch (control.Orientation)
+                if (ReferenceEquals(control, AxialControl))
                 {
-                    case SliceOrientation.Axial:
-                        _vm.AxialSliceIndex += increment;
-                        break;
-                    case SliceOrientation.Coronal:
-                        _vm.CoronalSliceIndex += increment;
-                        break;
-                    case SliceOrientation.Sagittal:
-                        _vm.SagittalSliceIndex += increment;
-                        break;
+                    _vm.AxialSliceIndex += increment;
+                }
+                else if (ReferenceEquals(control, CoronalControl))
+                {
+                    _vm.CoronalSliceIndex += increment;
+                }
+                else if (ReferenceEquals(control, SagittalControl))
+                {
+                    _vm.SagittalSliceIndex += increment;
                 }
             })
             .Build()

@@ -92,8 +92,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable, IVtkSceneC
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     private RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkCamera Camera => MainRenderer.GetActiveCamera();
-    public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
+    public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     /// <summary>

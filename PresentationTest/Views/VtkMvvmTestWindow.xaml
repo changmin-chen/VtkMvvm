@@ -155,7 +155,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSceneControl x:Name="AxialControl"
+                <controls:VtkObliqueImageSceneControl x:Name="AxialControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding AxialVms}"
                                                OverlayObjects="{Binding AxialOverlayVms}" />
