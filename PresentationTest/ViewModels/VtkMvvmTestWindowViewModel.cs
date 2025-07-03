@@ -57,7 +57,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public VtkElementViewModel[] ObliqueOverlayVms => [_obliqueBullseyeVm];
 
     // -- Oblique slice orientation -------------------------
-    [Reactive] public float YawDegrees { get; set; }
+    [Reactive] public float YawDegrees { get; set; } = 33;
     [Reactive] public float PitchDegrees { get; set; } = -45;
     [Reactive] public float RollDegrees { get; set; }
 
@@ -234,6 +234,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             Deg2Rad(RollDegrees));
 
         _obliqueVm.SliceOrientation = sliceOrientation;
+        _obliqueLabelVm.SliceOrientation = sliceOrientation;
 
         // Adjust overlays, so they can plot onto the resliced plane
         _obliqueBullseyeVm.Normal = _obliqueVm.PlaneNormal;

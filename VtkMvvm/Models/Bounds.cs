@@ -6,6 +6,9 @@
 public readonly record struct Bounds(double XMin, double XMax, double YMin, double YMax, double ZMin, double ZMax)
 {
     public Double3 Center => new((XMax + XMin) / 2, (YMax + YMin) / 2, (ZMax + ZMin) / 2);
+    public double Width => Math.Abs(XMax - XMin);
+    public double Height => Math.Abs(YMax - YMin);
+    public double Depth => Math.Abs(ZMax - ZMin);
 
     public static Bounds FromArray(double[] bounds)
     {
