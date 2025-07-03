@@ -71,7 +71,7 @@ public sealed class OrientationLabelBehavior : IDisposable
     {
         // 1.  Display coords of the slice centre (focal point)
         double[] f = _cam.GetFocalPoint();
-        var dispCentre = WorldToDisplay(f);
+        var displayCentre = WorldToDisplay(f);
 
         // 2.  Map each patient axis to screen Δ(x,y)
         var screenVectors = PatientAxes.Select(ax =>
@@ -80,8 +80,8 @@ public sealed class OrientationLabelBehavior : IDisposable
             var d = WorldToDisplay(p);
 
             return (ax.Tag,
-                dx: d.X - dispCentre.X,
-                dy: d.Y - dispCentre.Y);
+                dx: d.X - displayCentre.X,
+                dy: d.Y - displayCentre.Y);
         }).ToArray();
 
         // 3.  Pick ONE tag per edge (max |Δ| wins)

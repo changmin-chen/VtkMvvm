@@ -211,19 +211,14 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _painter.PaintLinear(_labelMap, activeOffsets, clickWorldPos, fillingValue);
     }
 
-    public void OnControlGetBrushPosition(VtkImageSceneControl sender, int x, int y)
+    public void OnControlGetBrushPosition(IVtkSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
 
         BrushVm.Center = clickWorldPos;
-        BrushVm.Normal = sender.Orientation switch
-        {
-            SliceOrientation.Axial => Vector3.UnitZ,
-            SliceOrientation.Sagittal => Vector3.UnitX,
-            _ => Vector3.UnitY, // coronal
-        };
+        BrushVm.Normal = sender.GetViewPlaneNormal();
     }
 
     private void SetLabelOneVisibility(bool? isVisible)
