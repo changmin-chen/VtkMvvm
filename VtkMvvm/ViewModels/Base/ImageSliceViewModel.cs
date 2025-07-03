@@ -4,8 +4,8 @@ using VtkMvvm.Models;
 namespace VtkMvvm.ViewModels.Base;
 
 /// <summary>
-/// Slice orientation info of the sliced 2D image plane in the 3D space.
-/// Useful for camera positioning.
+/// ViewModel base that cuts an 2D image slice from a 3D volume.
+/// Brings orientation info of the sliced plane, which is necessary for camera positioning.
 /// </summary>
 public abstract class ImageSliceViewModel : VtkElementViewModel
 {
