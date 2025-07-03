@@ -13,6 +13,7 @@ namespace VtkMvvm.Controls;
 /// <summary>
 ///     Displaying orthogonal slices of an image volume as the background image, while putting overlay objects onto it.
 /// </summary>
+[Obsolete("Use VtkImageSliceSceneControl instead for more generalized usage. It adapts to slice with arbitary orientation.")]
 public partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     // ---------- Plugins --------------------------------------- 
