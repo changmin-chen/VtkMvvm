@@ -21,7 +21,7 @@ public static class ControlPlugin
 
     private static void OnOrientationCubeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is VtkObliqueImageSceneControl sceneControl)
+        if (d is VtkImageSliceSceneControl sceneControl)
         {
             if ((bool)e.NewValue) sceneControl.AddOrientationCube();
             else sceneControl.RemoveOrientationCube();
@@ -42,7 +42,7 @@ public static class ControlPlugin
 
     private static void OnOrientationLabelsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is VtkObliqueImageSceneControl sceneControl)
+        if (d is VtkImageSliceSceneControl sceneControl)
         {
             if ((bool)e.NewValue) sceneControl.AddOrientationLabels();
             else sceneControl.RemoveOrientationLabels();

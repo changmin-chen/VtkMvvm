@@ -12,7 +12,7 @@ namespace VtkMvvm.Controls;
 /// <summary>
 /// For binding to the image slice that may not be orthogonal.
 /// </summary>
-public partial class VtkObliqueImageSceneControl : UserControl, IDisposable, IVtkSceneControl
+public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     private const double CamDist = 500; // mm
     private bool _isLoaded; // flag indicates the control is loaded.
@@ -29,13 +29,13 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable, IVt
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IReadOnlyList<ImageSliceViewModel>),
-        typeof(VtkObliqueImageSceneControl),
+        typeof(VtkImageSliceSceneControl),
         new PropertyMetadata(null, OnImageObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
         nameof(OverlayObjects),
         typeof(IReadOnlyList<VtkElementViewModel>),
-        typeof(VtkObliqueImageSceneControl),
+        typeof(VtkImageSliceSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
     public IReadOnlyList<VtkElementViewModel>? SceneObjects
@@ -56,7 +56,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable, IVt
     public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
-    public VtkObliqueImageSceneControl()
+    public VtkImageSliceSceneControl()
     {
         InitializeComponent();
         if (DesignerProperties.GetIsInDesignMode(this)) return;
@@ -211,7 +211,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable, IVt
 
     private static void OnImageObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
+        VtkImageSliceSceneControl control = (VtkImageSliceSceneControl)d;
         control.RehookImageObjects((IReadOnlyList<ImageSliceViewModel>)e.OldValue, (IReadOnlyList<ImageSliceViewModel>)e.NewValue);
     }
 
@@ -287,7 +287,7 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable, IVt
 
     private static void OnOverlayObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkObliqueImageSceneControl control = (VtkObliqueImageSceneControl)d;
+        VtkImageSliceSceneControl control = (VtkImageSliceSceneControl)d;
         control.UpdateOverlays((IReadOnlyList<VtkElementViewModel>)e.OldValue, (IReadOnlyList<VtkElementViewModel>)e.NewValue);
     }
 

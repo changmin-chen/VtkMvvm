@@ -70,7 +70,7 @@ public class VtkObliqueSliceTestWindowViewModel : ReactiveObject
         _bullseye = BullseyeViewModel.Create(Double3.Zero, obliqueVm.PlaneNormal);
     }
 
-    public void OnControlGetMouseDisplayPosition(VtkObliqueImageSceneControl sender, int x, int y)
+    public void OnControlGetMouseDisplayPosition(VtkImageSliceSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
 
