@@ -29,7 +29,7 @@ public partial class VtkMvvmTestWindow : Window
             _vm = vm;
         }
 
-        foreach (var ctrl in new IVtkSceneControl[] { AxialControl, CoronalControl, SagittalControl })
+        foreach (var ctrl in new IVtkSceneControl[] { AxialControl, CoronalControl, SagittalControl, ObliqueControl })
         {
             InitializeFreehandInteractor(ctrl);
         }
@@ -49,23 +49,15 @@ public partial class VtkMvvmTestWindow : Window
             .LeftDrag((x, y) => _vm.OnControlGetMousePaintPosition(control, x, y), keys: KeyMask.None)
             .LeftDragRx(obs => obs
                 .Sample(TimeSpan.FromMilliseconds(33))
-                .ObserveOn(RxApp.MainThreadScheduler)  // necessary
+                .ObserveOn(RxApp.MainThreadScheduler) // necessary
                 .Subscribe(_ => RenderControls()))
             .Scroll(forward =>
             {
                 int increment = forward ? 1 : -1;
-                if (ReferenceEquals(control, AxialControl))
-                {
-                    _vm.AxialSliceIndex += increment;
-                }
-                else if (ReferenceEquals(control, CoronalControl))
-                {
-                    _vm.CoronalSliceIndex += increment;
-                }
-                else if (ReferenceEquals(control, SagittalControl))
-                {
-                    _vm.SagittalSliceIndex += increment;
-                }
+                if (ReferenceEquals(control, AxialControl)) _vm.AxialSliceIndex += increment;
+                else if (ReferenceEquals(control, CoronalControl)) _vm.CoronalSliceIndex += increment;
+                else if (ReferenceEquals(control, SagittalControl)) _vm.SagittalSliceIndex += increment;
+                else _vm.ObliqueSliceIndex += increment;
             })
             .Build()
             .DisposeWith(_disposables);
@@ -77,5 +69,6 @@ public partial class VtkMvvmTestWindow : Window
         AxialControl.Render();
         CoronalControl.Render();
         SagittalControl.Render();
+        ObliqueControl.Render();
     }
 }

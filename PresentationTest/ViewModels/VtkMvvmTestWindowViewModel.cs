@@ -49,22 +49,28 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public ImageObliqueSliceViewModel[] ObliqueVms => [_obliqueVm, _obliqueLabelVm];
 
     // Overlay ViewModels
-    public BrushViewModel BrushVm { get; } = new(); // directly binds to slider for setting diameter
-    public VtkElementViewModel[] AxialOverlayVms { get; }
-    public VtkElementViewModel[] CoronalOverlayVms { get; }
-    public VtkElementViewModel[] SagittalOverlayVms { get; }
+    private readonly BrushViewModel _brushVm = new() { Diameter = 5.0 };
+    public BrushViewModel BrushVm => _brushVm; // directly binds to slider for setting diameter
+    public VtkElementViewModel[] AxialOverlayVms => [_brushVm, _axialCrosshairVm];
+    public VtkElementViewModel[] CoronalOverlayVms => [_brushVm, _coronalCrosshairVm];
+    public VtkElementViewModel[] SagittalOverlayVms => [_brushVm, _sagittalCrosshairVm];
     public VtkElementViewModel[] ObliqueOverlayVms => [_obliqueBullseyeVm];
 
     // -- Oblique slice orientation -------------------------
-    [Reactive] public float YawDegrees { get; set; }
-    [Reactive] public float PitchDegrees { get; set; }
-    [Reactive] public float RollDegrees { get; set; } = 45;
+    [Reactive] public float YawDegrees { get; set; } = 33;
+    [Reactive] public float PitchDegrees { get; set; } = -45;
+    [Reactive] public float RollDegrees { get; set; }
 
 
     public VtkMvvmTestWindowViewModel()
     {
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
         _backgroundDims = _background.GetDimensions();
+
+        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(Deg2Rad(YawDegrees),
+            Deg2Rad(PitchDegrees),
+            Deg2Rad(RollDegrees));
+        sliceOrientation = Quaternion.Normalize(sliceOrientation);
 
         // Build the shared background image pipeline
         var bgPipe = ColoredImagePipelineBuilder
@@ -89,27 +95,20 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _sagittalVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, bgPipe);
         _sagittalLabelVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Sagittal, labelMapPipe);
 
-        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(Deg2Rad(YawDegrees),
-            Deg2Rad(PitchDegrees),
-            Deg2Rad(RollDegrees));
         _obliqueVm = new ImageObliqueSliceViewModel(sliceOrientation, bgPipe);
         _obliqueLabelVm = new ImageObliqueSliceViewModel(sliceOrientation, labelMapPipe);
 
         // Add brushes that render on top of the image
-        BrushVm.Diameter = 3.0;
+        _brushVm.Diameter = 5.0;
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
-        BrushVm.Height = spacing.Min();
+        _brushVm.Height = spacing.Max();
         _offsetsConverter.BindLabelMapInfo(_labelMap);
         _offsetsConverter.SetBrushGeometry(BrushVm.GetBrushGeometryPort());
 
-        // Pick list
-        _picker.SetTolerance(0.005);
-        _picker.PickFromListOn();
-        _picker.AddPickList(_axialVm.Actor);
-        _picker.AddPickList(_coronalVm.Actor);
-        _picker.AddPickList(_sagittalVm.Actor);
+        // Pick list config
+        _picker.SetTolerance(0.05);
 
         // Overlay ViewModels -----------------------------------------
         var bounds = Bounds.FromArray(_background.GetBounds());
@@ -117,9 +116,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
         _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
         _obliqueBullseyeVm = BullseyeViewModel.Create(Double3.Zero, _obliqueVm.PlaneNormal);
-        AxialOverlayVms = [BrushVm, _axialCrosshairVm];
-        CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
-        SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];
 
         // Commands
         SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
@@ -180,23 +176,21 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public void OnControlGetMouseDisplayPosition(IVtkSceneControl sender, int x, int y)
     {
         if (_picker.Pick(x, y, 0, sender.MainRenderer) == 0) return;
-
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
-        if (_background.TryComputeStructuredCoordinates(clickWorldPos, out (int i, int j, int k) voxel, out Double3 _))
+
+        if (_background.TryComputeStructuredCoordinates(clickWorldPos, out var voxel, out Double3 _))
         {
             AxialSliceIndex = voxel.k;
             CoronalSliceIndex = voxel.j;
             SagittalSliceIndex = voxel.i;
-
             _axialCrosshairVm.FocalPoint = clickWorldPos;
             _coronalCrosshairVm.FocalPoint = clickWorldPos;
             _sagittalCrosshairVm.FocalPoint = clickWorldPos;
-
-            _obliqueBullseyeVm.FocalPoint = clickWorldPos;
         }
         if (_obliqueVm.TryWorldToSlice(clickWorldPos, out int sliceIdx, out double _, out double _))
         {
             ObliqueSliceIndex = sliceIdx;
+            _obliqueBullseyeVm.FocalPoint = clickWorldPos;
         }
     }
 
@@ -235,12 +229,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     private void SetSliceOrientation()
     {
-        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(
-            Deg2Rad(YawDegrees),
+        var sliceOrientation = Quaternion.CreateFromYawPitchRoll(Deg2Rad(YawDegrees),
             Deg2Rad(PitchDegrees),
             Deg2Rad(RollDegrees));
 
         _obliqueVm.SliceOrientation = sliceOrientation;
+        _obliqueLabelVm.SliceOrientation = sliceOrientation;
 
         // Adjust overlays, so they can plot onto the resliced plane
         _obliqueBullseyeVm.Normal = _obliqueVm.PlaneNormal;
