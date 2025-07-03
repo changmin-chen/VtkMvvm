@@ -28,8 +28,16 @@ public sealed class BullseyeViewModel : VtkElementViewModel
     private (double R, double G, double B) _color = (1, 1, 0); // yellow
 
     // ── ctor/factory ────────────────────────────────────────────────
-    private BullseyeViewModel() // internal; use Create()
+    private BullseyeViewModel(Double3 centre,
+        Vector3 normal,
+        int ringCount = 2,
+        double ringSpacing = 2.0)
     {
+        _focalPoint = centre;
+        _normal = Vector3.Normalize(normal);
+        _ringCount = Math.Max(1, ringCount);
+        _ringSpacing = Math.Max(0.1, ringSpacing);
+        
         _mapper.SetInputConnection(_append.GetOutputPort());
         _actor.SetMapper(_mapper);
         _actor.GetProperty().SetOpacity(1); // outline only
@@ -47,15 +55,7 @@ public sealed class BullseyeViewModel : VtkElementViewModel
         Vector3 normal,
         int ringCount = 2,
         double ringSpacing = 2.0 /* mm */)
-    {
-        return new BullseyeViewModel
-        {
-            _focalPoint = centre,
-            _normal = Vector3.Normalize(normal),
-            _ringCount = Math.Max(1, ringCount),
-            _ringSpacing = Math.Max(0.1, ringSpacing)
-        };
-    }
+        => new (centre, normal, ringCount, ringSpacing);
 
     // ── VtkElementViewModel contract ───────────────────────────────
     public override vtkProp Actor => _actor;
