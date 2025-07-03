@@ -49,16 +49,17 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public ImageObliqueSliceViewModel[] ObliqueVms => [_obliqueVm, _obliqueLabelVm];
 
     // Overlay ViewModels
-    public BrushViewModel BrushVm { get; } = new(); // directly binds to slider for setting diameter
-    public VtkElementViewModel[] AxialOverlayVms { get; }
-    public VtkElementViewModel[] CoronalOverlayVms { get; }
-    public VtkElementViewModel[] SagittalOverlayVms { get; }
-    public VtkElementViewModel[] ObliqueOverlayVms => [_obliqueBullseyeVm];
+    private readonly BrushViewModel _brushVm = new() { Diameter = 5.0 };
+    public BrushViewModel BrushVm => _brushVm; // directly binds to slider for setting diameter
+    public VtkElementViewModel[] AxialOverlayVms => [_brushVm, _axialCrosshairVm];
+    public VtkElementViewModel[] CoronalOverlayVms => [_brushVm, _coronalCrosshairVm];
+    public VtkElementViewModel[] SagittalOverlayVms => [_brushVm, _sagittalCrosshairVm];
+    public VtkElementViewModel[] ObliqueOverlayVms => [_brushVm, _obliqueBullseyeVm];
 
     // -- Oblique slice orientation -------------------------
     [Reactive] public float YawDegrees { get; set; }
-    [Reactive] public float PitchDegrees { get; set; }
-    [Reactive] public float RollDegrees { get; set; } = 45;
+    [Reactive] public float PitchDegrees { get; set; } = 45;
+    [Reactive] public float RollDegrees { get; set; } 
 
 
     public VtkMvvmTestWindowViewModel()
@@ -96,11 +97,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _obliqueLabelVm = new ImageObliqueSliceViewModel(sliceOrientation, labelMapPipe);
 
         // Add brushes that render on top of the image
-        BrushVm.Diameter = 3.0;
+        _brushVm.Diameter = 5.0;
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
-        BrushVm.Height = spacing.Min();
+        _brushVm.Height = spacing.Max();
         _offsetsConverter.BindLabelMapInfo(_labelMap);
         _offsetsConverter.SetBrushGeometry(BrushVm.GetBrushGeometryPort());
 
@@ -113,13 +114,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
         // Overlay ViewModels -----------------------------------------
         var bounds = Bounds.FromArray(_background.GetBounds());
+        Vector3 obliquePlaneNormal = _obliqueVm.PlaneNormal;
         _axialCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Axial, bounds);
         _coronalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Coronal, bounds);
         _sagittalCrosshairVm = CrosshairViewModel.Create(SliceOrientation.Sagittal, bounds);
-        _obliqueBullseyeVm = BullseyeViewModel.Create(Double3.Zero, _obliqueVm.PlaneNormal);
-        AxialOverlayVms = [BrushVm, _axialCrosshairVm];
-        CoronalOverlayVms = [BrushVm, _coronalCrosshairVm];
-        SagittalOverlayVms = [BrushVm, _sagittalCrosshairVm];
+        _obliqueBullseyeVm = BullseyeViewModel.Create(Double3.Zero, obliquePlaneNormal);
 
         // Commands
         SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
@@ -191,7 +190,6 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             _axialCrosshairVm.FocalPoint = clickWorldPos;
             _coronalCrosshairVm.FocalPoint = clickWorldPos;
             _sagittalCrosshairVm.FocalPoint = clickWorldPos;
-
             _obliqueBullseyeVm.FocalPoint = clickWorldPos;
         }
         if (_obliqueVm.TryWorldToSlice(clickWorldPos, out int sliceIdx, out double _, out double _))
