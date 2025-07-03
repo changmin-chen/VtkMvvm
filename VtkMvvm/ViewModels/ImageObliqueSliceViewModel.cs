@@ -21,7 +21,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     private readonly vtkImageActor _actor = vtkImageActor.New();
 
     private readonly double[] _imgCentre;
-    private readonly double[] _imgBounds;
+    private readonly Bounds _imgBounds;
     private readonly double[] _spacing;
 
     // ── cached values for slider & step ─────────────────────────────
@@ -38,7 +38,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 
         ImageModel = ImageModel.Create(volume);
         _imgCentre = volume.GetCenter();
-        _imgBounds = volume.GetBounds();
+        _imgBounds = Bounds.FromArray(volume.GetBounds());
         _spacing = volume.GetSpacing();
 
         // -------- reslice: 2-D image in its own XY coord system -----
@@ -127,8 +127,8 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
             (float)(w.Z - origin.Z));
 
         // PlaneAxisU/V already hold unit vectors; divide by voxel pitch
-        i = Vector3.Dot(rel, PlaneAxisU) / _spacing[0]; // column
-        j = Vector3.Dot(rel, PlaneAxisV) / _spacing[1]; // row
+        i = Vector3.Dot(rel, PlaneAxisU) / _spacing[0]; 
+        j = Vector3.Dot(rel, PlaneAxisV) / _spacing[1]; 
         return true;
     }
 
@@ -165,9 +165,9 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         StepMillimeter = 1.0 / Math.Sqrt(dx * dx + dy * dy + dz * dz);
 
         // ---- slider limits via support-function distance -----------
-        double hx = 0.5 * (_imgBounds[1] - _imgBounds[0]);
-        double hy = 0.5 * (_imgBounds[3] - _imgBounds[2]);
-        double hz = 0.5 * (_imgBounds[5] - _imgBounds[4]);
+        double hx = 0.5 * _imgBounds.Width;
+        double hy = 0.5 * _imgBounds.Height;
+        double hz = 0.5 * _imgBounds.Depth;
 
         double maxDist = Math.Abs(n.X) * hx + Math.Abs(n.Y) * hy + Math.Abs(n.Z) * hz; // dot product of n with half-extent vector
         int maxIdx = (int)Math.Floor(maxDist / StepMillimeter);
