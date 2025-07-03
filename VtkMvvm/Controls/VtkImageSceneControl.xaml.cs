@@ -13,7 +13,7 @@ namespace VtkMvvm.Controls;
 /// <summary>
 ///     Displaying orthogonal slices of an image volume as the background image, while putting overlay objects onto it.
 /// </summary>
-public partial class VtkImageSceneControl : UserControl, IDisposable
+public partial class VtkImageSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     // ---------- Plugins --------------------------------------- 
     private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
@@ -91,7 +91,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
+    private RenderWindowControl RenderWindowControl { get; } = new();
     public vtkCamera GetActiveCamera() => MainRenderer.GetActiveCamera();
     public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();

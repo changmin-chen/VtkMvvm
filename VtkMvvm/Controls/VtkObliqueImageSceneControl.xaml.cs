@@ -12,7 +12,7 @@ namespace VtkMvvm.Controls;
 /// <summary>
 /// For binding to the image slice that may not be orthogonal.
 /// </summary>
-public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
+public partial class VtkObliqueImageSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     private const double CamDist = 500; // mm
     private bool _isLoaded; // flag indicates the control is loaded.
@@ -53,11 +53,8 @@ public partial class VtkObliqueImageSceneControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
-
     public vtkCamera GetActiveCamera() => MainRenderer.GetActiveCamera();
-
     public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
-
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     public VtkObliqueImageSceneControl()
