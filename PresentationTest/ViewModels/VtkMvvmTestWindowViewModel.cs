@@ -56,8 +56,8 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public VtkElementViewModel[] ObliqueOverlayVms => [_obliqueBullseyeVm];
 
     // -- Oblique slice orientation -------------------------
-    [Reactive] public float YawDegrees { get; set; } = 0;
-    [Reactive] public float PitchDegrees { get; set; } = 0;
+    [Reactive] public float YawDegrees { get; set; }
+    [Reactive] public float PitchDegrees { get; set; }
     [Reactive] public float RollDegrees { get; set; } = 45;
 
 
@@ -218,7 +218,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         Double3 clickWorldPos = _picker.GetPickWorldPosition();
 
         BrushVm.Center = clickWorldPos;
-        BrushVm.Orientation = sender.Orientation;
+        BrushVm.Normal = sender.Orientation switch
+        {
+            SliceOrientation.Axial => Vector3.UnitZ,
+            SliceOrientation.Sagittal => Vector3.UnitX,
+            _ => Vector3.UnitY, // coronal
+        };
     }
 
     private void SetLabelOneVisibility(bool? isVisible)
