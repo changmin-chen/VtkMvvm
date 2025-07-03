@@ -195,7 +195,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSceneControl x:Name="CoronalControl"
+                <controls:VtkOrthoImageSceneControl x:Name="CoronalControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding CoronalVms}"
                                                OverlayObjects="{Binding CoronalOverlayVms}" />
@@ -235,7 +235,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <controls:VtkImageSceneControl x:Name="SagittalControl"
+                <controls:VtkOrthoImageSceneControl x:Name="SagittalControl"
                                                Grid.Row="0"
                                                SceneObjects="{Binding SagittalVms}"
                                                OverlayObjects="{Binding SagittalOverlayVms}" />
