@@ -105,12 +105,13 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _offsetsConverter.BindLabelMapInfo(_labelMap);
         _offsetsConverter.SetBrushGeometry(BrushVm.GetBrushGeometryPort());
 
-        // Pick list
+        // Pick list config
         _picker.SetTolerance(0.005);
         _picker.PickFromListOn();
         _picker.AddPickList(_axialVm.Actor);
         _picker.AddPickList(_coronalVm.Actor);
         _picker.AddPickList(_sagittalVm.Actor);
+        _picker.AddPickList(_obliqueVm.Actor);
 
         // Overlay ViewModels -----------------------------------------
         var bounds = Bounds.FromArray(_background.GetBounds());
