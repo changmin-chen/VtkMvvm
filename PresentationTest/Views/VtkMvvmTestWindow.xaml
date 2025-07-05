@@ -34,10 +34,15 @@
                 </Style>
             </Grid.Resources>
             <StackPanel>
-                <TextBlock Margin="0,16"
-                           Text="Binding tests"
-                           FontWeight="Bold"
-                           FontSize="32" />
+                <StackPanel Margin="0 8">
+                    <TextBlock Margin="0,4"
+                               Text="Mouse events: "
+                               FontWeight="Bold"
+                               FontSize="18" />
+                    <TextBlock Text="Left drag: draw on labelmap"/>
+                    <TextBlock Text="Left drag + Alt: display at this position"/>
+                </StackPanel>
+
 
                 <StackPanel Margin="0,4" Orientation="Horizontal">
                     <TextBlock Text="Brush diameter" />
