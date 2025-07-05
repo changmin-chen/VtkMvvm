@@ -45,6 +45,7 @@ internal sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStra
     {
         _cmap = cmap;
         _cmap.SetLookupTable(_lut);
+        _cmap.SetOutputFormatToLuminance();
         _cmap.PassAlphaToOutputOff();
         Update();
     }

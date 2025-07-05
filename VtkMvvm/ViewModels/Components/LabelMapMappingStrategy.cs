@@ -17,6 +17,7 @@ internal sealed class LabelMapColorMapping : IColorMappingStrategy
     {
         _cmap = cmap;
         _cmap.SetLookupTable(_lut);
+        _cmap.SetOutputFormatToRGBA();
         _cmap.PassAlphaToOutputOn();
         Update();
     }
