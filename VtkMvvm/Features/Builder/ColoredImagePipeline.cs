@@ -44,17 +44,12 @@ public sealed record ColoredImagePipeline(
         else actor.InterpolateOff();
     }
 
+   
     private void ConfigureColormap(vtkImageMapToColors mapToColors)
     {
         mapToColors.SetLookupTable(LookupTable);
-
-        if (IsRgba)
-        {
-            mapToColors.SetOutputFormatToRGBA();
-        }
-        else
-        {
-            mapToColors.SetOutputFormatToLuminance();
-        }
+        
+        if (IsRgba) mapToColors.SetOutputFormatToRGBA();
+        else mapToColors.SetOutputFormatToLuminance();
     }
 }
