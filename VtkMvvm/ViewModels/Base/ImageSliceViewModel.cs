@@ -12,19 +12,20 @@ namespace VtkMvvm.ViewModels.Base;
 /// </summary>
 public abstract class ImageSliceViewModel : VtkElementViewModel
 {
+    /// <summary>
+    /// Concrete actor override for displaying image slice in the scene
+    /// </summary>
+    public override vtkImageActor Actor { get; } = vtkImageActor.New();
+    
     // ── color map ─────────────────────
     private readonly IColorMappingStrategy _colorStrategy;
     
     /// <summary>
-    /// Maps sliced image to color and should be connected to the actor
+    /// Maps sliced image to the colors. Its output should be connected to the actor
     /// </summary>
     protected vtkImageMapToColors ColorMap { get; } = vtkImageMapToColors.New();
     
-    /// <summary>
-    /// Concrete actor for displaying image slice in the scene
-    /// </summary>
-    public override vtkImageActor Actor { get; } = vtkImageActor.New();
-
+    
     protected ImageSliceViewModel(ColoredImagePipeline pipe)
     {
         _colorStrategy = pipe.IsRgba ? new LabelMapColorMapping(pipe) : new WindowLevelColorMapping(pipe);
@@ -62,15 +63,33 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     }
     
     // ── slice orientation info ─────────────────────
+    
+    /// <summary>
+    /// Normal direction of the image slice
+    /// </summary>
     public Vector3 PlaneNormal { get; protected set; }
+    
+    /// <summary>
+    /// First axis direction of the image slice
+    /// </summary>
     public Vector3 PlaneAxisU { get; protected set; }
+    
+    /// <summary>
+    /// Second axis direction of the image slice
+    /// </summary>
     public Vector3 PlaneAxisV { get; protected set; }
+    
+    /// <summary>
+    /// World coordinate of the current image slice origin
+    /// </summary>
     public Double3 PlaneOrigin { get; protected set; }
 
-    // ── slice index (still abstract: each VM applies it differently)
+    // ── slice index (still abstract: each VM applies it differently) ─────────────────────
     private int _sliceIndex = int.MinValue;
 
-    /// <summary>Index of the slice to display. The setter raises OnSliceIndexChanged</summary>
+    /// <summary>
+    /// Index of the slice to display. The setter raises OnSliceIndexChanged
+    /// </summary>
     public int SliceIndex
     {
         get => _sliceIndex;
