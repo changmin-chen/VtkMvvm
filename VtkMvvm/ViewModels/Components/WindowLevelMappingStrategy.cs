@@ -4,7 +4,7 @@ using VtkMvvm.ViewModels.Base;
 
 namespace VtkMvvm.ViewModels.Components;
 
-public sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrategy
+internal sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrategy
 {
     private readonly vtkLookupTable _lut;
     private vtkImageMapToColors? _cmap;

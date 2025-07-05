@@ -5,7 +5,7 @@ namespace VtkMvvm.ViewModels.Components;
 /// <summary>
 /// Strategy pattern for mapping image data scalars to colors
 /// </summary>
-public interface IColorMappingStrategy : IDisposable
+internal interface IColorMappingStrategy : IDisposable
 {
     /// <summary>
     /// Apply this strategy. This is done by configuring <see cref="vtkImageMapToColors"/>

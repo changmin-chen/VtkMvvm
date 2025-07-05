@@ -3,7 +3,7 @@ using VtkMvvm.Features.Builder;
 
 namespace VtkMvvm.ViewModels.Components;
 
-public sealed class LabelMapColorMapping : IColorMappingStrategy
+internal sealed class LabelMapColorMapping : IColorMappingStrategy
 {
     private readonly vtkLookupTable _lut;
     private vtkImageMapToColors? _cmap;
