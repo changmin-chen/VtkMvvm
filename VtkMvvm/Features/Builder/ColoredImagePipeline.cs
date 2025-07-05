@@ -3,17 +3,18 @@ using VtkMvvm.ViewModels.Base;
 
 namespace VtkMvvm.Features.Builder;
 
+
 /// <summary>
 /// DTO for the shared vtk image pipeline with color mapping.
 /// The image data may be shared across multiple <see cref="VtkElementViewModel"/>.
 /// So the ViewModel should not dispose them. 
 /// </summary>
-public sealed record ColoredImagePipeline(
-    vtkImageData Image,
-    vtkLookupTable LookupTable,
-    bool IsRgba,
-    bool IsLinearInterpolationOn
-);
+public sealed class ColoredImagePipeline
+{
+    public required vtkImageData Image { get; init; }
+    public required vtkLookupTable LookupTable { get; init; }
+    public required bool IsRgba { get; init; }
+}
 
 // internal static class ColoredImagePipelineExtensions
 // {

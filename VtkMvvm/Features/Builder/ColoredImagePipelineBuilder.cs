@@ -11,7 +11,6 @@ public class ColoredImagePipelineBuilder
     private readonly vtkImageData _image;
 
     // Configuration fields only:
-    private bool _linearInterpolation = true;
     private vtkLookupTable? _rgbaLookupTable; // null means Luminance
 
     private ColoredImagePipelineBuilder(vtkImageData image) => _image = image;
@@ -29,12 +28,6 @@ public class ColoredImagePipelineBuilder
         return grayLut;
     }
 
-    public ColoredImagePipelineBuilder WithLinearInterpolation(bool linear)
-    {
-        _linearInterpolation = linear;
-        return this;
-    }
-
     public ColoredImagePipelineBuilder WithRgbaLookupTable(vtkLookupTable lut)
     {
         _rgbaLookupTable = lut;
@@ -46,6 +39,11 @@ public class ColoredImagePipelineBuilder
         bool isRgba = _rgbaLookupTable != null;
         vtkLookupTable lut = _rgbaLookupTable ??= CreateDefaultGrayLut();
 
-        return new ColoredImagePipeline(_image, lut, isRgba, _linearInterpolation);
+        return new ColoredImagePipeline
+        {
+            Image = _image,
+            LookupTable = lut,
+            IsRgba = isRgba
+        };
     }
 }

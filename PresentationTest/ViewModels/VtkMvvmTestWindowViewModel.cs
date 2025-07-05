@@ -75,14 +75,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         // Build the shared background image pipeline
         var bgPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
-            .WithLinearInterpolation(true)
             .Build();
 
         // Build the shared labelmap image pipeline
         _labelMap = CreateLabelMap(_background);
         var labelMapPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_labelMap)
-            .WithLinearInterpolation(false)
             .WithRgbaLookupTable(_labelMapLut)
             .Build();
 
