@@ -13,43 +13,45 @@ public sealed record ColoredImagePipeline(
     vtkLookupTable LookupTable,
     bool IsRgba,
     bool IsLinearInterpolationOn
-)
+);
+
+internal static class ColoredImagePipelineExtensions
 {
     /// <summary>
     ///     Connect pipeline: Image -> ColorMap -> Actor
     /// </summary>
-    internal void Connect(vtkImageMapToColors mapToColors, vtkImageActor actor)
+    public static void Connect(this ColoredImagePipeline pipe, vtkImageMapToColors colorMap, vtkImageActor actor)
     {
-        ConfigureColormap(mapToColors);
+        colorMap.ConfigureColorMap(pipe);
 
-        mapToColors.SetInput(Image);
-        actor.SetInput(mapToColors.GetOutput());
+        colorMap.SetInput(pipe.Image);
+        actor.SetInput(colorMap.GetOutput());
 
-        if (IsLinearInterpolationOn) actor.InterpolateOn();
+        if (pipe.IsLinearInterpolationOn) actor.InterpolateOn();
         else actor.InterpolateOff();
     }
-
+    
     /// <summary>
     /// Connect pipeline: Image -> Reslice Image → ColorMap → Actor
     /// </summary>
-    internal void ConnectWithReslice(vtkImageMapToColors mapToColors, vtkImageReslice reslice, vtkImageActor actor)
+    public static void ConnectWithReslice(this ColoredImagePipeline pipe, vtkImageMapToColors colorMap, vtkImageReslice reslice, vtkImageActor actor)
     {
-        ConfigureColormap(mapToColors);
+        colorMap.ConfigureColorMap(pipe);
 
-        reslice.SetInput(Image);
-        mapToColors.SetInputConnection(reslice.GetOutputPort());
-        actor.SetInput(mapToColors.GetOutput());
+        reslice.SetInput(pipe.Image);
+        colorMap.SetInputConnection(reslice.GetOutputPort());
+        actor.SetInput(colorMap.GetOutput());
 
-        if (IsLinearInterpolationOn) actor.InterpolateOn();
+        if (pipe.IsLinearInterpolationOn) actor.InterpolateOn();
         else actor.InterpolateOff();
     }
 
-   
-    private void ConfigureColormap(vtkImageMapToColors mapToColors)
+    // ---- Helpers ------------------------------------
+    private static void ConfigureColorMap(this vtkImageMapToColors colorMap, ColoredImagePipeline pipe)
     {
-        mapToColors.SetLookupTable(LookupTable);
-        
-        if (IsRgba) mapToColors.SetOutputFormatToRGBA();
-        else mapToColors.SetOutputFormatToLuminance();
+        colorMap.SetLookupTable(pipe.LookupTable);
+
+        if (pipe.IsRgba) colorMap.SetOutputFormatToRGBA();
+        else colorMap.SetOutputFormatToLuminance();
     }
 }

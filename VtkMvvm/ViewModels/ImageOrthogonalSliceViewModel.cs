@@ -18,21 +18,23 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
     private double _windowLevel;
     private double _windowWidth;
 
-    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeline)
+    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipe)
     {
         Orientation = orientation;
         (PlaneAxisU, PlaneAxisV) = GetPlaneAxes(orientation);
         PlaneNormal = Vector3.Normalize(Vector3.Cross(PlaneAxisU, PlaneAxisV));
 
-        vtkImageData image = pipeline.Image;
+        vtkImageData image = pipe.Image;
         _origin = image.GetOrigin();
         _spacing = image.GetSpacing();
 
         vtkImageActor actor = vtkImageActor.New();
         Actor = actor;
         ImageModel = ImageModel.Create(image);
-        pipeline.Connect(_cmap, actor);
-
+        
+        // VTK plumping
+        pipe.Connect(_cmap, actor);
+        
         // SetSliceIndex here is necessary.
         // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
         SliceIndex = 0;
