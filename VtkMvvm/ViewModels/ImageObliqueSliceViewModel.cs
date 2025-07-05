@@ -39,9 +39,8 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         // -------- connect full display pipeline ---------------------
         var slicePort = BuildObliqueSlice(volume);
         ColorMap.SetInputConnection(slicePort);
-        _actor.SetInput(ColorMap.GetOutput());
-        _actor.SetUserTransform(_xfm); // positions slice in 3-D
-        Actor = _actor;
+        Actor.SetInput(ColorMap.GetOutput());
+        Actor.SetUserTransform(_xfm); // positions slice in 3-D
 
         // -------- initialise orientation & index --------------------
         SliceOrientation = orientation; // sets step & slider limits
@@ -62,7 +61,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     }
 
     // ── public surface  ─────────────────────
-    public override vtkImageActor Actor { get; }
 
     /// <summary>
     /// Δ mm per slice index

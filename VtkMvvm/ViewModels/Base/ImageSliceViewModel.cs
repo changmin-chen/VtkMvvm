@@ -13,24 +13,33 @@ namespace VtkMvvm.ViewModels.Base;
 public abstract class ImageSliceViewModel : VtkElementViewModel
 {
     // ── color map ─────────────────────
-    private readonly vtkImageMapToColors _colorMap = vtkImageMapToColors.New();
     private readonly IColorMappingStrategy _colorStrategy;
-    protected vtkImageMapToColors ColorMap => _colorMap;
+    
+    /// <summary>
+    /// Maps sliced image to color and should be connected to the actor
+    /// </summary>
+    protected vtkImageMapToColors ColorMap { get; } = vtkImageMapToColors.New();
+    
+    /// <summary>
+    /// Concrete actor for displaying image slice in the scene
+    /// </summary>
+    public override vtkImageActor Actor { get; } = vtkImageActor.New();
+
     protected ImageSliceViewModel(ColoredImagePipeline pipe)
     {
         _colorStrategy = pipe.IsRgba ? new LabelMapColorMapping(pipe) : new WindowLevelColorMapping(pipe);
-        _colorStrategy.Apply(_colorMap);
+        _colorStrategy.Apply(ColorMap);
     }
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) _colorMap.Dispose();
+        if (disposing) ColorMap.Dispose();
         base.Dispose(disposing);
     }
     
     public double WindowLevel
     {
-        get => (_colorStrategy as WindowLevelColorMapping)?.Level ?? 0;
+        get => (_colorStrategy as WindowLevelColorMapping)?.Level ?? double.NaN;
         set
         {
             if (_colorStrategy is not WindowLevelColorMapping wlv) return;
@@ -42,7 +51,7 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     
     public double WindowWidth
     {
-        get => (_colorStrategy as WindowLevelColorMapping)?.Window ?? 0;
+        get => (_colorStrategy as WindowLevelColorMapping)?.Window ?? double.NaN;
         set
         {
             if (_colorStrategy is not WindowLevelColorMapping wlv) return;
@@ -61,7 +70,8 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     // ── slice index (still abstract: each VM applies it differently)
     private int _sliceIndex = int.MinValue;
 
-    public virtual int SliceIndex
+    /// <summary>Index of the slice to display. The setter raises OnSliceIndexChanged</summary>
+    public int SliceIndex
     {
         get => _sliceIndex;
         set

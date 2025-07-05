@@ -24,13 +24,11 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         _origin = image.GetOrigin();
         _spacing = image.GetSpacing();
 
-        vtkImageActor actor = vtkImageActor.New();
-        Actor = actor;
         ImageModel = ImageModel.Create(image);
         
         // VTK plumping
         ColorMap.SetInput(pipe.Image);
-        actor.SetInput(ColorMap.GetOutput());
+        Actor.SetInput(ColorMap.GetOutput());
         
         // SetSliceIndex here is necessary.
         // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
@@ -47,10 +45,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
 
     public SliceOrientation Orientation { get; }
     public ImageModel ImageModel { get; }
-    public override vtkImageActor Actor { get; }
 
-
-    
 
     public double Opacity
     {
