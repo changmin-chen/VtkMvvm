@@ -14,9 +14,6 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
     private readonly double[] _origin;
     private readonly double[] _spacing;
 
-    private double _windowLevel;
-    private double _windowWidth;
-
     public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipe)
     {
         Orientation = orientation;
@@ -52,27 +49,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
     public override vtkImageActor Actor { get; }
 
 
-    public double WindowLevel
-    {
-        get => _windowLevel;
-        set
-        {
-            if (!SetField(ref _windowLevel, value)) return;
-            SetWindowBand(value, WindowWidth);
-            OnModified();
-        }
-    }
-
-    public double WindowWidth
-    {
-        get => _windowWidth;
-        set
-        {
-            if (!SetField(ref _windowWidth, value)) return;
-            SetWindowBand(WindowLevel, value);
-            OnModified();
-        }
-    }
+    
 
     public double Opacity
     {
@@ -122,20 +99,6 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         PlaneOrigin = new Double3(ox, oy, oz);
         OnPropertyChanged(nameof(PlaneOrigin));
 
-        Actor.Modified();
-    }
-
-    private void SetWindowBand(double level, double width)
-    {
-        double low = level - width * 0.5;
-        double high = level + width * 0.5;
-
-        vtkScalarsToColors? lut = ColorMap.GetLookupTable();
-        lut.SetRange(low, high);
-        lut.Build();
-        ColorMap.SetLookupTable(lut);
-
-        ColorMap.Modified();
         Actor.Modified();
     }
 }
