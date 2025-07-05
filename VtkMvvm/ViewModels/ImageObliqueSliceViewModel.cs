@@ -68,8 +68,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     /// Δ mm per slice index
     /// </summary>
     public double StepMillimeter { get; private set; }
-
-
+    
     public Quaternion SliceOrientation
     {
         get => _sliceOrientation;
@@ -176,11 +175,11 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 
         // ----- keep current index inside the new range --------------
         SliceIndex = Math.Clamp(SliceIndex, _minSliceIdx, _maxSliceIdx);
-        ApplySliceIndex(SliceIndex); // ★ always update slice idx to fit the current transform
+        OnSliceIndexChanged(SliceIndex); // ★ always update slice idx to fit the current transform
     }
 
     /// <summary>Move the slice plane along its normal by idx · Δ.</summary>
-    protected override void ApplySliceIndex(int idx)
+    protected override void OnSliceIndexChanged(int idx)
     {
         // current normal (3rd column)
         double nx = _axes.GetElement(0, 2);

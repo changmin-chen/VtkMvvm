@@ -51,8 +51,7 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
             OnModified();
         }
     }
-
-
+    
     // ── slice orientation info ─────────────────────
     public Vector3 PlaneNormal { get; protected set; }
     public Vector3 PlaneAxisU { get; protected set; }
@@ -62,16 +61,16 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     // ── slice index (still abstract: each VM applies it differently)
     private int _sliceIndex = int.MinValue;
 
-    public int SliceIndex
+    public virtual int SliceIndex
     {
         get => _sliceIndex;
         set
         {
             if (!SetField(ref _sliceIndex, value)) return;
-            ApplySliceIndex(value); // concrete hook
+            OnSliceIndexChanged(value); // concrete hook
             OnModified();
         }
     }
 
-    protected abstract void ApplySliceIndex(int idx);
+    protected abstract void OnSliceIndexChanged(int idx);
 }

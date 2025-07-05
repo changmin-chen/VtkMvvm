@@ -66,7 +66,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
     }
     
 
-    protected override void ApplySliceIndex(int idx)
+    protected override void OnSliceIndexChanged(int idx)
     {
         int[] dims = ImageModel.Dimensions;
 
