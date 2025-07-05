@@ -72,8 +72,8 @@
                                 IsSnapToTickEnabled="True"
                                 Minimum="-500"
                                 Maximum="1000"
-                                Value="{Binding SagittalVms[0].WindowLevel, Mode=TwoWay}" />
-                        <TextBlock Margin="0,5,5,0" Text="{Binding SagittalVms[0].WindowLevel}" />
+                                Value="{Binding WindowLevel, Mode=TwoWay}" />
+                        <TextBlock Margin="0,5,5,0" Text="{Binding WindowLevel}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal">
@@ -84,8 +84,8 @@
                                 IsSnapToTickEnabled="True"
                                 Minimum="200"
                                 Maximum="1000"
-                                Value="{Binding SagittalVms[0].WindowWidth, Mode=TwoWay}" />
-                        <TextBlock Margin="0,5,5,0" Text="{Binding SagittalVms[0].WindowWidth}" />
+                                Value="{Binding WindowWidth, Mode=TwoWay}" />
+                        <TextBlock Margin="0,5,5,0" Text="{Binding WindowWidth}" />
                     </StackPanel>
                 </StackPanel>
 
