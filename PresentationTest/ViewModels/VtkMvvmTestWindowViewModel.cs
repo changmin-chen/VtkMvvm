@@ -37,10 +37,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
 
     // Painting labelmap
     private readonly vtkCellPicker _picker = new();
-    private int _axialSliceIndex;
-    private int _coronalSliceIndex;
-    private int _sagittalSliceIndex;
-    private int _obliqueSliceIndex;
+
 
     // Background ViewModels: Axial, Coronal, Sagittal slice view models
     public ImageOrthogonalSliceViewModel[] AxialVms => [_axialVm, _axialLabelVm];
@@ -75,14 +72,12 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         // Build the shared background image pipeline
         var bgPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
-            .WithLinearInterpolation(true)
             .Build();
 
         // Build the shared labelmap image pipeline
         _labelMap = CreateLabelMap(_background);
         var labelMapPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_labelMap)
-            .WithLinearInterpolation(false)
             .WithRgbaLookupTable(_labelMapLut)
             .Build();
 
@@ -99,7 +94,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _obliqueLabelVm = new ImageObliqueSliceViewModel(sliceOrientation, labelMapPipe);
 
         // Add brushes that render on top of the image
-        _brushVm.Diameter = 5.0;
+        _brushVm.Diameter = 8.0;
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();
@@ -121,7 +116,11 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         SetLabelOneVisibilityCommand = new DelegateCommand<bool?>(SetLabelOneVisibility);
         SetSliceOrientationCommand = new DelegateCommand(SetSliceOrientation);
     }
-
+    
+    private int _axialSliceIndex;
+    private int _coronalSliceIndex;
+    private int _sagittalSliceIndex;
+    private int _obliqueSliceIndex;
 
     public int AxialSliceIndex
     {
@@ -164,6 +163,31 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             value = Math.Clamp(value, _obliqueVm.MinSliceIndex, _obliqueVm.MaxSliceIndex);
             this.RaiseAndSetIfChanged(ref _obliqueSliceIndex, value);
             SetSliceIndex(ObliqueVms, value);
+        }
+    }
+    public double WindowLevel
+    {
+        get => AxialVms[0].WindowLevel;  // we use the shared lut. so modify one and tell others to render. 
+        set
+        {
+            AxialVms[0].WindowLevel = value;
+            SagittalVms[0].ForceRender();
+            CoronalVms[0].ForceRender();
+            ObliqueVms[0].ForceRender();
+            this.RaisePropertyChanged();
+        }
+    }
+
+    public double WindowWidth
+    {
+        get => AxialVms[0].WindowWidth;
+        set
+        {
+            AxialVms[0].WindowWidth = value;
+            SagittalVms[0].ForceRender();
+            CoronalVms[0].ForceRender();
+            ObliqueVms[0].ForceRender();
+            this.RaisePropertyChanged();
         }
     }
 

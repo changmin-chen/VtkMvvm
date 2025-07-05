@@ -34,16 +34,21 @@
                 </Style>
             </Grid.Resources>
             <StackPanel>
-                <TextBlock Margin="0,16"
-                           Text="Binding tests"
-                           FontWeight="Bold"
-                           FontSize="32" />
+                <StackPanel Margin="0 8">
+                    <TextBlock Margin="0,4"
+                               Text="Mouse events: "
+                               FontWeight="Bold"
+                               FontSize="18" />
+                    <TextBlock Text="Left drag: draw on labelmap"/>
+                    <TextBlock Text="Left drag + Alt: display at this position"/>
+                </StackPanel>
+
 
                 <StackPanel Margin="0,4" Orientation="Horizontal">
                     <TextBlock Text="Brush diameter" />
                     <Slider Width="200"
-                            Minimum="1"
-                            Maximum="5"
+                            Minimum="2"
+                            Maximum="10"
                             Value="{Binding BrushVm.Diameter}" />
                     <TextBlock Text="{Binding BrushVm.Diameter, StringFormat={}{0:F2}}" />
                     <TextBlock Text=" mm" />
@@ -70,10 +75,10 @@
                                    Text="Level:" />
                         <Slider Width="200"
                                 IsSnapToTickEnabled="True"
-                                Minimum="{Binding SagittalVms[0].ImageModel.ScalarRange[0]}"
-                                Maximum="{Binding SagittalVms[0].ImageModel.ScalarRange[1]}"
-                                Value="{Binding SagittalVms[0].WindowLevel, Mode=TwoWay}" />
-                        <TextBlock Margin="0,5,5,0" Text="{Binding SagittalVms[0].WindowLevel}" />
+                                Minimum="-500"
+                                Maximum="1000"
+                                Value="{Binding WindowLevel, Mode=TwoWay}" />
+                        <TextBlock Margin="0,5,5,0" Text="{Binding WindowLevel}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal">
@@ -82,10 +87,10 @@
                                    Text="Width:" />
                         <Slider Width="200"
                                 IsSnapToTickEnabled="True"
-                                Minimum="100000"
-                                Maximum="500000"
-                                Value="{Binding SagittalVms[0].WindowWidth, Mode=TwoWay}" />
-                        <TextBlock Margin="0,5,5,0" Text="{Binding SagittalVms[0].WindowWidth}" />
+                                Minimum="200"
+                                Maximum="1000"
+                                Value="{Binding WindowWidth, Mode=TwoWay}" />
+                        <TextBlock Margin="0,5,5,0" Text="{Binding WindowWidth}" />
                     </StackPanel>
                 </StackPanel>
 

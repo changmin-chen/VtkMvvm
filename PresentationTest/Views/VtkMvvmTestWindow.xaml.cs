@@ -42,6 +42,8 @@ public partial class VtkMvvmTestWindow : Window
     {
         vtkInteractorStyleImage style = new(); // 被attach的event會直接覆蓋
         vtkRenderWindowInteractor iren = control.Interactor;
+        
+
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftMove((x, y) => _vm.OnControlGetBrushPosition(control, x, y))
@@ -49,7 +51,7 @@ public partial class VtkMvvmTestWindow : Window
             .LeftDrag((x, y) => _vm.OnControlGetMousePaintPosition(control, x, y), keys: KeyMask.None)
             .LeftDragRx(obs => obs
                 .Sample(TimeSpan.FromMilliseconds(33))
-                .ObserveOn(RxApp.MainThreadScheduler) // necessary
+                .ObserveOn(RxApp.MainThreadScheduler /*always render on UI thread*/) 
                 .Subscribe(_ => RenderControls()))
             .Scroll(forward =>
             {
@@ -63,8 +65,8 @@ public partial class VtkMvvmTestWindow : Window
             .DisposeWith(_disposables);
     }
 
-
-    private void RenderControls()
+    
+    private void RenderControls()  
     {
         AxialControl.Render();
         CoronalControl.Render();

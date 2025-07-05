@@ -15,7 +15,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 {
     // ── VTK pipeline ────────────────────────────────────────────────
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
-    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly vtkTransform _xfm = vtkTransform.New();
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
     private readonly vtkImageActor _actor = vtkImageActor.New();
@@ -30,17 +29,26 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     private Quaternion _sliceOrientation = Quaternion.Identity;
 
 
-    public ImageObliqueSliceViewModel(
-        Quaternion orientation,
-        ColoredImagePipeline pipeline)
+    public ImageObliqueSliceViewModel(Quaternion orientation, ColoredImagePipeline pipeline) : base(pipeline)
     {
         vtkImageData volume = pipeline.Image;
-
-        ImageModel = ImageModel.Create(volume);
         _imgCentre = volume.GetCenter();
         _imgBounds = Bounds.FromArray(volume.GetBounds());
         _spacing = volume.GetSpacing();
+        
+        // -------- connect full display pipeline ---------------------
+        var slicePort = BuildObliqueSlice(volume);
+        ColorMap.SetInputConnection(slicePort);
+        Actor.SetInput(ColorMap.GetOutput());
+        Actor.SetUserTransform(_xfm); // positions slice in 3-D
 
+        // -------- initialise orientation & index --------------------
+        SliceOrientation = orientation; // sets step & slider limits
+        SliceIndex = 0; // central slice
+    }
+
+    private vtkAlgorithmOutput BuildObliqueSlice(vtkImageData volume)
+    {
         // -------- reslice: 2-D image in its own XY coord system -----
         _reslice.SetInput(volume);
         _reslice.SetInterpolationModeToLinear();
@@ -48,28 +56,17 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         _reslice.AutoCropOutputOn();
         _reslice.SetBackgroundLevel(volume.GetScalarRange()[0]);
         _reslice.SetResliceAxes(_axes); // we will fill it below
-
-        // -------- connect full display pipeline ---------------------
-        _actor.SetUserTransform(_xfm); // ***positions slice in 3-D***
-        pipeline.ConnectWithReslice(_cmap, _reslice, _actor);
-        Actor = _actor;
-
-        // -------- initialise orientation & index --------------------
-        SliceOrientation = orientation; // sets step & slider limits
-        SliceIndex = 0; // central slice
+        
+        return _reslice.GetOutputPort();
     }
 
     // ── public surface  ─────────────────────
-    public override vtkImageActor Actor { get; }
-    public ImageModel ImageModel { get; }
-
 
     /// <summary>
     /// Δ mm per slice index
     /// </summary>
     public double StepMillimeter { get; private set; }
-
-
+    
     public Quaternion SliceOrientation
     {
         get => _sliceOrientation;
@@ -176,11 +173,11 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 
         // ----- keep current index inside the new range --------------
         SliceIndex = Math.Clamp(SliceIndex, _minSliceIdx, _maxSliceIdx);
-        ApplySliceIndex(SliceIndex); // ★ always update slice idx to fit the current transform
+        OnSliceIndexChanged(SliceIndex); // ★ always update slice idx to fit the current transform
     }
 
     /// <summary>Move the slice plane along its normal by idx · Δ.</summary>
-    protected override void ApplySliceIndex(int idx)
+    protected override void OnSliceIndexChanged(int idx)
     {
         // current normal (3rd column)
         double nx = _axes.GetElement(0, 2);
@@ -215,7 +212,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         if (disposing)
         {
             _actor.Dispose();
-            _cmap.Dispose();
             _reslice.Dispose();
             _xfm.Dispose();
             _axes.Dispose();
