@@ -47,7 +47,7 @@ internal static class ColoredImagePipelineExtensions
     }
 
     // ---- Helpers ------------------------------------
-    private static void ConfigureColorMap(this vtkImageMapToColors colorMap, ColoredImagePipeline pipe)
+    public static void ConfigureColorMap(this vtkImageMapToColors colorMap, ColoredImagePipeline pipe)
     {
         colorMap.SetLookupTable(pipe.LookupTable);
 

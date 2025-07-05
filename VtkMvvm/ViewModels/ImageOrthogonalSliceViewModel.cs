@@ -29,7 +29,9 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         ImageModel = ImageModel.Create(image);
         
         // VTK plumping
-        pipe.Connect(ColorMap, actor);
+        ColorMap.ConfigureColorMap(pipe);
+        ColorMap.SetInput(pipe.Image);
+        actor.SetInput(ColorMap.GetOutput());
         
         // SetSliceIndex here is necessary.
         // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation

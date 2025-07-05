@@ -34,23 +34,16 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         ColoredImagePipeline pipeline)
     {
         vtkImageData volume = pipeline.Image;
-
-        ImageModel = ImageModel.Create(volume);
         _imgCentre = volume.GetCenter();
         _imgBounds = Bounds.FromArray(volume.GetBounds());
         _spacing = volume.GetSpacing();
-
-        // -------- reslice: 2-D image in its own XY coord system -----
-        _reslice.SetInput(volume);
-        _reslice.SetInterpolationModeToLinear();
-        _reslice.SetOutputDimensionality(2);
-        _reslice.AutoCropOutputOn();
-        _reslice.SetBackgroundLevel(volume.GetScalarRange()[0]);
-        _reslice.SetResliceAxes(_axes); // we will fill it below
-
+        
         // -------- connect full display pipeline ---------------------
-        _actor.SetUserTransform(_xfm); // ***positions slice in 3-D***
-        pipeline.ConnectWithReslice(ColorMap, _reslice, _actor);
+        var slicePort = BuildObliqueSlice(volume);
+        ColorMap.SetInputConnection(slicePort);
+        ColorMap.ConfigureColorMap(pipeline);
+        _actor.SetInput(ColorMap.GetOutput());
+        _actor.SetUserTransform(_xfm); // positions slice in 3-D
         Actor = _actor;
 
         // -------- initialise orientation & index --------------------
@@ -58,10 +51,21 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         SliceIndex = 0; // central slice
     }
 
+    private vtkAlgorithmOutput BuildObliqueSlice(vtkImageData volume)
+    {
+        // -------- reslice: 2-D image in its own XY coord system -----
+        _reslice.SetInput(volume);
+        _reslice.SetInterpolationModeToLinear();
+        _reslice.SetOutputDimensionality(2);
+        _reslice.AutoCropOutputOn();
+        _reslice.SetBackgroundLevel(volume.GetScalarRange()[0]);
+        _reslice.SetResliceAxes(_axes); // we will fill it below
+        
+        return _reslice.GetOutputPort();
+    }
+
     // ── public surface  ─────────────────────
     public override vtkImageActor Actor { get; }
-    public ImageModel ImageModel { get; }
-
 
     /// <summary>
     /// Δ mm per slice index
