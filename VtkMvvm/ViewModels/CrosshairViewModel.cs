@@ -26,7 +26,7 @@ public sealed class CrosshairViewModel : VtkElementViewModel
     private Double3 _focalPoint;
     private float _lineWidth = 1.5F;
     
-    private CrosshairViewModel(
+    public CrosshairViewModel(
         Vector3 uDir,
         Vector3 vDir,
         Bounds lineBounds)

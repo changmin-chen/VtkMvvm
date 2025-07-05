@@ -28,7 +28,7 @@ public sealed class BullseyeViewModel : VtkElementViewModel
     private (double R, double G, double B) _color = (1, 1, 0); // yellow
 
     // ── ctor/factory ────────────────────────────────────────────────
-    private BullseyeViewModel(Double3 centre,
+    public BullseyeViewModel(Double3 centre,
         Vector3 normal,
         int ringCount = 2,
         double ringSpacing = 2.0)

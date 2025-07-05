@@ -3,7 +3,7 @@ using Kitware.VTK;
 using VtkMvvm.Models;
 using VtkMvvm.ViewModels.Base;
 
-namespace VtkMvvm.ViewModels;
+namespace VtkMvvm.Obsolete;
 
 /// <summary>
 /// Flat “R / L / A / P / H/ F” text hints glued to the viewport edges.
