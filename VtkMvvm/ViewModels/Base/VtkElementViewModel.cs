@@ -1,13 +1,11 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using Kitware.VTK;
+﻿using Kitware.VTK;
 
 namespace VtkMvvm.ViewModels.Base;
 
 /// <summary>
 ///     Abstract base ViewModel that can be put into RenderWindow control
 /// </summary>
-public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
+public abstract class VtkElementViewModel : ViewModelBase, IDisposable
 {
     public abstract vtkProp Actor { get; }
 
@@ -53,21 +51,5 @@ public abstract class VtkElementViewModel : INotifyPropertyChanged, IDisposable
         {
             Actor.Dispose();
         }
-    }
-    
-    // ----------- implement INotifyPropertyChanged -------------------------------------
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
     }
 }
