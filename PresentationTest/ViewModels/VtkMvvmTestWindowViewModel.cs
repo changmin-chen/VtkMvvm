@@ -174,6 +174,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             SagittalVms[0].ForceRender();
             CoronalVms[0].ForceRender();
             ObliqueVms[0].ForceRender();
+            this.RaisePropertyChanged();
         }
     }
 
@@ -186,6 +187,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
             SagittalVms[0].ForceRender();
             CoronalVms[0].ForceRender();
             ObliqueVms[0].ForceRender();
+            this.RaisePropertyChanged();
         }
     }
 
