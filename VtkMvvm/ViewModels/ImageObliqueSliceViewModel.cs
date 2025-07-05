@@ -15,7 +15,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 {
     // ── VTK pipeline ────────────────────────────────────────────────
     private readonly vtkImageReslice _reslice = vtkImageReslice.New();
-    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly vtkTransform _xfm = vtkTransform.New();
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
     private readonly vtkImageActor _actor = vtkImageActor.New();
@@ -51,7 +50,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 
         // -------- connect full display pipeline ---------------------
         _actor.SetUserTransform(_xfm); // ***positions slice in 3-D***
-        pipeline.ConnectWithReslice(_cmap, _reslice, _actor);
+        pipeline.ConnectWithReslice(ColorMap, _reslice, _actor);
         Actor = _actor;
 
         // -------- initialise orientation & index --------------------
@@ -215,7 +214,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         if (disposing)
         {
             _actor.Dispose();
-            _cmap.Dispose();
             _reslice.Dispose();
             _xfm.Dispose();
             _axes.Dispose();

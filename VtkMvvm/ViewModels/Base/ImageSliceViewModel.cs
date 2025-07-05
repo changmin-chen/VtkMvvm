@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Kitware.VTK;
 using VtkMvvm.Models;
 
 namespace VtkMvvm.ViewModels.Base;
@@ -9,6 +10,13 @@ namespace VtkMvvm.ViewModels.Base;
 /// </summary>
 public abstract class ImageSliceViewModel : VtkElementViewModel
 {
+    protected vtkImageMapToColors ColorMap { get; } = vtkImageMapToColors.New();
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) ColorMap.Dispose();
+        base.Dispose(disposing);
+    } 
+    
     // ── slice orientation info ─────────────────────
     public Vector3 PlaneNormal { get; protected set; }
     public Vector3 PlaneAxisU { get; protected set; }

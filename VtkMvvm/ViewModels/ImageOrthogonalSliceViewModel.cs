@@ -11,7 +11,6 @@ namespace VtkMvvm.ViewModels;
 /// </summary>
 public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
 {
-    private readonly vtkImageMapToColors _cmap = vtkImageMapToColors.New();
     private readonly double[] _origin;
     private readonly double[] _spacing;
 
@@ -33,7 +32,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         ImageModel = ImageModel.Create(image);
         
         // VTK plumping
-        pipe.Connect(_cmap, actor);
+        pipe.Connect(ColorMap, actor);
         
         // SetSliceIndex here is necessary.
         // This not only affects which slice it initially displayed, but also affects how the View recognizes the slicing orientation
@@ -87,17 +86,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
             OnModified();
         }
     }
-
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _cmap.Dispose();
-        }
-        base.Dispose(disposing);
-    }
-
+    
 
     protected override void ApplySliceIndex(int idx)
     {
@@ -141,12 +130,12 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         double low = level - width * 0.5;
         double high = level + width * 0.5;
 
-        vtkScalarsToColors? lut = _cmap.GetLookupTable();
+        vtkScalarsToColors? lut = ColorMap.GetLookupTable();
         lut.SetRange(low, high);
         lut.Build();
-        _cmap.SetLookupTable(lut);
+        ColorMap.SetLookupTable(lut);
 
-        _cmap.Modified();
+        ColorMap.Modified();
         Actor.Modified();
     }
 }
