@@ -14,7 +14,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
     private readonly double[] _origin;
     private readonly double[] _spacing;
 
-    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipe)
+    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipe) : base(pipe)
     {
         Orientation = orientation;
         (PlaneAxisU, PlaneAxisV) = GetPlaneAxes(orientation);
@@ -29,7 +29,6 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         ImageModel = ImageModel.Create(image);
         
         // VTK plumping
-        ColorMap.ConfigureColorMap(pipe);
         ColorMap.SetInput(pipe.Image);
         actor.SetInput(ColorMap.GetOutput());
         

@@ -1,12 +1,18 @@
 ﻿using Kitware.VTK;
+using VtkMvvm.Features.Builder;
 using VtkMvvm.ViewModels.Base;
 
 namespace VtkMvvm.ViewModels.Components;
 
 public sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrategy
 {
-    private readonly vtkLookupTable _lut = vtkLookupTable.New();
+    private readonly vtkLookupTable _lut;
     private vtkImageMapToColors? _cmap;
+
+    public WindowLevelColorMapping(ColoredImagePipeline pipe)
+    {
+        _lut = pipe.LookupTable;
+    }
 
     private double _window = 400;
     private double _level = 40;
@@ -16,12 +22,10 @@ public sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrate
         get => _window;
         set
         {
-            if (_window != value)
-            {
-                _window = value;
-                Update();
-                OnPropertyChanged();
-            }
+            if (Math.Abs(_window - value) < 1e-3) return;
+            _window = value;
+            Update();
+            OnPropertyChanged();
         }
     }
 
@@ -30,12 +34,10 @@ public sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrate
         get => _level;
         set
         {
-            if (_level != value)
-            {
-                _level = value;
-                Update();
-                OnPropertyChanged();
-            }
+            if (Math.Abs(_level - value) < 1e-3) return;
+            _level = value;
+            Update();
+            OnPropertyChanged();
         }
     }
 
@@ -43,7 +45,7 @@ public sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrate
     {
         _cmap = cmap;
         _cmap.SetLookupTable(_lut);
-        _cmap.PassAlphaToOutputOn();
+        _cmap.PassAlphaToOutputOff();
         Update();
     }
 
@@ -63,4 +65,5 @@ public sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrate
     }
 
     public void Dispose() => _lut.Dispose();
+    
 }

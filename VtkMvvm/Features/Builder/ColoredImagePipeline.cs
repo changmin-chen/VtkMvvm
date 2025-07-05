@@ -15,43 +15,43 @@ public sealed record ColoredImagePipeline(
     bool IsLinearInterpolationOn
 );
 
-internal static class ColoredImagePipelineExtensions
-{
-    /// <summary>
-    ///     Connect pipeline: Image -> ColorMap -> Actor
-    /// </summary>
-    public static void Connect(this ColoredImagePipeline pipe, vtkImageMapToColors colorMap, vtkImageActor actor)
-    {
-        colorMap.ConfigureColorMap(pipe);
-
-        colorMap.SetInput(pipe.Image);
-        actor.SetInput(colorMap.GetOutput());
-
-        if (pipe.IsLinearInterpolationOn) actor.InterpolateOn();
-        else actor.InterpolateOff();
-    }
-    
-    /// <summary>
-    /// Connect pipeline: Image -> Reslice Image → ColorMap → Actor
-    /// </summary>
-    public static void ConnectWithReslice(this ColoredImagePipeline pipe, vtkImageMapToColors colorMap, vtkImageReslice reslice, vtkImageActor actor)
-    {
-        colorMap.ConfigureColorMap(pipe);
-
-        reslice.SetInput(pipe.Image);
-        colorMap.SetInputConnection(reslice.GetOutputPort());
-        actor.SetInput(colorMap.GetOutput());
-
-        if (pipe.IsLinearInterpolationOn) actor.InterpolateOn();
-        else actor.InterpolateOff();
-    }
-
-    // ---- Helpers ------------------------------------
-    public static void ConfigureColorMap(this vtkImageMapToColors colorMap, ColoredImagePipeline pipe)
-    {
-        colorMap.SetLookupTable(pipe.LookupTable);
-
-        if (pipe.IsRgba) colorMap.SetOutputFormatToRGBA();
-        else colorMap.SetOutputFormatToLuminance();
-    }
-}
+// internal static class ColoredImagePipelineExtensions
+// {
+//     /// <summary>
+//     ///     Connect pipeline: Image -> ColorMap -> Actor
+//     /// </summary>
+//     public static void Connect(this ColoredImagePipeline pipe, vtkImageMapToColors colorMap, vtkImageActor actor)
+//     {
+//         colorMap.ConfigureColorMap(pipe);
+//
+//         colorMap.SetInput(pipe.Image);
+//         actor.SetInput(colorMap.GetOutput());
+//
+//         if (pipe.IsLinearInterpolationOn) actor.InterpolateOn();
+//         else actor.InterpolateOff();
+//     }
+//     
+//     /// <summary>
+//     /// Connect pipeline: Image -> Reslice Image → ColorMap → Actor
+//     /// </summary>
+//     public static void ConnectWithReslice(this ColoredImagePipeline pipe, vtkImageMapToColors colorMap, vtkImageReslice reslice, vtkImageActor actor)
+//     {
+//         colorMap.ConfigureColorMap(pipe);
+//
+//         reslice.SetInput(pipe.Image);
+//         colorMap.SetInputConnection(reslice.GetOutputPort());
+//         actor.SetInput(colorMap.GetOutput());
+//
+//         if (pipe.IsLinearInterpolationOn) actor.InterpolateOn();
+//         else actor.InterpolateOff();
+//     }
+//
+//     // ---- Helpers ------------------------------------
+//     public static void ConfigureColorMap(this vtkImageMapToColors colorMap, ColoredImagePipeline pipe)
+//     {
+//         colorMap.SetLookupTable(pipe.LookupTable);
+//
+//         if (pipe.IsRgba) colorMap.SetOutputFormatToRGBA();
+//         else colorMap.SetOutputFormatToLuminance();
+//     }
+// }

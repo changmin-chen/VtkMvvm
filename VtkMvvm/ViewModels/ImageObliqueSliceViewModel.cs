@@ -29,9 +29,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     private Quaternion _sliceOrientation = Quaternion.Identity;
 
 
-    public ImageObliqueSliceViewModel(
-        Quaternion orientation,
-        ColoredImagePipeline pipeline)
+    public ImageObliqueSliceViewModel(Quaternion orientation, ColoredImagePipeline pipeline) : base(pipeline)
     {
         vtkImageData volume = pipeline.Image;
         _imgCentre = volume.GetCenter();
@@ -41,7 +39,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         // -------- connect full display pipeline ---------------------
         var slicePort = BuildObliqueSlice(volume);
         ColorMap.SetInputConnection(slicePort);
-        ColorMap.ConfigureColorMap(pipeline);
         _actor.SetInput(ColorMap.GetOutput());
         _actor.SetUserTransform(_xfm); // positions slice in 3-D
         Actor = _actor;

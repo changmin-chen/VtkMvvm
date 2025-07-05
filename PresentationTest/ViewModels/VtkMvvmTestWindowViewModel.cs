@@ -99,7 +99,7 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
         _obliqueLabelVm = new ImageObliqueSliceViewModel(sliceOrientation, labelMapPipe);
 
         // Add brushes that render on top of the image
-        _brushVm.Diameter = 5.0;
+        _brushVm.Diameter = 8.0;
 
         // Instantiate voxel-brush and cached
         double[]? spacing = _labelMap.GetSpacing();

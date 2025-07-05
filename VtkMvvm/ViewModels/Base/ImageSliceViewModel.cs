@@ -1,6 +1,8 @@
 ﻿using System.Numerics;
 using Kitware.VTK;
+using VtkMvvm.Features.Builder;
 using VtkMvvm.Models;
+using VtkMvvm.ViewModels.Components;
 
 namespace VtkMvvm.ViewModels.Base;
 
@@ -10,52 +12,46 @@ namespace VtkMvvm.ViewModels.Base;
 /// </summary>
 public abstract class ImageSliceViewModel : VtkElementViewModel
 {
-    // color map ─────────────────────
-    protected vtkImageMapToColors ColorMap { get; } = vtkImageMapToColors.New();
+    // ── color map ─────────────────────
+    private readonly vtkImageMapToColors _colorMap = vtkImageMapToColors.New();
+    private readonly IColorMappingStrategy _colorStrategy;
+    protected vtkImageMapToColors ColorMap => _colorMap;
+    protected ImageSliceViewModel(ColoredImagePipeline pipe)
+    {
+        _colorStrategy = pipe.IsRgba ? new LabelMapColorMapping(pipe) : new WindowLevelColorMapping(pipe);
+        _colorStrategy.Apply(_colorMap);
+    }
+
     protected override void Dispose(bool disposing)
     {
-        if (disposing) ColorMap.Dispose();
+        if (disposing) _colorMap.Dispose();
         base.Dispose(disposing);
     }
     
-    private double _windowLevel;
-    private double _windowWidth;
-
     public double WindowLevel
     {
-        get => _windowLevel;
+        get => (_colorStrategy as WindowLevelColorMapping)?.Level ?? 0;
         set
         {
-            if (!SetField(ref _windowLevel, value)) return;
-            SetWindowBand(value, WindowWidth);
+            if (_colorStrategy is not WindowLevelColorMapping wlv) return;
+            wlv.Level = value;
+            OnPropertyChanged();
             OnModified();
         }
     }
-
+    
     public double WindowWidth
     {
-        get => _windowWidth;
+        get => (_colorStrategy as WindowLevelColorMapping)?.Window ?? 0;
         set
         {
-            if (!SetField(ref _windowWidth, value)) return;
-            SetWindowBand(WindowLevel, value);
+            if (_colorStrategy is not WindowLevelColorMapping wlv) return;
+            wlv.Window = value;
+            OnPropertyChanged();
             OnModified();
         }
     }
 
-    private void SetWindowBand(double level, double width)
-    {
-        double low = level - width * 0.5;
-        double high = level + width * 0.5;
-
-        vtkScalarsToColors? lut = ColorMap.GetLookupTable();
-        lut.SetRange(low, high);
-        lut.Build();
-        ColorMap.SetLookupTable(lut);
-
-        ColorMap.Modified();
-        Actor.Modified();
-    }
 
     // ── slice orientation info ─────────────────────
     public Vector3 PlaneNormal { get; protected set; }
