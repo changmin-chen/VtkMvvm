@@ -20,12 +20,13 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     private ImageSliceViewModel? _referenceSlice; // use first oblique slice as reference to place and rotate the camera
 
     // ---------- Plugins --------------------------------------- 
-    private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
+    private OrientationLabelBehavior? _orientationLabels; // L,R,P,A,S,I text labels on screen edges
     private OrientationCubeBehavior? _orientationCube; // L,R,P,A,S,I labeled cube fixed at screen bottom-left corner 
 
 
     // --- Dependency Properties -------------------------------------------------------- 
 
+    // Underlay and overlay objects binds to ViewModels
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IReadOnlyList<ImageSliceViewModel>),
@@ -37,6 +38,22 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         typeof(IReadOnlyList<VtkElementViewModel>),
         typeof(VtkImageSliceSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
+
+    // Customization of camera flip
+    public static readonly DependencyProperty FlipCameraHorizontalProperty =
+        DependencyProperty.Register(nameof(FlipCameraHorizontal), 
+            typeof(bool),
+            typeof(VtkImageSliceSceneControl),
+            new PropertyMetadata(false, (_, __) => ((VtkImageSliceSceneControl)_)
+                .RequestRender()));
+
+    public static readonly DependencyProperty FlipCameraVerticalProperty =
+        DependencyProperty.Register(nameof(FlipCameraVertical),
+            typeof(bool),
+            typeof(VtkImageSliceSceneControl),
+            new PropertyMetadata(false, (_, __) => ((VtkImageSliceSceneControl)_)
+                .RequestRender()));  
+
 
     public IReadOnlyList<VtkElementViewModel>? SceneObjects
     {
@@ -50,10 +67,23 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         set => SetValue(OverlayObjectsProperty, value);
     }
 
+    public bool FlipCameraHorizontal
+    {
+        get => (bool)GetValue(FlipCameraHorizontalProperty);
+        set => SetValue(FlipCameraHorizontalProperty, value);
+    }
+
+    public bool FlipCameraVertical
+    {
+        get => (bool)GetValue(FlipCameraVerticalProperty);
+        set => SetValue(FlipCameraVerticalProperty, value);
+    }
+
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
+
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     public VtkImageSliceSceneControl()
@@ -78,16 +108,16 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         renderWindow.AddRenderer(MainRenderer);
         MainRenderer.SetBackground(0.0, 0.0, 0.0);
         MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1);  // render overlays onto the main renderer
+        OverlayRenderer.SetLayer(1); // render overlays onto the main renderer
         OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
         renderWindow.SetNumberOfLayers(2);
         renderWindow.AddRenderer(OverlayRenderer);
-        
+
         _isLoaded = true;
 
-        // ── orientation cube ───────────────────────────────
+        // ── Plugins ───────────────────────────────
         // If the attached property was set before the control was loaded,
         // this will ensure the cube is created now.
         if (ControlPlugin.GetOrientationCube(this))
@@ -99,7 +129,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
             AddOrientationLabels();
         }
     }
-    
+
     public void AddOrientationCube()
     {
         if (_isLoaded && _orientationCube == null)
@@ -124,7 +154,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         if (_isLoaded && _orientationLabels == null)
         {
             _orientationLabels = new OrientationLabelBehavior(OverlayRenderer, MainRenderer.GetActiveCamera());
-            RequestRender(); 
+            RequestRender();
         }
     }
 
@@ -134,7 +164,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         {
             _orientationLabels.Dispose();
             _orientationLabels = null;
-            RequestRender(); 
+            RequestRender();
         }
     }
 
@@ -174,13 +204,15 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
                 _referenceSlice.Actor,
                 _referenceSlice.PlaneNormal,
                 _referenceSlice.PlaneAxisV,
+                flipU: FlipCameraHorizontal,
+                flipV: FlipCameraVertical,
                 resetParallelScale: false); // preserve camera zoom-in state
         }
 
         MainRenderer.ResetCameraClippingRange();
         RenderWindowControl.RenderWindow.Render();
     }
-    
+
     // ---------- dispose resources ----------------------
     public void Dispose()
     {
@@ -204,7 +236,6 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         MainRenderer.Dispose();
         OverlayRenderer.Dispose();
     }
-
 
 
     #region Scene objects changed
@@ -244,6 +275,8 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
             _referenceSlice.Actor,
             _referenceSlice.PlaneNormal,
             _referenceSlice.PlaneAxisV,
+            flipU: FlipCameraHorizontal,
+            flipV: FlipCameraVertical,
             resetParallelScale: true);
 
         // ----- render the scene to show the new stuff-----
@@ -254,31 +287,38 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     private static void FitObliqueSlice(
         vtkCamera cam,
         vtkProp sliceActor,
-        Vector3 normal, // = vm.PlaneNormal
-        Vector3 vAxis, // = vm.PlaneAxisV  (camera “up”)
+        Vector3 planeNormal, // = slice PlaneNormal
+        Vector3 planeVAxis, // = slice PlaneAxisV  (camera “up”)
+        bool flipU = false, // flip the displayed horizontal
+        bool flipV = false, // flip the displayed vertical
         bool resetParallelScale = true)
     {
         double[] b = sliceActor.GetBounds(); // world AABB
         double cx = 0.5 * (b[0] + b[1]);
         double cy = 0.5 * (b[2] + b[3]);
         double cz = 0.5 * (b[4] + b[5]);
-        double w = b[1] - b[0];
-        double h = b[3] - b[2];
+        double width = b[1] - b[0];
+        double height = b[3] - b[2];
 
-        normal = Vector3.Normalize(normal);
-        vAxis = Vector3.Normalize(vAxis);
+        // --- Build an orthonormal camera frame -----------------------
+        Vector3 vDir = Vector3.Normalize(planeVAxis);
+        Vector3 uDir = Vector3.Normalize(Vector3.Cross(planeNormal, vDir));
+        if (flipV) vDir = -vDir;
+        if (flipU) uDir = -uDir;
+        Vector3 nDir = Vector3.Normalize(Vector3.Cross(vDir, uDir)); // Re-compute N so the triad stays orthonormal
 
+        // --- Place the camera ---------------------------------------
         cam.ParallelProjectionOn();
         cam.SetFocalPoint(cx, cy, cz);
-        cam.SetPosition(cx - normal.X * CamDist,
-            cy - normal.Y * CamDist,
-            cz - normal.Z * CamDist);
-        cam.SetViewUp(vAxis.X, vAxis.Y, vAxis.Z);
+        cam.SetPosition(
+            cx + nDir.X * CamDist,
+            cy + nDir.Y * CamDist,
+            cz + nDir.Z * CamDist);
+        cam.SetViewUp(vDir.X, vDir.Y, vDir.Z);
         cam.SetClippingRange(0.1, 5000);
+
         if (resetParallelScale)
-        {
-            cam.SetParallelScale(0.5 * Math.Max(w, h));
-        }
+            cam.SetParallelScale(0.5 * Math.Max(width, height));
     }
 
     #endregion

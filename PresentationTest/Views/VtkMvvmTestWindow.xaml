@@ -290,6 +290,7 @@
                 <controls:VtkImageSliceSceneControl x:Name="ObliqueControl"
                                                     Grid.Row="0"
                                                     plugins:ControlPlugin.OrientationCube="True"
+                                                    plugins:ControlPlugin.OrientationLabels="True"
                                                     SceneObjects="{Binding ObliqueVms}"
                                                     OverlayObjects="{Binding ObliqueOverlayVms}" />
                 <Grid Grid.Row="1"

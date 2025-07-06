@@ -85,7 +85,7 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     public Double3 PlaneOrigin { get; protected set; }
 
     // ── slice index (still abstract: each VM applies it differently) ─────────────────────
-    private int _sliceIndex = int.MinValue;
+    private int _sliceIndex = int.MinValue;  // in ctor, ensure "SliceIndex = 0" can trigger OnSliceIndexChanged
 
     /// <summary>
     /// Index of the slice to display. The setter raises OnSliceIndexChanged
