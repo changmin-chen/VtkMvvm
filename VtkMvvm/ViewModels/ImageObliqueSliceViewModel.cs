@@ -26,7 +26,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     // ── cached values for slider & step ─────────────────────────────
     private int _minSliceIdx;
     private int _maxSliceIdx;
-    private Quaternion _sliceOrientation = Quaternion.Identity;
+    private Quaternion _sliceOrientation;
 
 
     public ImageObliqueSliceViewModel(Quaternion orientation, ColoredImagePipeline pipeline) : base(pipeline)
@@ -43,7 +43,8 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         Actor.SetUserTransform(_xfm); // positions slice in 3-D
 
         // -------- initialise orientation & index --------------------
-        SliceOrientation = orientation; // sets step & slider limits
+        _sliceOrientation = orientation; // sets step & slider limits
+        SetOrientation(orientation); 
         SliceIndex = 0; // central slice
     }
 
