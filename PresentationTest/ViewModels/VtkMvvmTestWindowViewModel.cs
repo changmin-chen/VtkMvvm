@@ -54,9 +54,9 @@ public class VtkMvvmTestWindowViewModel : ReactiveObject
     public VtkElementViewModel[] ObliqueOverlayVms => [_obliqueBullseyeVm];
 
     // -- Oblique slice orientation -------------------------
-    [Reactive] public float YawDegrees { get; set; } = 0;
-    [Reactive] public float PitchDegrees { get; set; } = 0;
-    [Reactive] public float RollDegrees { get; set; }
+    [Reactive] public float YawDegrees { get; set; } = 33;
+    [Reactive] public float PitchDegrees { get; set; } = -45;
+    [Reactive] public float RollDegrees { get; set; } 
 
 
     public VtkMvvmTestWindowViewModel()

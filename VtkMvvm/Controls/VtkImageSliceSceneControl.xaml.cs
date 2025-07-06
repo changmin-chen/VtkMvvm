@@ -51,8 +51,8 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         DependencyProperty.Register(nameof(FlipCameraVertical),
             typeof(bool),
             typeof(VtkImageSliceSceneControl),
-            new PropertyMetadata(true, (_, __) => ((VtkImageSliceSceneControl)_)
-                .RequestRender()));  // default to true. flip A-P if the plane is axial
+            new PropertyMetadata(false, (_, __) => ((VtkImageSliceSceneControl)_)
+                .RequestRender()));  
 
 
     public IReadOnlyList<VtkElementViewModel>? SceneObjects
