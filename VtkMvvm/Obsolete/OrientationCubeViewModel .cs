@@ -1,7 +1,7 @@
 ﻿using Kitware.VTK;
 using VtkMvvm.ViewModels.Base;
 
-namespace VtkMvvm.ViewModels;
+namespace VtkMvvm.Obsolete;
 
 /// <summary>
 /// A small “R L A P S I” orientation cube that can be dropped into an

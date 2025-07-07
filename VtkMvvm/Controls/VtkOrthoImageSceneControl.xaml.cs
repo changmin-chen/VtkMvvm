@@ -13,23 +13,28 @@ namespace VtkMvvm.Controls;
 /// <summary>
 ///     Displaying orthogonal slices of an image volume as the background image, while putting overlay objects onto it.
 /// </summary>
-public partial class VtkImageSceneControl : UserControl, IDisposable
+/// <remarks>
+/// This control adjusts the camera so that image was displayed with radiological convention.
+/// Though <see cref="VtkImageSliceSceneControl"/> adapts to the slices with any orientation,
+/// the displayed image is not further flipped to fit the convention.
+/// </remarks>
+public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     // ---------- Plugins --------------------------------------- 
-    private OrientationLabelBehavior? _orientationLabels;  // L,R,P,A,S,I text labels on screen edges
-    
+    private OrientationLabelBehavior? _orientationLabels; // L,R,P,A,S,I text labels on screen edges
+
     // --------------------------------------------------------- 
 
     public static readonly DependencyProperty SceneObjectsProperty = DependencyProperty.Register(
         nameof(SceneObjects),
         typeof(IReadOnlyList<ImageOrthogonalSliceViewModel>),
-        typeof(VtkImageSceneControl),
+        typeof(VtkOrthoImageSceneControl),
         new PropertyMetadata(null, OnSceneObjectsChanged));
 
     public static readonly DependencyProperty OverlayObjectsProperty = DependencyProperty.Register(
         nameof(OverlayObjects),
         typeof(IReadOnlyList<VtkElementViewModel>),
-        typeof(VtkImageSceneControl),
+        typeof(VtkOrthoImageSceneControl),
         new PropertyMetadata(null, OnOverlayObjectsChanged));
 
     /// <summary>
@@ -37,7 +42,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     /// </summary>
     private bool _isLoaded;
 
-    public VtkImageSceneControl()
+    public VtkOrthoImageSceneControl()
     {
         InitializeComponent();
         if (DesignerProperties.GetIsInDesignMode(this)) return;
@@ -52,7 +57,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     private void OnLoadedOnce(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoadedOnce;
-        
+
         var renderWindow = RenderWindowControl.RenderWindow;
         if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
 
@@ -91,8 +96,10 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkCamera Camera => MainRenderer.GetActiveCamera();
+    private RenderWindowControl RenderWindowControl { get; } = new();
+    public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
+
+    public void Render() => RenderWindowControl.RenderWindow.Render();
 
     /// <summary>
     ///     Indicates the orientation of the slices so that the camera can be set up correctly.
@@ -104,7 +111,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
     {
         // ── dispose plugins ───────────────────────────────
         _orientationLabels?.Dispose();
-        
+
         // ── dispose controls vtk components ───────────────────────────────
         if (SceneObjects is { } objects)
         {
@@ -154,7 +161,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     private static void OnSceneObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkImageSceneControl control = (VtkImageSceneControl)d;
+        VtkOrthoImageSceneControl control = (VtkOrthoImageSceneControl)d;
         control.UpdateSlices((IReadOnlyList<ImageOrthogonalSliceViewModel>)e.OldValue, (IReadOnlyList<ImageOrthogonalSliceViewModel>)e.NewValue);
     }
 
@@ -261,7 +268,7 @@ public partial class VtkImageSceneControl : UserControl, IDisposable
 
     private static void OnOverlayObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        VtkImageSceneControl control = (VtkImageSceneControl)d;
+        VtkOrthoImageSceneControl control = (VtkOrthoImageSceneControl)d;
         control.UpdateOverlays((IReadOnlyList<VtkElementViewModel>)e.OldValue, (IReadOnlyList<VtkElementViewModel>)e.NewValue);
     }
 

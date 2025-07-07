@@ -6,7 +6,6 @@ using PresentationTest.ViewModels;
 using ReactiveUI;
 using VtkMvvm.Controls;
 using VtkMvvm.Features.InteractorBehavior;
-using VtkMvvm.Models;
 
 namespace PresentationTest.Views;
 
@@ -30,7 +29,7 @@ public partial class VtkMvvmTestWindow : Window
             _vm = vm;
         }
 
-        foreach (var ctrl in new[] { AxialControl, CoronalControl, SagittalControl })
+        foreach (var ctrl in new IVtkSceneControl[] { AxialControl, CoronalControl, SagittalControl, ObliqueControl })
         {
             InitializeFreehandInteractor(ctrl);
         }
@@ -39,10 +38,12 @@ public partial class VtkMvvmTestWindow : Window
     /// <summary>
     /// Each controls has their own instance of freehand interactor
     /// </summary>
-    private void InitializeFreehandInteractor(VtkImageSceneControl control)
+    private void InitializeFreehandInteractor(IVtkSceneControl control)
     {
         vtkInteractorStyleImage style = new(); // 被attach的event會直接覆蓋
-        vtkRenderWindowInteractor? iren = control.RenderWindowControl.RenderWindow.GetInteractor();
+        vtkRenderWindowInteractor iren = control.Interactor;
+        
+
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftMove((x, y) => _vm.OnControlGetBrushPosition(control, x, y))
@@ -50,33 +51,26 @@ public partial class VtkMvvmTestWindow : Window
             .LeftDrag((x, y) => _vm.OnControlGetMousePaintPosition(control, x, y), keys: KeyMask.None)
             .LeftDragRx(obs => obs
                 .Sample(TimeSpan.FromMilliseconds(33))
-                .ObserveOn(RxApp.MainThreadScheduler)  // necessary
+                .ObserveOn(RxApp.MainThreadScheduler /*always render on UI thread*/) 
                 .Subscribe(_ => RenderControls()))
             .Scroll(forward =>
             {
                 int increment = forward ? 1 : -1;
-                switch (control.Orientation)
-                {
-                    case SliceOrientation.Axial:
-                        _vm.AxialSliceIndex += increment;
-                        break;
-                    case SliceOrientation.Coronal:
-                        _vm.CoronalSliceIndex += increment;
-                        break;
-                    case SliceOrientation.Sagittal:
-                        _vm.SagittalSliceIndex += increment;
-                        break;
-                }
+                if (ReferenceEquals(control, AxialControl)) _vm.AxialSliceIndex += increment;
+                else if (ReferenceEquals(control, CoronalControl)) _vm.CoronalSliceIndex += increment;
+                else if (ReferenceEquals(control, SagittalControl)) _vm.SagittalSliceIndex += increment;
+                else _vm.ObliqueSliceIndex += increment;
             })
             .Build()
             .DisposeWith(_disposables);
     }
 
-
-    private void RenderControls()
+    
+    private void RenderControls()  
     {
-        AxialControl.RenderWindowControl.RenderWindow.Render();
-        CoronalControl.RenderWindowControl.RenderWindow.Render();
-        SagittalControl.RenderWindowControl.RenderWindow.Render();
+        AxialControl.Render();
+        CoronalControl.Render();
+        SagittalControl.Render();
+        ObliqueControl.Render();
     }
 }
