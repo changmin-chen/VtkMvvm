@@ -14,7 +14,6 @@ public class DistanceMeasureWindowViewModel : ReactiveObject
     public ImageOrthogonalSliceViewModel[] AxialVms => [AxialVm];
     
     // ------------- Rulers ----------------
-    
 
     public DistanceMeasureWindowViewModel()
     {

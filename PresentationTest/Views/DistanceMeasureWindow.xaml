@@ -16,11 +16,15 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Slider Value="{Binding AxialVms[0].SliceIndex}"
-                Maximum="{Binding AxialVms[0].ImageModel.Dimensions[2]}"
-                Minimum="0"/>
+        <Border Background="Gray">
+            <Slider Value="{Binding AxialVms[0].SliceIndex}"
+                    Maximum="{Binding AxialVms[0].ImageModel.Dimensions[2]}"
+                    Minimum="0"
+                    Margin="20 8"/>
+        </Border>
+        
         <controls:VtkOrthoImageSceneControl x:Name="AxialControl"
                                             Grid.Row="1"
                                             plugins:ControlPlugin.OrientationLabels="True"
