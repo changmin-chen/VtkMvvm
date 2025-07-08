@@ -21,9 +21,9 @@ public sealed class BullseyeViewModel : VtkElementViewModel
 
     // ── user-tweakable state ────────────────────────────────────────
     private Double3 _focalPoint;
-    private Vector3 _normal = Vector3.UnitZ; // default: XY plane
-    private int _ringCount = 3;
-    private double _ringSpacing = 5.0; // mm
+    private Vector3 _normal; // default: XY plane
+    private int _ringCount;
+    private double _ringSpacing; // mm
     private float _lineWidth = 1.5f;
     private (double R, double G, double B) _color = (1, 1, 0); // yellow
 

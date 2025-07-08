@@ -14,9 +14,9 @@ namespace VtkMvvm.ViewModels;
 public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 {
     // ── VTK pipeline ────────────────────────────────────────────────
-    private readonly vtkImageReslice _reslice = vtkImageReslice.New();
-    private readonly vtkTransform _xfm = vtkTransform.New();
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
+    private readonly vtkTransform _xfm = vtkTransform.New();
+    private readonly vtkImageReslice _reslice = vtkImageReslice.New();
     private readonly vtkImageActor _actor = vtkImageActor.New();
 
     private readonly double[] _imgCentre;
