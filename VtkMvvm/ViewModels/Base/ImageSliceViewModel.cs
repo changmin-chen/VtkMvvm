@@ -34,7 +34,11 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) ColorMap.Dispose();
+        if (disposing)
+        {
+            ColorMap.Dispose();
+            if (_colorStrategy is IDisposable d) d.Dispose();
+        }
         base.Dispose(disposing);
     }
     

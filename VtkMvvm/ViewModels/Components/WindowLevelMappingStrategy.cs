@@ -6,8 +6,8 @@ namespace VtkMvvm.ViewModels.Components;
 
 internal sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStrategy
 {
-    private readonly vtkLookupTable _lut;
-    private vtkImageMapToColors? _cmap;
+    private readonly vtkLookupTable _lut;  // injected
+    private vtkImageMapToColors? _colorMap;  // injected
 
     public WindowLevelColorMapping(ColoredImagePipeline pipe)
     {
@@ -41,18 +41,18 @@ internal sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStra
         }
     }
 
-    public void Apply(vtkImageMapToColors cmap)
+    public void Apply(vtkImageMapToColors colorMap)
     {
-        _cmap = cmap;
-        _cmap.SetLookupTable(_lut);
-        _cmap.SetOutputFormatToLuminance();
-        _cmap.PassAlphaToOutputOff();
+        _colorMap = colorMap;
+        _colorMap.SetLookupTable(_lut);
+        _colorMap.SetOutputFormatToLuminance();
+        _colorMap.PassAlphaToOutputOff();
         Update();
     }
 
     public void Update()
     {
-        if (_cmap == null) return;
+        if (_colorMap == null) return;
 
         double low = Level - Window / 2.0;
         double high = Level + Window / 2.0;
@@ -62,9 +62,6 @@ internal sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStra
         _lut.SetSaturationRange(0.0, 0.0); // greyscale
         _lut.Build();
 
-        _cmap.Modified();
+        _colorMap.Modified();
     }
-
-    public void Dispose() => _lut.Dispose();
-    
 }
