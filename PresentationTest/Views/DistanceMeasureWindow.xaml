@@ -19,9 +19,9 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <DockPanel Dock="Left" LastChildFill="True" Margin="8">
-            <Button Content="Add Measurement" Width="100" Click="AddMeasurement" />
-            <Button Content="Get Distance" Width="100" Click="MeasureDistance" />
+        <DockPanel Dock="Left" LastChildFill="False" Margin="8">
+            <Button Content="Add Measurement" Width="120" Click="AddMeasurement"  Margin="8 0"/>
+            <Button Content="Get Distance" Width="100" Click="MeasureDistance"  />
         </DockPanel>
         
         <Border Grid.Row="1" Background="Gray">

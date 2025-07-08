@@ -3,6 +3,7 @@ using System.Reactive.Disposables;
 using System.Windows;
 using Kitware.VTK;
 using PresentationTest.ViewModels;
+using ReactiveUI;
 using VtkMvvm.Features.InteractorBehavior;
 
 namespace PresentationTest.Views;
@@ -12,8 +13,10 @@ public partial class DistanceMeasureWindow : Window
     private readonly CompositeDisposable _disposables = new();
     private DistanceMeasureWindowViewModel _vm;
 
-    private readonly Stack<vtkDistanceWidget> _measureWidgets = new();
+    private readonly Stack<WidgetRecord> _measureWidgets = new();
     private readonly vtkImageActorPointPlacer _placer = vtkImageActorPointPlacer.New();
+
+    private int _currentSliceZ;
 
     public DistanceMeasureWindow()
     {
@@ -40,12 +43,45 @@ public partial class DistanceMeasureWindow : Window
             })
             .Build()
             .DisposeWith(_disposables);
+
+        _vm.AxialVm.WhenAnyValue(x => x.SliceIndex)
+            .Subscribe(sliceIndex =>
+            {
+                _currentSliceZ = sliceIndex;
+                foreach (var record in _measureWidgets) UpdateWidgetVisibility(record);
+            })
+            .DisposeWith(_disposables);
+    }
+
+    private void UpdateWidgetVisibility(WidgetRecord record)
+    {
+        var widget = record.Widget;
+        int widgetSliceIndex = record.SliceIndex;
+        
+        var rep2d = vtkDistanceRepresentation2D.SafeDownCast(widget.GetRepresentation());
+        if (rep2d == null) return;
+
+        double[] p1 = rep2d.GetPoint1WorldPosition();
+        double[] p2 = rep2d.GetPoint2WorldPosition();
+
+        // only show if *both* handles lie (approximately) on current slice
+        Debug.WriteLine($"P1 z offset: {p1[2] - _currentSliceZ:F3},  P2 z offset: {p2[2] - _currentSliceZ:F3}");
+
+        if (widgetSliceIndex == _currentSliceZ)
+        {
+            widget.EnabledOn();
+        }
+        else
+        {
+            widget.EnabledOff();
+        }
+        AxialControl.Render();
     }
 
     private void MeasureDistance(object sender, RoutedEventArgs e)
     {
         if (_measureWidgets.Count == 0) return;
-        var widget = _measureWidgets.Peek();
+        var widget = _measureWidgets.Peek().Widget;
         var rep = vtkDistanceRepresentation2D.SafeDownCast(widget.GetRepresentation());
 
         double[] p1 = rep.GetPoint1WorldPosition();
@@ -98,7 +134,12 @@ public partial class DistanceMeasureWindow : Window
         widget.EnabledOn();
 
         // 9) Save it so you can delete or iterate later
-        _measureWidgets.Push(widget);
+        var record = new WidgetRecord
+        {
+            Widget = widget,
+            SliceIndex = _vm.AxialVm.SliceIndex
+        };
+        _measureWidgets.Push(record);
 
         // 10) Render
         iren.GetRenderWindow().Render();
@@ -111,15 +152,21 @@ public partial class DistanceMeasureWindow : Window
         cursor.SetModelBounds(-halfSize, halfSize, -halfSize, halfSize, 0, 0);
         cursor.SetFocalPoint(0, 0, 0);
         cursor.OutlineOff();
-        
+
         var h1 = vtkPointHandleRepresentation2D.SafeDownCast(rep.GetPoint1Representation());
         var h2 = vtkPointHandleRepresentation2D.SafeDownCast(rep.GetPoint2Representation());
         h1.SetCursorShape(cursor.GetOutput());
         h2.SetCursorShape(cursor.GetOutput());
-       
+
         h1.GetProperty().SetLineWidth(2);
         h2.GetProperty().SetLineWidth(2);
         h1.GetSelectedProperty().SetLineWidth(3);
         h2.GetSelectedProperty().SetLineWidth(3);
     }
+}
+
+public class WidgetRecord
+{
+    public required vtkDistanceWidget Widget { get; init; }
+    public required int SliceIndex { get; init; }  // slice index when the widget created
 }
