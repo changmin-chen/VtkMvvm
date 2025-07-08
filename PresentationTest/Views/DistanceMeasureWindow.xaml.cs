@@ -45,8 +45,25 @@ public partial class DistanceMeasureWindow : Window
         // Create the distance widget and its 3D representation -------------
         _distanceWidget.SetInteractor(iren);
         _distanceWidget.SetCurrentRenderer(AxialControl.OverlayRenderer);
-        _distanceWidget.CreateDefaultRepresentation(); 
+        _distanceWidget.CreateDefaultRepresentation();
         _rep = vtkDistanceRepresentation2D.SafeDownCast(_distanceWidget.GetRepresentation());
+
+        // Configure cross hair
+        var h1 = vtkPointHandleRepresentation2D.SafeDownCast(_rep.GetPoint1Representation());
+        var h2 = vtkPointHandleRepresentation2D.SafeDownCast(_rep.GetPoint2Representation());
+        h1.GetProperty().SetColor(1, 0, 0);
+        h2.GetProperty().SetColor(1, 0, 0);
+        h1.GetProperty().SetLineWidth(3);
+        h2.GetProperty().SetLineWidth(3);
+
+        // I want smaller cursor size
+        var cursor = vtkCursor2D.New();
+        const double hs = 7;
+        cursor.SetModelBounds(-hs, hs, -hs, hs, 0, 0); 
+        cursor.SetFocalPoint(0, 0, 0);
+        cursor.OutlineOff();
+        h1.SetCursorShape(cursor.GetOutput());
+        h2.SetCursorShape(cursor.GetOutput());
 
         // keep both handles fixed on the slice plane
         vtkImageActor actor = _vm.AxialVm.Actor;
@@ -56,11 +73,12 @@ public partial class DistanceMeasureWindow : Window
 
         // Configure the visuals
         vtkAxisActor2D axis = _rep.GetAxis();
+        axis.TickVisibilityOff();
         axis.GetProperty().SetColor(1, 1, 0);
         axis.GetProperty().SetLineWidth(1);
-        axis.SetTitlePosition(1); 
+        axis.SetTitlePosition(1);
         _rep.SetLabelFormat("%4.2f mm");
-        
+
 
         // -------------------------------------------------------------------------
         _distanceWidget.EnabledOn();
@@ -83,6 +101,6 @@ public partial class DistanceMeasureWindow : Window
 
     private void NewInstance(object sender, RoutedEventArgs e)
     {
-        // 
+        // Create another distance measurement
     }
 }
