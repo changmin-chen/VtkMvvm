@@ -34,20 +34,18 @@ public sealed class MouseInteractorBuilder
     // ───────────────────────── fields ─────────────────────────
     private readonly vtkRenderWindowInteractor _iren;
     private readonly vtkInteractorStyle _style;
-    private readonly CompositeDisposable _cd = new();
+    private readonly CompositeDisposable _disposables = new();
     private readonly List<IInteractorBehavior> _behaviours = new();
 
     // ─────────────────────── constructor ─────────────────────
-    private MouseInteractorBuilder(vtkRenderWindowInteractor iren,
-        vtkInteractorStyle? baseStyle)
+    private MouseInteractorBuilder(vtkRenderWindowInteractor iren, vtkInteractorStyle baseStyle)
     {
         _iren = iren ?? throw new ArgumentNullException(nameof(iren));
-        _style = baseStyle ?? new vtkInteractorStyleImage();
+        _style = baseStyle ?? throw new ArgumentNullException(nameof(baseStyle));
     }
 
     // ─────────────────────── factory ─────────────────────────
-    public static MouseInteractorBuilder Create(vtkRenderWindowInteractor iren,
-        vtkInteractorStyle? baseStyle = null)
+    public static MouseInteractorBuilder Create(vtkRenderWindowInteractor iren, vtkInteractorStyle baseStyle)
         => new(iren, baseStyle);
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -159,11 +157,11 @@ public sealed class MouseInteractorBuilder
         _iren.SetInteractorStyle(_style);
         _iren.Initialize();
 
-        _cd.Add(Disposable.Create(() =>
+        _disposables.Add(Disposable.Create(() =>
         {
             foreach (var b in _behaviours) b.Detach();
         }));
-        return _cd;
+        return _disposables;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -215,8 +213,8 @@ public sealed class MouseInteractorBuilder
     {
         behaviour.AttachTo(_style);
         _behaviours.Add(behaviour);
-        _cd.Add((IDisposable)behaviour); // dispose behaviour
-        _cd.Add(subscriber(streamSelector(behaviour))); // dispose Rx
+        _disposables.Add((IDisposable)behaviour); // dispose behaviour
+        _disposables.Add(subscriber(streamSelector(behaviour))); // dispose Rx
     }
 
     #endregion
