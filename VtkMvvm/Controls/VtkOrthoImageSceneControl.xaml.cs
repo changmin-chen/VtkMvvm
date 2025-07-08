@@ -115,14 +115,12 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
         // ── dispose controls vtk components ───────────────────────────────
         if (SceneObjects is { } objects)
         {
-            foreach (ImageOrthogonalSliceViewModel sceneObj in objects)
-                sceneObj.Modified -= OnSceneObjectsModified;
+            foreach (ImageOrthogonalSliceViewModel sceneObj in objects) UnHookActor(MainRenderer, sceneObj);
         }
 
         if (OverlayObjects is { } overlays)
         {
-            foreach (VtkElementViewModel overlayObj in overlays)
-                overlayObj.Modified -= OnSceneObjectsModified;
+            foreach (VtkElementViewModel overlayObj in overlays) UnHookActor(OverlayRenderer, overlayObj);
         }
 
         WFHost.Child = null;

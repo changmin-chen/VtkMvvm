@@ -12,7 +12,7 @@ namespace VtkMvvm.Controls;
 /// <summary>
 /// For binding to the image slice that may not be orthogonal.
 /// </summary>
-public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkSceneControl
+public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     private const double CamDist = 500; // mm
     private bool _isLoaded; // flag indicates the control is loaded.
@@ -183,10 +183,8 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     // internal render request
     private void RequestRender()
     {
-        if (_isLoaded)
-            OnSceneObjectsModified(this, EventArgs.Empty);
-        else
-            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
+        if (_isLoaded) OnSceneObjectsModified(this, EventArgs.Empty);
+        else Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
     }
 
     /// <summary>
@@ -217,17 +215,16 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     public void Dispose()
     {
         _orientationCube?.Dispose();
+        _orientationLabels?.Dispose();
 
-        if (SceneObjects is { } objects)
+        if (SceneObjects is { } sceneObjects)
         {
-            foreach (VtkElementViewModel sceneObj in objects)
-                sceneObj.Modified -= OnSceneObjectsModified;
+            foreach (VtkElementViewModel sceneObj in sceneObjects) UnHookActor(MainRenderer, sceneObj);
         }
 
-        if (OverlayObjects is { } overlays)
+        if (OverlayObjects is { } overlayObjects)
         {
-            foreach (VtkElementViewModel overlayObj in overlays)
-                overlayObj.Modified -= OnSceneObjectsModified;
+            foreach (VtkElementViewModel overlayObj in overlayObjects) UnHookActor(OverlayRenderer, overlayObj);
         }
 
         WFHost.Child = null;
@@ -243,10 +240,10 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     private static void OnImageObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkImageSliceSceneControl control = (VtkImageSliceSceneControl)d;
-        control.RehookImageObjects((IReadOnlyList<ImageSliceViewModel>)e.OldValue, (IReadOnlyList<ImageSliceViewModel>)e.NewValue);
+        control.UpdateImageObjects((IReadOnlyList<ImageSliceViewModel>)e.OldValue, (IReadOnlyList<ImageSliceViewModel>)e.NewValue);
     }
 
-    private void RehookImageObjects(
+    private void UpdateImageObjects(
         IReadOnlyList<ImageSliceViewModel>? oldSceneObjects,
         IReadOnlyList<ImageSliceViewModel>? newSceneObjects)
     {

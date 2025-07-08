@@ -37,7 +37,6 @@
 
 
     <ItemGroup>
-        <PackageReference Include="MedXtend" Version="1.0.3.2"/>
         <PackageReference Include="Prism.DryIoc" Version="9.0.537"/>
         <PackageReference Include="ReactiveUI.Fody" Version="19.5.41"/>
         <PackageReference Include="ReactiveUI.WPF" Version="20.4.1"/>
