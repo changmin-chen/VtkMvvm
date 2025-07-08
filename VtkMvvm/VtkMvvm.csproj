@@ -1,23 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
-    <Configurations>Debug;Release</Configurations>
-    <Platforms>x64</Platforms>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-      <AssemblyVersion>1.2.4</AssemblyVersion>
-      <FileVersion>1.2.4</FileVersion>
-      <Version>1.2.4</Version>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <UseWindowsForms>true</UseWindowsForms>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-  <ItemGroup>
-    <PackageReference Include="Activiz.NET.x64" Version="5.8.0" />
-    <PackageReference Include="System.Reactive" Version="6.0.1"/>
-  </ItemGroup>
+        <!-- Package identity -->
+        <PackageId>VtkMvvm</PackageId>
+        <Version>1.2.5</Version>
+        <Authors>ChangMin</Authors>
+        <Title>VtkMvvm</Title>
+        <Description>
+            VtkMvvm is designed to simplify the development of applications using
+            VTK (Visualization Toolkit) through ActiViz.NET by providing a
+            structured MVVM architecture.
+        </Description>
+        <PackageTags>vtk;mvvm;imaging</PackageTags>
+
+        <!-- Licensing & metadata -->
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/changmin-chen/VtkMvvm</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/changmin-chen/VtkMvvm.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Activiz.NET.x64" Version="5.8.0"/>
+        <PackageReference Include="System.Reactive" Version="6.0.1"/>
+    </ItemGroup>
 
 
 </Project>
