@@ -12,9 +12,8 @@ public partial class DistanceMeasureWindow : Window
     private readonly CompositeDisposable _disposables = new();
     private DistanceMeasureWindowViewModel _vm;
 
-    private readonly vtkDistanceWidget _distanceWidget = vtkDistanceWidget.New();
+    private readonly Stack<vtkDistanceWidget> _measureWidgets = new();
     private readonly vtkImageActorPointPlacer _placer = vtkImageActorPointPlacer.New();
-    private vtkDistanceRepresentation2D _rep;
 
     public DistanceMeasureWindow()
     {
@@ -41,66 +40,64 @@ public partial class DistanceMeasureWindow : Window
             })
             .Build()
             .DisposeWith(_disposables);
-
-        // Create the distance widget and its 3D representation -------------
-        _distanceWidget.SetInteractor(iren);
-        _distanceWidget.SetCurrentRenderer(AxialControl.OverlayRenderer);
-        _distanceWidget.CreateDefaultRepresentation();
-        _rep = vtkDistanceRepresentation2D.SafeDownCast(_distanceWidget.GetRepresentation());
-
-        // Configure cross hair
-        var h1 = vtkPointHandleRepresentation2D.SafeDownCast(_rep.GetPoint1Representation());
-        var h2 = vtkPointHandleRepresentation2D.SafeDownCast(_rep.GetPoint2Representation());
-        h1.GetProperty().SetColor(1, 0, 0);
-        h2.GetProperty().SetColor(1, 0, 0);
-        h1.GetProperty().SetLineWidth(3);
-        h2.GetProperty().SetLineWidth(3);
-
-        // I want smaller cursor size
-        var cursor = vtkCursor2D.New();
-        const double hs = 7;
-        cursor.SetModelBounds(-hs, hs, -hs, hs, 0, 0); 
-        cursor.SetFocalPoint(0, 0, 0);
-        cursor.OutlineOff();
-        h1.SetCursorShape(cursor.GetOutput());
-        h2.SetCursorShape(cursor.GetOutput());
-
-        // keep both handles fixed on the slice plane
-        vtkImageActor actor = _vm.AxialVm.Actor;
-        _placer.SetImageActor(actor);
-        _rep.GetPoint1Representation().SetPointPlacer(_placer);
-        _rep.GetPoint2Representation().SetPointPlacer(_placer);
-
-        // Configure the visuals
-        vtkAxisActor2D axis = _rep.GetAxis();
-        axis.TickVisibilityOff();
-        axis.GetProperty().SetColor(1, 1, 0);
-        axis.GetProperty().SetLineWidth(1);
-        axis.SetTitlePosition(1);
-        _rep.SetLabelFormat("%4.2f mm");
-
-
-        // -------------------------------------------------------------------------
-        _distanceWidget.EnabledOn();
-        iren.Initialize();
-        iren.GetRenderWindow().Render();
     }
 
     private void MeasureDistance(object sender, RoutedEventArgs e)
     {
-        double[] p1 = _rep.GetPoint1WorldPosition();
-        double[] p2 = _rep.GetPoint2WorldPosition();
-
+        if (_measureWidgets.Count == 0) return;
+        var widget = _measureWidgets.Peek();
+        var rep = vtkDistanceRepresentation2D.SafeDownCast(widget.GetRepresentation());
+        
+        double[] p1 = rep.GetPoint1WorldPosition();
+        double[] p2 = rep.GetPoint2WorldPosition();
         double width = p2[0] - p1[0];
         double height = p2[1] - p1[1];
         double depth = p2[2] - p1[2];
-
+        
         double distMm = Math.Sqrt(width * width + height * height + depth * depth);
-        Debug.WriteLine($"Widget says: {_rep.GetDistance():F2} mm,  manual check: {distMm:F2} mm");
+        Debug.WriteLine($"Widget says: {rep.GetDistance():F2} mm,  manual check: {distMm:F2} mm");
     }
 
-    private void NewInstance(object sender, RoutedEventArgs e)
+    private void AddMeasurement(object sender, RoutedEventArgs e)
     {
-        // Create another distance measurement
+        // 1) New distance widget
+        var widget = vtkDistanceWidget.New();
+        var iren = AxialControl.Interactor;
+
+        // 2) Hook up interactor & renderer
+        widget.SetInteractor(iren);
+        widget.SetCurrentRenderer(AxialControl.OverlayRenderer);
+
+        // 3) Build its default rep
+        widget.CreateDefaultRepresentation();
+        var rep = vtkDistanceRepresentation2D.SafeDownCast(widget.GetRepresentation());
+
+        // 4) Constrain the two “+” to your image‐slice plane
+        vtkImageActor actor = _vm.AxialVm.Actor;
+        _placer.SetImageActor(actor);
+        rep.GetPoint1Representation().SetPointPlacer(_placer);
+        rep.GetPoint2Representation().SetPointPlacer(_placer);
+
+        // 5) Style the line + text
+        var axis = rep.GetAxis();
+        axis.GetProperty().SetColor(1, 1, 0); // yellow
+        axis.GetProperty().SetLineWidth(1);
+        rep.SetLabelFormat("%4.2f mm");
+
+        // 6) Style the handles (optional)
+        var h1 = vtkPointHandleRepresentation2D.SafeDownCast(rep.GetPoint1Representation());
+        var h2 = vtkPointHandleRepresentation2D.SafeDownCast(rep.GetPoint2Representation());
+        h1.GetProperty().SetColor(1, 0, 0); // red crosses
+        h2.GetProperty().SetColor(1, 0, 0);
+
+        // 7) Enable it (starts in “placement” mode)
+        widget.EnabledOn();
+        
+        // 9) Save it so you can delete or iterate later
+        _measureWidgets.Push(widget);
+
+        // 10) Render
+        iren.GetRenderWindow().Render();
     }
+    
 }
