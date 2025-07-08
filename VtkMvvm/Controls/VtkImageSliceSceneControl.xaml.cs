@@ -204,6 +204,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
                 _referenceSlice.PlaneAxisV,
                 flipU: FlipCameraHorizontal,
                 flipV: FlipCameraVertical,
+                resetViewUp: false, // user may have rotated the camera
                 resetParallelScale: false); // preserve camera zoom-in state
         }
 
@@ -288,6 +289,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
         Vector3 planeVAxis, // = slice PlaneAxisV  (camera “up”)
         bool flipU = false, // flip the displayed horizontal
         bool flipV = false, // flip the displayed vertical
+        bool resetViewUp = true,
         bool resetParallelScale = true)
     {
         double[] b = sliceActor.GetBounds(); // world AABB
@@ -311,11 +313,14 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
             cx + nDir.X * CamDist,
             cy + nDir.Y * CamDist,
             cz + nDir.Z * CamDist);
-        cam.SetViewUp(vDir.X, vDir.Y, vDir.Z);
-        cam.SetClippingRange(0.1, 5000);
+        
+        if (resetViewUp) 
+            cam.SetViewUp(vDir.X, vDir.Y, vDir.Z);
 
         if (resetParallelScale)
             cam.SetParallelScale(0.5 * Math.Max(width, height));
+        
+        cam.SetClippingRange(0.1, 5000);
     }
 
     #endregion
