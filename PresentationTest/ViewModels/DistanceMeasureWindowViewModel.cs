@@ -13,7 +13,6 @@ public class DistanceMeasureWindowViewModel : ReactiveObject
     public ImageOrthogonalSliceViewModel AxialVm { get; }
     public ImageOrthogonalSliceViewModel[] AxialVms => [AxialVm];
     
-    // ------------- Rulers ----------------
 
     public DistanceMeasureWindowViewModel()
     {
@@ -23,6 +22,7 @@ public class DistanceMeasureWindowViewModel : ReactiveObject
             .WithSharedImage(_background)
             .Build();
         AxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipe);
-        
     }
+
+    
 }

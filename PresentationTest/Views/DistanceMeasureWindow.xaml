@@ -16,9 +16,15 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Border Background="Gray">
+        <DockPanel Dock="Left" LastChildFill="True" Margin="8">
+            <Button Content="Measure Distance" Width="100" Click="MeasureDistance" />
+            <Button Content="New Instance" Width="100" Click="NewInstance" />
+        </DockPanel>
+        
+        <Border Grid.Row="1" Background="Gray">
             <Slider Value="{Binding AxialVms[0].SliceIndex}"
                     Maximum="{Binding AxialVms[0].ImageModel.Dimensions[2]}"
                     Minimum="0"
@@ -26,7 +32,7 @@
         </Border>
         
         <controls:VtkOrthoImageSceneControl x:Name="AxialControl"
-                                            Grid.Row="1"
+                                            Grid.Row="2"
                                             plugins:ControlPlugin.OrientationLabels="True"
                                             SceneObjects="{Binding AxialVms}"
                                             OverlayObjects="{Binding AxialOverlayVms}" />

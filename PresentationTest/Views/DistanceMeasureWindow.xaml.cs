@@ -1,4 +1,5 @@
-﻿using System.Reactive.Disposables;
+﻿using System.Diagnostics;
+using System.Reactive.Disposables;
 using System.Windows;
 using Kitware.VTK;
 using PresentationTest.ViewModels;
@@ -13,6 +14,7 @@ public partial class DistanceMeasureWindow : Window
 
     private readonly vtkDistanceWidget _distanceWidget = vtkDistanceWidget.New();
     private readonly vtkImageActorPointPlacer _placer = vtkImageActorPointPlacer.New();
+    private vtkDistanceRepresentation2D _rep;
 
     public DistanceMeasureWindow()
     {
@@ -28,8 +30,9 @@ public partial class DistanceMeasureWindow : Window
             _vm = vm;
         }
 
+        // scroll-to-next-slice 
         vtkRenderWindowInteractor iren = AxialControl.Interactor;
-        vtkInteractorStyleImage style = new();
+        var style = vtkInteractorStyleImage.New();
         MouseInteractorBuilder.Create(iren, style)
             .Scroll(forward =>
             {
@@ -41,28 +44,45 @@ public partial class DistanceMeasureWindow : Window
 
         // Create the distance widget and its 3D representation -------------
         _distanceWidget.SetInteractor(iren);
+        _distanceWidget.SetCurrentRenderer(AxialControl.OverlayRenderer);
+        _distanceWidget.CreateDefaultRepresentation(); 
+        _rep = vtkDistanceRepresentation2D.SafeDownCast(_distanceWidget.GetRepresentation());
 
-        // now grab that representation so we can tweak it -------------------------
-        var rep = (vtkDistanceRepresentation2D)_distanceWidget.GetRepresentation();
-        
         // keep both handles fixed on the slice plane
-        vtkImageActor actor = _vm.AxialVms[0].Actor;
-        _placer.SetImageActor(actor); 
-        ((vtkHandleRepresentation)rep.GetPoint1Representation()).SetPointPlacer(_placer);
-        ((vtkHandleRepresentation)rep.GetPoint2Representation()).SetPointPlacer(_placer);
+        vtkImageActor actor = _vm.AxialVm.Actor;
+        _placer.SetImageActor(actor);
+        _rep.GetPoint1Representation().SetPointPlacer(_placer);
+        _rep.GetPoint2Representation().SetPointPlacer(_placer);
 
-        // ---- cosmetics ----------------------------------------------------------
-        rep.GetAxisProperty().SetColor(1, 1, 0);
-        rep.GetAxis().GetTitleTextProperty().SetColor(1, 0, 0);
-        rep.SetLabelFormat("%4.2f mm");
+        // Configure the visuals
+        vtkAxisActor2D axis = _rep.GetAxis();
+        axis.GetProperty().SetColor(1, 1, 0);
+        axis.GetProperty().SetLineWidth(1);
+        axis.SetTitlePosition(1); 
+        _rep.SetLabelFormat("%4.2f mm");
         
-        rep.VisibilityOn();
-        rep.RulerModeOn();
-        _distanceWidget.SetPriority(1);
 
         // -------------------------------------------------------------------------
         _distanceWidget.EnabledOn();
         iren.Initialize();
         iren.GetRenderWindow().Render();
+    }
+
+    private void MeasureDistance(object sender, RoutedEventArgs e)
+    {
+        double[] p1 = _rep.GetPoint1WorldPosition();
+        double[] p2 = _rep.GetPoint2WorldPosition();
+
+        double width = p2[0] - p1[0];
+        double height = p2[1] - p1[1];
+        double depth = p2[2] - p1[2];
+
+        double distMm = Math.Sqrt(width * width + height * height + depth * depth);
+        Debug.WriteLine($"Widget says: {_rep.GetDistance():F2} mm,  manual check: {distMm:F2} mm");
+    }
+
+    private void NewInstance(object sender, RoutedEventArgs e)
+    {
+        // 
     }
 }
