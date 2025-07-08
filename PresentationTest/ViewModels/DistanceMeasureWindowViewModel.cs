@@ -17,8 +17,8 @@ public class DistanceMeasureWindowViewModel : ReactiveObject
     public DistanceMeasureWindowViewModel()
     {
         _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
-        var bgPipe = ColoredImagePipelineBuilder
         
+        var bgPipe = ColoredImagePipelineBuilder
             .WithSharedImage(_background)
             .Build();
         AxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipe);
