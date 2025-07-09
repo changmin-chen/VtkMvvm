@@ -12,7 +12,7 @@ internal sealed class LabelMapColorMapping : IColorMappingStrategy
         _lut = pipe.LookupTable;
     }
 
-    public void Apply(vtkImageMapToColors colorMap)
+    public void ApplyTo(vtkImageMapToColors colorMap)
     {
         colorMap.SetLookupTable(_lut);
         colorMap.SetOutputFormatToRGBA();

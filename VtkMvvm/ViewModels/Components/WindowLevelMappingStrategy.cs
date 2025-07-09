@@ -41,7 +41,7 @@ internal sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStra
         }
     }
 
-    public void Apply(vtkImageMapToColors colorMap)
+    public void ApplyTo(vtkImageMapToColors colorMap)
     {
         _colorMap = colorMap;
         _colorMap.SetLookupTable(_lut);

@@ -8,9 +8,9 @@ namespace VtkMvvm.ViewModels.Components;
 internal interface IColorMappingStrategy 
 {
     /// <summary>
-    /// Apply this strategy. This is done by configuring <see cref="vtkImageMapToColors"/>
+    /// Apply this strategy onto the colormap. This may mutate the <see cref="vtkImageMapToColors"/>.
     /// </summary>
-    void Apply(vtkImageMapToColors colorMap);
+    void ApplyTo(vtkImageMapToColors colorMap);
     
     void Update();
 }

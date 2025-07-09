@@ -29,7 +29,7 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     protected ImageSliceViewModel(ColoredImagePipeline pipe)
     {
         _colorStrategy = pipe.IsRgba ? new LabelMapColorMapping(pipe) : new WindowLevelColorMapping(pipe);
-        _colorStrategy.Apply(ColorMap);
+        _colorStrategy.ApplyTo(ColorMap);
     }
 
     protected override void Dispose(bool disposing)
