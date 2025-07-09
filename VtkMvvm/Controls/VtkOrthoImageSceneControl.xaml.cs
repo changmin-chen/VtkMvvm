@@ -141,6 +141,13 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
         renderer.RemoveActor(viewModel.Actor);
         viewModel.Modified -= OnSceneObjectsModified;
     }
+    
+    // internal render request
+    private void RequestRender()
+    {
+        if (_isLoaded) OnSceneObjectsModified(this, EventArgs.Empty);
+        else Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
+    }
 
     /// <summary>
     ///     Render the scene when the actors are modified.
@@ -190,14 +197,7 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
         FitSlice(first.Actor, first.Orientation);
 
         // ----- 4. Render the scene to show the new stuff-----
-        if (_isLoaded)
-        {
-            OnSceneObjectsModified(this, EventArgs.Empty);
-        }
-        else
-        {
-            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
-        }
+        RequestRender();
     }
 
 
@@ -287,14 +287,7 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
             HookActor(OverlayRenderer, item);
 
         // ----- 3. Render the scene to show the new stuff-----
-        if (_isLoaded)
-        {
-            OnSceneObjectsModified(this, EventArgs.Empty);
-        }
-        else
-        {
-            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
-        }
+        RequestRender();
     }
 
     #endregion
