@@ -26,6 +26,9 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     /// </summary>
     protected vtkImageMapToColors ColorMap { get; } = vtkImageMapToColors.New();
     
+    /// <summary>
+    /// Flattened ORIGINAL vtkImageData property for easy binding   
+    /// </summary>
     public ImageModel ImageModel { get; }
     
     

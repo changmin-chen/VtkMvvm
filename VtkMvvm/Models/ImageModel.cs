@@ -2,9 +2,11 @@
 
 namespace VtkMvvm.Models;
 
-// Simple model to hold image data and display properties
+/// <summary>
+/// Simple model to hold image data and display properties
+/// </summary>
 public record ImageModel(
-    vtkImageData Value,
+    vtkImageData Image,
     int[] Dimensions,
     Extent Extent,
     double[] Center,
