@@ -14,20 +14,20 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
     private readonly double[] _origin;
     private readonly double[] _spacing;
 
-    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipe) : base(pipe)
+    public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeLine) : base(pipeLine)
     {
         Orientation = orientation;
         (PlaneAxisU, PlaneAxisV) = GetPlaneAxes(orientation);
         PlaneNormal = Vector3.Normalize(Vector3.Cross(PlaneAxisU, PlaneAxisV));
 
-        vtkImageData image = pipe.Image;
+        vtkImageData image = pipeLine.Image;
         _origin = image.GetOrigin();
         _spacing = image.GetSpacing();
 
         ImageModel = ImageModel.Create(image);
         
         // VTK plumping
-        ColorMap.SetInput(pipe.Image);
+        ColorMap.SetInput(pipeLine.Image);
         Actor.SetInput(ColorMap.GetOutput());
         
         // SetSliceIndex here is necessary.

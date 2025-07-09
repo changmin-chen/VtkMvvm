@@ -5,15 +5,20 @@ namespace VtkMvvm.Features.Builder;
 
 
 /// <summary>
-/// DTO for the shared vtk image pipeline with color mapping.
+/// Data model for the shared vtk image pipeline with color mapping.
 /// The image data may be shared across multiple <see cref="VtkElementViewModel"/>.
-/// So the ViewModel should not dispose them. 
 /// </summary>
-public sealed class ColoredImagePipeline
+public sealed class ColoredImagePipeline : IDisposable
 {
     public required vtkImageData Image { get; init; }
     public required vtkLookupTable LookupTable { get; init; }
     public required bool IsRgba { get; init; }
+
+    public void Dispose()
+    {
+        Image.Dispose();
+        LookupTable.Dispose();
+    }
 }
 
 // internal static class ColoredImagePipelineExtensions
