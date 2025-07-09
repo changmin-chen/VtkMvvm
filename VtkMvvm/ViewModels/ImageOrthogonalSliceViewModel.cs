@@ -61,7 +61,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
 
     protected override void OnSliceIndexChanged(int idx)
     {
-        int[] dims = ImageModel.Dimensions;
+        int[] dims = ImageModel.Dims;
 
         // --- tell the actor which slice to draw ----------------------
         switch (Orientation)

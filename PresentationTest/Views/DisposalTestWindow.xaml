@@ -42,7 +42,7 @@
                 </Grid.RowDefinitions>
                 <Border Background="Gray">
                     <Slider Margin="20,8"
-                            Maximum="{Binding AxialVms[0].ImageModel.Dimensions[2]}"
+                            Maximum="{Binding AxialVms[0].ImageModel.Dims[2]}"
                             Minimum="0"
                             Value="{Binding AxialVms[0].SliceIndex}" />
                 </Border>
@@ -60,7 +60,7 @@
                 </Grid.RowDefinitions>
                 <Border Background="Gray">
                     <Slider Margin="20,8"
-                            Maximum="{Binding CoronalVms[0].ImageModel.Dimensions[1]}"
+                            Maximum="{Binding CoronalVms[0].ImageModel.Dims[1]}"
                             Minimum="0"
                             Value="{Binding CoronalVms[0].SliceIndex}" />
                 </Border>

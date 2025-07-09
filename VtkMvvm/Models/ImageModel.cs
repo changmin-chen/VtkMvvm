@@ -7,8 +7,9 @@ namespace VtkMvvm.Models;
 /// </summary>
 public record ImageModel(
     vtkImageData Image,
-    int[] Dimensions,
+    int[] Dims,
     Extent Extent,
+    double[] Origin,
     double[] Center,
     double[] Spacing,
     double[] ScalarRange
@@ -22,6 +23,7 @@ public record ImageModel(
             image,
             image.GetDimensions(),
             new Extent(ext[0], ext[1], ext[2], ext[3], ext[4], ext[5]),
+            image.GetOrigin(),
             image.GetCenter(),
             image.GetSpacing(),
             image.GetScalarRange()
