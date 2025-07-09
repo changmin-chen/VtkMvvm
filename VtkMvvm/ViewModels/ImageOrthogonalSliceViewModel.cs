@@ -13,6 +13,8 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
 {
     private readonly double[] _origin;
     private readonly double[] _spacing;
+    public SliceOrientation Orientation { get; }
+    
 
     public ImageOrthogonalSliceViewModel(SliceOrientation orientation, ColoredImagePipeline pipeLine) : base(pipeLine)
     {
@@ -24,8 +26,6 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         _origin = image.GetOrigin();
         _spacing = image.GetSpacing();
 
-        ImageModel = ImageModel.Create(image);
-        
         // VTK plumping
         ColorMap.SetInput(pipeLine.Image);
         Actor.SetInput(ColorMap.GetOutput());
@@ -42,10 +42,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
         SliceOrientation.Sagittal => (Vector3.UnitY, Vector3.UnitZ),
         _ => throw new ArgumentOutOfRangeException(nameof(orientation), orientation, null)
     };
-
-    public SliceOrientation Orientation { get; }
-    public ImageModel ImageModel { get; }
-
+    
 
     public double Opacity
     {

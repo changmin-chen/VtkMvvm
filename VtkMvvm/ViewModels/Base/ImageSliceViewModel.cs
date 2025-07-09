@@ -26,12 +26,16 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     /// </summary>
     protected vtkImageMapToColors ColorMap { get; } = vtkImageMapToColors.New();
     
+    public ImageModel ImageModel { get; }
+    
     
     protected ImageSliceViewModel(ColoredImagePipeline pipeLine)
     {
         _pipeLine = pipeLine;
         _colorStrategy = pipeLine.IsRgba ? new LabelMapColorMapping(pipeLine) : new WindowLevelColorMapping(pipeLine);
         _colorStrategy.ApplyTo(ColorMap);
+        
+        ImageModel = ImageModel.Create(pipeLine.Image);
     }
 
     protected override void Dispose(bool disposing)
