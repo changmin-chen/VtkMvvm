@@ -78,9 +78,9 @@ public class DisposalTestWindowViewModel : ReactiveObject
         _background = image;
         AxialVms = [axialVm];
         CoronalVms = [coronalVm];
-        _serialDisposable.Disposable = new CompositeDisposable(axialVm, coronalVm); // stash for next disposal
 
         // Debug assert
+        _serialDisposable.Disposable = new CompositeDisposable(image, axialVm, coronalVm); // stash for next disposal
         Debug.Assert(oldAxialVm.IsDisposed, "Should be disposed.");
     }
 }

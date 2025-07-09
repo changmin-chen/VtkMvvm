@@ -13,7 +13,7 @@ namespace VtkMvvm.ViewModels.Base;
 public abstract class ImageSliceViewModel : VtkElementViewModel
 {
     // ── color map ─────────────────────
-    private readonly ColoredImagePipeline _pipeLine;
+    private readonly ColoredImagePipeline _pipeLine;  // holds private field to prevent GC
     private readonly IColorMappingStrategy _colorStrategy;
     
     /// <summary>
@@ -36,11 +36,17 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
 
     protected override void Dispose(bool disposing)
     {
+        if (IsDisposed) return;
+        
         if (disposing)
         {
+            Actor.SetInput(null);
+            ColorMap.RemoveAllObservers();
+            
             ColorMap.Dispose();
             if (_colorStrategy is IDisposable d) d.Dispose();
         }
+        
         base.Dispose(disposing);
     }
     
