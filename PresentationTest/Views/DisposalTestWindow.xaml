@@ -3,11 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:plugins="clr-namespace:VtkMvvm.Controls.Plugins;assembly=VtkMvvm"
         xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
         xmlns:viewModels="clr-namespace:PresentationTest.ViewModels"
-        mc:Ignorable="d"
-        Title="DisposalTestWindow" Height="450" Width="800">
+        Title="DisposalTestWindow"
+        Width="800"
+        Height="450"
+        mc:Ignorable="d">
 
     <d:Window.DataContext>
         <viewModels:DisposalTestWindowViewModel />
@@ -16,23 +17,61 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <DockPanel Dock="Left" LastChildFill="False" Margin="8">
-            <Button Content="Load New Image" Width="120" Command="{Binding LoadNewImageCommand}" Margin="8 0" />
+        <DockPanel Margin="8"
+                   Dock="Left"
+                   LastChildFill="False">
+            <Button Width="120"
+                    Margin="8,0"
+                    Content="Load New Image"
+                    Command="{Binding LoadNewImageCommand}" />
         </DockPanel>
 
-        <Border Grid.Row="1" Background="Gray">
-            <Slider Value="{Binding AxialVms[0].SliceIndex}"
-                    Maximum="{Binding AxialVms[0].ImageModel.Dimensions[2]}"
-                    Minimum="0"
-                    Margin="20 8" />
-        </Border>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
 
-        <controls:VtkOrthoImageSceneControl x:Name="AxialControl"
-                                            Grid.Row="2"
-                                            plugins:ControlPlugin.OrientationLabels="True"
-                                            SceneObjects="{Binding AxialVms}" />
+            <!-- View port cell #1 -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Background="Gray">
+                    <Slider Margin="20,8"
+                            Maximum="{Binding AxialVms[0].ImageModel.Dimensions[2]}"
+                            Minimum="0"
+                            Value="{Binding AxialVms[0].SliceIndex}" />
+                </Border>
+
+                <controls:VtkOrthoImageSceneControl x:Name="AxialControl"
+                                                    Grid.Row="1"
+                                                    SceneObjects="{Binding AxialVms}" />
+            </Grid>
+            
+            <!-- View port cell #2 -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Background="Gray">
+                    <Slider Margin="20,8"
+                            Maximum="{Binding CoronalVms[0].ImageModel.Dimensions[1]}"
+                            Minimum="0"
+                            Value="{Binding CoronalVms[0].SliceIndex}" />
+                </Border>
+
+                <controls:VtkOrthoImageSceneControl x:Name="CoronalControl"
+                                                    Grid.Row="1"
+                                                    SceneObjects="{Binding CoronalVms}" />
+            </Grid>
+
+
+        </Grid>
+
     </Grid>
 </Window>

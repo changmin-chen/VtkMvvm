@@ -23,6 +23,4 @@ public class DistanceMeasureWindowViewModel : ReactiveObject
             .Build();
         AxialVm = new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, bgPipe);
     }
-
-    
 }

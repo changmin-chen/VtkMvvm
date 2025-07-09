@@ -2,6 +2,7 @@
 using System.Windows;
 using Kitware.VTK;
 using PresentationTest.ViewModels;
+using VtkMvvm.Controls;
 using VtkMvvm.Features.InteractorBehavior;
 
 namespace PresentationTest.Views;
@@ -23,15 +24,28 @@ public partial class DisposalTestWindow : Window
         {
             _vm = vm;
         }
-        
-        // scroll-to-next-slice 
-        vtkRenderWindowInteractor iren = AxialControl.Interactor;
+
+        foreach (var control in new [] {AxialControl, CoronalControl})
+        {
+            InitializeInteractorStyle(control);
+        }
+    }
+    
+    /// <summary>
+    /// Each controls has their own instance of freehand interactor
+    /// </summary>
+    private void InitializeInteractorStyle(IVtkSceneControl control)
+    {
         var style = vtkInteractorStyleImage.New();
+        vtkRenderWindowInteractor iren = control.Interactor;
+
         MouseInteractorBuilder.Create(iren, style)
+            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), keys: KeyMask.Alt)
             .Scroll(forward =>
             {
                 int increment = forward ? 1 : -1;
-                _vm.AxialVms[0].SliceIndex += increment;
+                if (ReferenceEquals(control, AxialControl)) _vm.AxialVms[0].SliceIndex += increment;
+                else if (ReferenceEquals(control, CoronalControl)) _vm.CoronalVms[0].SliceIndex += increment;
             })
             .Build()
             .DisposeWith(_disposables);
