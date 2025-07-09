@@ -12,13 +12,14 @@ namespace VtkMvvm.ViewModels.Base;
 /// </summary>
 public abstract class ImageSliceViewModel : VtkElementViewModel
 {
+    // ── color map ─────────────────────
+    private readonly ColoredImagePipeline _pipeLine;
+    private readonly IColorMappingStrategy _colorStrategy;
+    
     /// <summary>
     /// Concrete actor override for displaying image slice in the scene
     /// </summary>
     public override vtkImageActor Actor { get; } = vtkImageActor.New();
-    
-    // ── color map ─────────────────────
-    private readonly IColorMappingStrategy _colorStrategy;
     
     /// <summary>
     /// Maps sliced image to the colors. Its output should be connected to the actor
@@ -26,9 +27,10 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
     protected vtkImageMapToColors ColorMap { get; } = vtkImageMapToColors.New();
     
     
-    protected ImageSliceViewModel(ColoredImagePipeline pipe)
+    protected ImageSliceViewModel(ColoredImagePipeline pipeLine)
     {
-        _colorStrategy = pipe.IsRgba ? new LabelMapColorMapping(pipe) : new WindowLevelColorMapping(pipe);
+        _pipeLine = pipeLine;
+        _colorStrategy = pipeLine.IsRgba ? new LabelMapColorMapping(pipeLine) : new WindowLevelColorMapping(pipeLine);
         _colorStrategy.ApplyTo(ColorMap);
     }
 
