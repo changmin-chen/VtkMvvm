@@ -39,6 +39,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         // -------- connect full display pipeline ---------------------
         var slicePort = BuildObliqueSlice(volume);
         ColorMap.SetInputConnection(slicePort);
+        ColorMap.Update(); // update once, so the output() holds stable ptr
         Actor.SetInput(ColorMap.GetOutput());
         Actor.SetUserTransform(_xfm); // positions slice in 3-D
 

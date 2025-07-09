@@ -28,6 +28,7 @@ public sealed class ImageOrthogonalSliceViewModel : ImageSliceViewModel
 
         // VTK plumping
         ColorMap.SetInput(pipeLine.Image);
+        ColorMap.Update();  // update once, so the output() holds stable ptr
         Actor.SetInput(ColorMap.GetOutput());
         
         // SetSliceIndex here is necessary.
