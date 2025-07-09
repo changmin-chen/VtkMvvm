@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using Kitware.VTK;
 using VtkMvvm.Controls.Plugins;
 using VtkMvvm.ViewModels.Base;
+using Application = System.Windows.Application;
 using UserControl = System.Windows.Controls.UserControl;
 
 namespace VtkMvvm.Controls;
@@ -184,7 +185,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
     private void RequestRender()
     {
         if (_isLoaded) OnSceneObjectsModified(this, EventArgs.Empty);
-        else Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
+        else Application.Current.Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
     }
 
     /// <summary>
