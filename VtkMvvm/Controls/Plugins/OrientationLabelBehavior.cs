@@ -43,8 +43,11 @@ public sealed class OrientationLabelBehavior : IDisposable
     public void Dispose()
     {
         _overlay.EndEvt -= UpdateLabels;
-        foreach (var a in new[] { _lblRight, _lblLeft, _lblTop, _lblBottom })
-            a.Dispose();
+        foreach (vtkTextActor actor in new[] { _lblRight, _lblLeft, _lblTop, _lblBottom })
+        {
+            _overlay.RemoveActor2D(actor);
+            actor.Dispose();
+        }
     }
 
     // ─────────────────────────────────────────────────────────────

@@ -138,8 +138,8 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
 
     private void UnHookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
-        renderer.RemoveActor(viewModel.Actor);
         viewModel.Modified -= OnSceneObjectsModified;
+        renderer.RemoveActor(viewModel.Actor);
     }
 
     /// <summary>

@@ -60,8 +60,6 @@ internal sealed class WindowLevelColorMapping : ViewModelBase, IColorMappingStra
         _lut.SetRange(low, high); // maps scalar → [0,1]
         _lut.SetValueRange(0.0, 1.0); // brightness
         _lut.SetSaturationRange(0.0, 0.0); // greyscale
-        _lut.Build();
-
-        _colorMap.Modified();
+        _lut.Modified();
     }
 }

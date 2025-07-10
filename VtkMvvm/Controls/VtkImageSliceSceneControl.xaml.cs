@@ -176,8 +176,8 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
 
     private void UnHookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
-        renderer.RemoveActor(viewModel.Actor);
         viewModel.Modified -= OnSceneObjectsModified;
+        renderer.RemoveActor(viewModel.Actor);
     }
 
     // internal render request
