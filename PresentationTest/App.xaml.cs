@@ -13,7 +13,7 @@ public partial class App : PrismApplication
     }
 
     protected override Window CreateShell() =>
-        // Container.Resolve<VtkMvvmTestWindow>();
+        Container.Resolve<VtkMvvmTestWindow>();
         // Container.Resolve<DistanceMeasureWindow>();
-        Container.Resolve<DisposalTestWindow>();
+        // Container.Resolve<DisposalTestWindow>();
 }

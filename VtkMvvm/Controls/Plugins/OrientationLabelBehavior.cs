@@ -37,12 +37,12 @@ public sealed class OrientationLabelBehavior : IDisposable
 
         (_lblRight, _lblLeft, _lblTop, _lblBottom) = MakeActors();
         UpdateLabels(null, null); // initial placement
-        _cam.ModifiedEvt += UpdateLabels; // follow every roll / flip
+        _overlay.EndEvt += UpdateLabels;  // follow every roll / flip
     }
 
     public void Dispose()
     {
-        _cam.ModifiedEvt -= UpdateLabels;
+        _overlay.EndEvt -= UpdateLabels;
         foreach (var a in new[] { _lblRight, _lblLeft, _lblTop, _lblBottom })
             a.Dispose();
     }
