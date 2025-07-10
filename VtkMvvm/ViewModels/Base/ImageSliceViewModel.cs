@@ -42,7 +42,6 @@ public abstract class ImageSliceViewModel : VtkElementViewModel
         {
             Actor.SetInput(null);
             ColorMap.RemoveAllObservers();
-            
             ColorMap.Dispose();
             if (_colorStrategy is IDisposable d) d.Dispose();
         }
