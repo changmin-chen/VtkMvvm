@@ -40,7 +40,7 @@ public partial class DisposalTestWindow : Window
         vtkRenderWindowInteractor iren = control.Interactor;
 
         MouseInteractorBuilder.Create(iren, style)
-            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), keys: KeyMask.Alt)
+            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), k: KeyMask.Alt)
             .Scroll(forward =>
             {
                 int increment = forward ? 1 : -1;

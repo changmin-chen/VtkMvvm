@@ -17,35 +17,66 @@ internal sealed class BaseForwarder : IObservable<VtkEvent>, IDisposable
     private readonly Subject<VtkEvent> _bus = new();
     private readonly HashSet<VtkEventId> _swallow = new();
 
+    // Keep strong refs so we can detach on Dispose
+    private readonly vtkObject.vtkObjectEventHandler _mouseMove;
+    private readonly vtkObject.vtkObjectEventHandler _leftDown;
+    private readonly vtkObject.vtkObjectEventHandler _leftUp;
+    private readonly vtkObject.vtkObjectEventHandler _rightDown;
+    private readonly vtkObject.vtkObjectEventHandler _rightUp;
+    private readonly vtkObject.vtkObjectEventHandler _middleDown;
+    private readonly vtkObject.vtkObjectEventHandler _middleUp;
+    private readonly vtkObject.vtkObjectEventHandler _wheelFwd;
+    private readonly vtkObject.vtkObjectEventHandler _wheelBack;
+
     public BaseForwarder(vtkInteractorStyle style)
     {
         _style = style ?? throw new ArgumentNullException(nameof(style));
 
-        style.MouseMoveEvt += (_, _) => Publish(VtkEventId.MouseMove, () => style.OnMouseMove());
-        style.LeftButtonPressEvt += (_, _) => Publish(VtkEventId.LeftDown, () => style.OnLeftButtonDown());
-        style.LeftButtonReleaseEvt += (_, _) => Publish(VtkEventId.LeftUp, () => style.OnLeftButtonUp());
-        style.RightButtonPressEvt += (_, _) => Publish(VtkEventId.RightDown, () => style.OnRightButtonDown());
-        style.RightButtonReleaseEvt += (_, _) => Publish(VtkEventId.RightUp, () => style.OnRightButtonUp());
-        style.MiddleButtonPressEvt += (_, _) => Publish(VtkEventId.MiddleDown, () => style.OnMiddleButtonDown());
-        style.MiddleButtonReleaseEvt += (_, _) => Publish(VtkEventId.MiddleUp, () => style.OnMiddleButtonUp());
-        style.MouseWheelForwardEvt += (_, _) => Publish(VtkEventId.WheelForward, () => style.OnMouseWheelForward());
-        style.MouseWheelBackwardEvt += (_, _) => Publish(VtkEventId.WheelBackward, () => style.OnMouseWheelBackward());
+        // Build handlers once, attach, remember for detach
+        _mouseMove = (_, _) => Publish(VtkEventId.MouseMove, () => style.OnMouseMove());
+        _leftDown = (_, _) => Publish(VtkEventId.LeftDown, () => style.OnLeftButtonDown());
+        _leftUp = (_, _) => Publish(VtkEventId.LeftUp, () => style.OnLeftButtonUp());
+        _rightDown = (_, _) => Publish(VtkEventId.RightDown, () => style.OnRightButtonDown());
+        _rightUp = (_, _) => Publish(VtkEventId.RightUp, () => style.OnRightButtonUp());
+        _middleDown = (_, _) => Publish(VtkEventId.MiddleDown, () => style.OnMiddleButtonDown());
+        _middleUp = (_, _) => Publish(VtkEventId.MiddleUp, () => style.OnMiddleButtonUp());
+        _wheelFwd = (_, _) => Publish(VtkEventId.WheelForward, () => style.OnMouseWheelForward());
+        _wheelBack = (_, _) => Publish(VtkEventId.WheelBackward, () => style.OnMouseWheelBackward());
+
+        style.MouseMoveEvt += _mouseMove;
+        style.LeftButtonPressEvt += _leftDown;
+        style.LeftButtonReleaseEvt += _leftUp;
+        style.RightButtonPressEvt += _rightDown;
+        style.RightButtonReleaseEvt += _rightUp;
+        style.MiddleButtonPressEvt += _middleDown;
+        style.MiddleButtonReleaseEvt += _middleUp;
+        style.MouseWheelForwardEvt += _wheelFwd;
+        style.MouseWheelBackwardEvt += _wheelBack;
     }
 
-    public IDisposable Subscribe(IObserver<VtkEvent> observer) => _bus.Subscribe(observer);
+    public IDisposable Subscribe(IObserver<VtkEvent> o) => _bus.Subscribe(o);
 
-    /// <summary>Prevent a particular event from being forwarded to the native base style.</summary>
-    public void AddSwallow(VtkEventId evt) => _swallow.Add(evt);
+    public void AddSwallow(VtkEventId id) => _swallow.Add(id);
 
     private void Publish(VtkEventId id, Action forwardOnce)
     {
-        // Push through the bus first (behaviours will listen).
         var iren = _style.GetInteractor();
         _bus.OnNext(new VtkEvent(id, iren));
-
-        if (!_swallow.Contains(id))
-            forwardOnce(); // exactly once per physical VTK event
+        if (!_swallow.Contains(id)) forwardOnce();
     }
 
-    public void Dispose() => _bus.Dispose();
+    public void Dispose()
+    {
+        // Detach to avoid memory leaks / double events when builder discarded
+        _style.MouseMoveEvt -= _mouseMove;
+        _style.LeftButtonPressEvt -= _leftDown;
+        _style.LeftButtonReleaseEvt -= _leftUp;
+        _style.RightButtonPressEvt -= _rightDown;
+        _style.RightButtonReleaseEvt -= _rightUp;
+        _style.MiddleButtonPressEvt -= _middleDown;
+        _style.MiddleButtonReleaseEvt -= _middleUp;
+        _style.MouseWheelForwardEvt -= _wheelFwd;
+        _style.MouseWheelBackwardEvt -= _wheelBack;
+        _bus.Dispose();
+    }
 }

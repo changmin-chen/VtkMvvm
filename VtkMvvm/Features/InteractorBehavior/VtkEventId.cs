@@ -4,7 +4,7 @@ namespace VtkMvvm.Features.InteractorBehavior;
 
 
 /// <summary>Distinct VTK interaction events we care about.</summary>
-internal enum VtkEventId
+public enum VtkEventId
 {
     MouseMove,
     LeftDown,
@@ -18,5 +18,5 @@ internal enum VtkEventId
 }
 
 /// <summary>Strong‑typed event payload that flows through the bus.</summary>
-internal readonly record struct VtkEvent(VtkEventId Id, vtkRenderWindowInteractor Iren);
+public readonly record struct VtkEvent(VtkEventId Id, vtkRenderWindowInteractor Iren);
 
