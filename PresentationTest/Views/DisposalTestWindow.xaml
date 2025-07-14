@@ -1,0 +1,77 @@
+﻿<Window x:Class="PresentationTest.Views.DisposalTestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:controls="clr-namespace:VtkMvvm.Controls;assembly=VtkMvvm"
+        xmlns:viewModels="clr-namespace:PresentationTest.ViewModels"
+        Title="DisposalTestWindow"
+        Width="800"
+        Height="450"
+        mc:Ignorable="d">
+
+    <d:Window.DataContext>
+        <viewModels:DisposalTestWindowViewModel />
+    </d:Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel Margin="8"
+                   Dock="Left"
+                   LastChildFill="False">
+            <Button Width="120"
+                    Margin="8,0"
+                    Content="Load New Image"
+                    Command="{Binding LoadNewImageCommand}" />
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <!-- View port cell #1 -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Background="Gray">
+                    <Slider Margin="20,8"
+                            Maximum="{Binding AxialVms[0].ImageModel.Dimensions[2]}"
+                            Minimum="0"
+                            Value="{Binding AxialVms[0].SliceIndex}" />
+                </Border>
+
+                <controls:VtkOrthoImageSceneControl x:Name="AxialControl"
+                                                    Grid.Row="1"
+                                                    SceneObjects="{Binding AxialVms}" />
+            </Grid>
+            
+            <!-- View port cell #2 -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Background="Gray">
+                    <Slider Margin="20,8"
+                            Maximum="{Binding CoronalVms[0].ImageModel.Dimensions[1]}"
+                            Minimum="0"
+                            Value="{Binding CoronalVms[0].SliceIndex}" />
+                </Border>
+
+                <controls:VtkOrthoImageSceneControl x:Name="CoronalControl"
+                                                    Grid.Row="1"
+                                                    SceneObjects="{Binding CoronalVms}" />
+            </Grid>
+
+
+        </Grid>
+
+    </Grid>
+</Window>

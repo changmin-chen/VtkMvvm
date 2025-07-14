@@ -12,9 +12,3 @@ public interface IInteractorBehavior
     void Detach();
 }
 
-public enum TriggerMouseButton
-{
-    Left,
-    Right,
-    Middle
-}

@@ -12,7 +12,7 @@ namespace VtkMvvm.Controls;
 /// <summary>
 /// For binding to the image slice that may not be orthogonal.
 /// </summary>
-public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkSceneControl
+public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkSceneControl
 {
     private const double CamDist = 500; // mm
     private bool _isLoaded; // flag indicates the control is loaded.
@@ -41,7 +41,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
 
     // Customization of camera flip
     public static readonly DependencyProperty FlipCameraHorizontalProperty =
-        DependencyProperty.Register(nameof(FlipCameraHorizontal), 
+        DependencyProperty.Register(nameof(FlipCameraHorizontal),
             typeof(bool),
             typeof(VtkImageSliceSceneControl),
             new PropertyMetadata(false, (_, __) => ((VtkImageSliceSceneControl)_)
@@ -52,7 +52,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
             typeof(bool),
             typeof(VtkImageSliceSceneControl),
             new PropertyMetadata(false, (_, __) => ((VtkImageSliceSceneControl)_)
-                .RequestRender()));  
+                .RequestRender()));
 
 
     public IReadOnlyList<VtkElementViewModel>? SceneObjects
@@ -79,11 +79,10 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         set => SetValue(FlipCameraVerticalProperty, value);
     }
 
+    public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
-
+    public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     public VtkImageSliceSceneControl()
@@ -105,14 +104,16 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         var renderWindow = RenderWindowControl.RenderWindow;
         if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
 
-        renderWindow.AddRenderer(MainRenderer);
+        // render overlays onto the main renderer
         MainRenderer.SetBackground(0.0, 0.0, 0.0);
         MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1); // render overlays onto the main renderer
+        OverlayRenderer.SetLayer(1);
         OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
+
         renderWindow.SetNumberOfLayers(2);
+        renderWindow.AddRenderer(MainRenderer);
         renderWindow.AddRenderer(OverlayRenderer);
 
         _isLoaded = true;
@@ -153,7 +154,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     {
         if (_isLoaded && _orientationLabels == null)
         {
-            _orientationLabels = new OrientationLabelBehavior(OverlayRenderer, MainRenderer.GetActiveCamera());
+            _orientationLabels = new OrientationLabelBehavior(OverlayRenderer);
             RequestRender();
         }
     }
@@ -176,17 +177,15 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
 
     private void UnHookActor(vtkRenderer renderer, VtkElementViewModel viewModel)
     {
-        renderer.RemoveActor(viewModel.Actor);
         viewModel.Modified -= OnSceneObjectsModified;
+        renderer.RemoveActor(viewModel.Actor);
     }
 
     // internal render request
     private void RequestRender()
     {
-        if (_isLoaded)
-            OnSceneObjectsModified(this, EventArgs.Empty);
-        else
-            Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
+        if (_isLoaded) OnSceneObjectsModified(this, EventArgs.Empty);
+        else Dispatcher.InvokeAsync(() => OnSceneObjectsModified(this, EventArgs.Empty), DispatcherPriority.Loaded);
     }
 
     /// <summary>
@@ -206,6 +205,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
                 _referenceSlice.PlaneAxisV,
                 flipU: FlipCameraHorizontal,
                 flipV: FlipCameraVertical,
+                resetViewUp: false, // user may have rotated the camera
                 resetParallelScale: false); // preserve camera zoom-in state
         }
 
@@ -217,17 +217,16 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     public void Dispose()
     {
         _orientationCube?.Dispose();
+        _orientationLabels?.Dispose();
 
-        if (SceneObjects is { } objects)
+        if (SceneObjects is { } sceneObjects)
         {
-            foreach (VtkElementViewModel sceneObj in objects)
-                sceneObj.Modified -= OnSceneObjectsModified;
+            foreach (VtkElementViewModel sceneObj in sceneObjects) UnHookActor(MainRenderer, sceneObj);
         }
 
-        if (OverlayObjects is { } overlays)
+        if (OverlayObjects is { } overlayObjects)
         {
-            foreach (VtkElementViewModel overlayObj in overlays)
-                overlayObj.Modified -= OnSceneObjectsModified;
+            foreach (VtkElementViewModel overlayObj in overlayObjects) UnHookActor(OverlayRenderer, overlayObj);
         }
 
         WFHost.Child = null;
@@ -243,10 +242,10 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
     private static void OnImageObjectsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         VtkImageSliceSceneControl control = (VtkImageSliceSceneControl)d;
-        control.RehookImageObjects((IReadOnlyList<ImageSliceViewModel>)e.OldValue, (IReadOnlyList<ImageSliceViewModel>)e.NewValue);
+        control.UpdateImageObjects((IReadOnlyList<ImageSliceViewModel>)e.OldValue, (IReadOnlyList<ImageSliceViewModel>)e.NewValue);
     }
 
-    private void RehookImageObjects(
+    private void UpdateImageObjects(
         IReadOnlyList<ImageSliceViewModel>? oldSceneObjects,
         IReadOnlyList<ImageSliceViewModel>? newSceneObjects)
     {
@@ -291,6 +290,7 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
         Vector3 planeVAxis, // = slice PlaneAxisV  (camera “up”)
         bool flipU = false, // flip the displayed horizontal
         bool flipV = false, // flip the displayed vertical
+        bool resetViewUp = true,
         bool resetParallelScale = true)
     {
         double[] b = sliceActor.GetBounds(); // world AABB
@@ -314,11 +314,14 @@ public partial class VtkImageSliceSceneControl : UserControl, IDisposable, IVtkS
             cx + nDir.X * CamDist,
             cy + nDir.Y * CamDist,
             cz + nDir.Z * CamDist);
-        cam.SetViewUp(vDir.X, vDir.Y, vDir.Z);
-        cam.SetClippingRange(0.1, 5000);
+
+        if (resetViewUp)
+            cam.SetViewUp(vDir.X, vDir.Y, vDir.Z);
 
         if (resetParallelScale)
             cam.SetParallelScale(0.5 * Math.Max(width, height));
+
+        cam.SetClippingRange(0.1, 5000);
     }
 
     #endregion

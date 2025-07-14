@@ -5,24 +5,21 @@ namespace VtkMvvm.ViewModels.Components;
 
 internal sealed class LabelMapColorMapping : IColorMappingStrategy
 {
-    private readonly vtkLookupTable _lut;
-    private vtkImageMapToColors? _cmap;
+    private readonly vtkLookupTable _lut;  // injected
 
     public LabelMapColorMapping(ColoredImagePipeline pipe)
     {
         _lut = pipe.LookupTable;
     }
 
-    public void Apply(vtkImageMapToColors cmap)
+    public void ApplyTo(vtkImageMapToColors colorMap)
     {
-        _cmap = cmap;
-        _cmap.SetLookupTable(_lut);
-        _cmap.SetOutputFormatToRGBA();
-        _cmap.PassAlphaToOutputOn();
+        colorMap.SetLookupTable(_lut);
+        colorMap.SetOutputFormatToRGBA();
+        colorMap.PassAlphaToOutputOn();
         Update();
     }
 
     public void Update() { /* nothing dynamic for now */ }
 
-    public void Dispose() => _lut.Dispose();
 }

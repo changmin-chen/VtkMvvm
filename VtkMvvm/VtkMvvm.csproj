@@ -7,14 +7,16 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>x64</Platforms>
 
         <!-- Package identity -->
         <PackageId>VtkMvvm</PackageId>
-        <Version>1.2.5</Version>
+        <Version>1.2.7</Version>
         <Authors>ChangMin</Authors>
         <Title>VtkMvvm</Title>
         <Description>
-            VtkMvvm is designed to simplify the development of applications using
+            VtkMvvm is designed to simplify the development of WPF applications using
             VTK (Visualization Toolkit) through ActiViz.NET by providing a
             structured MVVM architecture.
         </Description>

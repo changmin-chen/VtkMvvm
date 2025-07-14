@@ -9,9 +9,10 @@ using VtkMvvm.Features.InteractorBehavior;
 
 namespace PresentationTest.Views;
 
-public partial class VtkMvvmTestWindow : Window
+public partial class VtkMvvmTestWindow : Window, IDisposable
 {
     private readonly CompositeDisposable _disposables = new();
+    private readonly List<vtkInteractorStyle> _interactorStyles = new(); // hold the references, prevent GC
     private VtkMvvmTestWindowViewModel _vm;
 
     public VtkMvvmTestWindow()
@@ -40,16 +41,17 @@ public partial class VtkMvvmTestWindow : Window
     /// </summary>
     private void InitializeFreehandInteractor(IVtkSceneControl control)
     {
-        vtkInteractorStyleImage style = new(); // 被attach的event會直接覆蓋
-        vtkRenderWindowInteractor iren = control.Interactor;
+        var style = vtkInteractorStyleImage.New(); // 被attach的event會直接覆蓋
+        _interactorStyles.Add(style);
+        vtkRenderWindowInteractor iren = control.GetInteractor();
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftMove((x, y) => _vm.OnControlGetBrushPosition(control, x, y))
-            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), keys: KeyMask.Alt)
-            .LeftDrag((x, y) => _vm.OnControlGetMousePaintPosition(control, x, y), keys: KeyMask.None)
+            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), KeyModifier.Alt)
+            .LeftDrag((x, y) => _vm.OnControlGetMousePaintPosition(control, x, y), KeyModifier.None)
             .LeftDragRx(obs => obs
                 .Sample(TimeSpan.FromMilliseconds(33))
-                .ObserveOn(RxApp.MainThreadScheduler /*always render on UI thread*/) 
+                .ObserveOn(RxApp.MainThreadScheduler /*always render on UI thread*/)
                 .Subscribe(_ => RenderControls()))
             .Scroll(forward =>
             {
@@ -63,12 +65,25 @@ public partial class VtkMvvmTestWindow : Window
             .DisposeWith(_disposables);
     }
 
-    
-    private void RenderControls()  
+
+    private void RenderControls()
     {
         AxialControl.Render();
         CoronalControl.Render();
         SagittalControl.Render();
         ObliqueControl.Render();
+    }
+
+    public void Dispose()
+    {
+        _disposables.Dispose();
+        AxialControl?.Dispose();
+        CoronalControl?.Dispose();
+        SagittalControl?.Dispose();
+        ObliqueControl?.Dispose();
+        foreach (var style in _interactorStyles)
+        {
+            style.Dispose();
+        }
     }
 }

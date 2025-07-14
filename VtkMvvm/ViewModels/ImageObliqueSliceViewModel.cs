@@ -14,10 +14,9 @@ namespace VtkMvvm.ViewModels;
 public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 {
     // ── VTK pipeline ────────────────────────────────────────────────
-    private readonly vtkImageReslice _reslice = vtkImageReslice.New();
-    private readonly vtkTransform _xfm = vtkTransform.New();
     private readonly vtkMatrix4x4 _axes = vtkMatrix4x4.New(); // reslice axes
-    private readonly vtkImageActor _actor = vtkImageActor.New();
+    private readonly vtkTransform _xfm = vtkTransform.New();
+    private readonly vtkImageReslice _reslice = vtkImageReslice.New();
 
     private readonly double[] _imgCentre;
     private readonly Bounds _imgBounds;
@@ -48,14 +47,14 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
         SliceIndex = 0; // central slice
     }
 
-    private vtkAlgorithmOutput BuildObliqueSlice(vtkImageData volume)
+    private vtkAlgorithmOutput BuildObliqueSlice(vtkImageData image)
     {
         // -------- reslice: 2-D image in its own XY coord system -----
-        _reslice.SetInput(volume);
+        _reslice.SetInput(image);
         _reslice.SetInterpolationModeToLinear();
         _reslice.SetOutputDimensionality(2);
         _reslice.AutoCropOutputOn();
-        _reslice.SetBackgroundLevel(volume.GetScalarRange()[0]);
+        _reslice.SetBackgroundLevel(image.GetScalarRange()[0]);
         _reslice.SetResliceAxes(_axes); // we will fill it below
         
         return _reslice.GetOutputPort();
@@ -204,7 +203,7 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
 
         _xfm.SetMatrix(_axes); // same 4×4 = slice → world
         _xfm.Modified();
-        _actor.Modified();
+        Actor.Modified();
     }
 
 
@@ -212,7 +211,6 @@ public sealed class ImageObliqueSliceViewModel : ImageSliceViewModel
     {
         if (disposing)
         {
-            _actor.Dispose();
             _reslice.Dispose();
             _xfm.Dispose();
             _axes.Dispose();

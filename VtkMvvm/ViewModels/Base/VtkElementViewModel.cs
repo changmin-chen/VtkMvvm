@@ -7,6 +7,8 @@ namespace VtkMvvm.ViewModels.Base;
 /// </summary>
 public abstract class VtkElementViewModel : ViewModelBase, IDisposable
 {
+    public bool IsDisposed { get; private set; }
+
     public abstract vtkProp Actor { get; }
 
     public bool Visible
@@ -34,10 +36,7 @@ public abstract class VtkElementViewModel : ViewModelBase, IDisposable
     /// <summary>
     /// Notify RenderWindow to render the scene
     /// </summary>
-    protected void OnModified()
-    {
-        Modified?.Invoke(this, EventArgs.Empty);
-    }
+    protected void OnModified() => Modified?.Invoke(this, EventArgs.Empty);
 
     public void Dispose()
     {
@@ -45,11 +44,19 @@ public abstract class VtkElementViewModel : ViewModelBase, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    ~VtkElementViewModel() => Dispose(false);
+
     protected virtual void Dispose(bool disposing)
     {
+        if (IsDisposed) return;
+        IsDisposed = true;
+
         if (disposing)
         {
-            Actor.Dispose();
+            Actor.RemoveAllObservers();
         }
+
+        // delete native memory (works in both disposing=true/false paths)
+        Actor.Dispose();
     }
 }

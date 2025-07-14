@@ -4,10 +4,10 @@ namespace VtkMvvm.Features.InteractorBehavior;
 
 /// <summary>
 /// Combination of keyboard keys that must be held down for the callback to fire.
-/// The "None" requires strickly NO key is pressing.
+/// The "None" requires strictly NO key is pressing.
 /// </summary>
 [Flags]
-public enum KeyMask
+public enum KeyModifier
 {
     None = 0,
     Alt = 1,
@@ -15,20 +15,20 @@ public enum KeyMask
     Shift = 4,
 }
 
-internal static class KeyMaskExtensions
+internal static class KeyModifierExtensions
 {
-    public static bool IsSatisfied(this KeyMask mask, vtkRenderWindowInteractor iren)
+    public static bool IsSatisfied(this KeyModifier key, vtkRenderWindowInteractor iren)
     {
         bool alt = iren.GetAltKey() != 0;
         bool ctrl = iren.GetControlKey() != 0;
         bool shift = iren.GetShiftKey() != 0;
         
-        if (mask == KeyMask.None)
+        if (key == KeyModifier.None)
             return !alt && !ctrl && !shift; // ← strict zero
 
-        if (mask.HasFlag(KeyMask.Alt) && !alt) return false;
-        if (mask.HasFlag(KeyMask.Ctrl) && !ctrl) return false;
-        if (mask.HasFlag(KeyMask.Shift) && !shift) return false;
+        if (key.HasFlag(KeyModifier.Alt) && !alt) return false;
+        if (key.HasFlag(KeyModifier.Ctrl) && !ctrl) return false;
+        if (key.HasFlag(KeyModifier.Shift) && !shift) return false;
         return true;
     }
 }
