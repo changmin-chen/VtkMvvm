@@ -33,7 +33,7 @@ public partial class DistanceMeasureWindow : Window
         }
 
         // scroll-to-next-slice 
-        vtkRenderWindowInteractor iren = AxialControl.Interactor;
+        vtkRenderWindowInteractor iren = AxialControl.GetInteractor();
         var style = vtkInteractorStyleImage.New();
         MouseInteractorBuilder.Create(iren, style)
             .Scroll(forward =>
@@ -98,7 +98,7 @@ public partial class DistanceMeasureWindow : Window
     {
         // 1) New distance widget
         var widget = vtkDistanceWidget.New();
-        var iren = AxialControl.Interactor;
+        var iren = AxialControl.GetInteractor();
 
         // 2) Hook up interactor & renderer
         widget.SetInteractor(iren);

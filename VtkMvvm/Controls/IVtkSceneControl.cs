@@ -7,8 +7,8 @@ public interface IVtkSceneControl
 {
     public vtkRenderer MainRenderer { get; }
     public vtkRenderer OverlayRenderer { get; }
-    public vtkRenderWindowInteractor Interactor { get; }
-    
+    public vtkRenderWindowInteractor GetInteractor();
+
     // ── camera orientation info ─────────────────────
     public vtkCamera Camera => MainRenderer.GetActiveCamera();
 

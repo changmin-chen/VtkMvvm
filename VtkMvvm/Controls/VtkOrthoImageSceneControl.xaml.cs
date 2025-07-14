@@ -42,6 +42,7 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
     /// </summary>
     private bool _isLoaded;
 
+
     public VtkOrthoImageSceneControl()
     {
         InitializeComponent();
@@ -57,20 +58,20 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
     private void OnLoadedOnce(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoadedOnce;
-
+        
         var renderWindow = RenderWindowControl.RenderWindow;
-        if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
+        if (RenderWindowControl.RenderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
 
-        renderWindow.AddRenderer(MainRenderer);
+        // render overlays onto the main renderer
         MainRenderer.SetBackground(0.0, 0.0, 0.0);
-
-        // Render overlays onto the main renderer
         MainRenderer.SetLayer(0);
         OverlayRenderer.SetLayer(1);
         OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
+        
         renderWindow.SetNumberOfLayers(2);
+        renderWindow.AddRenderer(MainRenderer);
         renderWindow.AddRenderer(OverlayRenderer);
 
         // ── orientation labels ───────────────────────────────
@@ -95,8 +96,7 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     private RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
-
+    public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     /// <summary>

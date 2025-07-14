@@ -82,8 +82,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
     public RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
-
+    public vtkRenderWindowInteractor GetInteractor() =>RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     public VtkImageSliceSceneControl()
@@ -105,14 +104,16 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
         var renderWindow = RenderWindowControl.RenderWindow;
         if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
 
-        renderWindow.AddRenderer(MainRenderer);
+        // render overlays onto the main renderer
         MainRenderer.SetBackground(0.0, 0.0, 0.0);
         MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1); // render overlays onto the main renderer
+        OverlayRenderer.SetLayer(1); 
         OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
+        
         renderWindow.SetNumberOfLayers(2);
+        renderWindow.AddRenderer(MainRenderer);
         renderWindow.AddRenderer(OverlayRenderer);
 
         _isLoaded = true;
