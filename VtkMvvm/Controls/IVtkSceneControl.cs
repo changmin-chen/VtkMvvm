@@ -19,16 +19,13 @@ public interface IVtkSceneControl
 {
     public vtkRenderer MainRenderer { get; }
     public vtkRenderer OverlayRenderer { get; }
-
     public vtkRenderWindowInteractor GetInteractor();
-    public vtkCamera GetCamera() => MainRenderer.GetActiveCamera();
 
-    // ── camera orientation info ─────────────────────
 
     /// <summary>unit vector defined as "camera position - focal point", which points towards the camera.</summary>
     public Vector3 GetViewPlaneNormal()
     {
-        double[] vpn = GetCamera().GetViewPlaneNormal();
+        double[] vpn = MainRenderer.GetActiveCamera().GetViewPlaneNormal();
         return new Vector3((float)vpn[0], (float)vpn[1], (float)vpn[2]);
     }
 }

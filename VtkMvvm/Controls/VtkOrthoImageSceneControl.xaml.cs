@@ -95,7 +95,7 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
 
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    private RenderWindowControl RenderWindowControl { get; } = new();
+    public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 

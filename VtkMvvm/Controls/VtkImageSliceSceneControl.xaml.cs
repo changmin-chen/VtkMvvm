@@ -79,12 +79,10 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
         set => SetValue(FlipCameraVerticalProperty, value);
     }
 
+    public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
-
     public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
-
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     public VtkImageSliceSceneControl()
