@@ -74,9 +74,7 @@ public sealed partial class VtkOrthoImageSceneControl : UserControl, IDisposable
         renderWindow.AddRenderer(OverlayRenderer);
 
         // ── orientation labels ───────────────────────────────
-        _orientationLabels = new OrientationLabelBehavior(
-            OverlayRenderer, // render layer 1
-            MainRenderer.GetActiveCamera());
+        _orientationLabels = new OrientationLabelBehavior(OverlayRenderer);
 
         _isLoaded = true;
     }

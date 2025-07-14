@@ -153,7 +153,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
     {
         if (_isLoaded && _orientationLabels == null)
         {
-            _orientationLabels = new OrientationLabelBehavior(OverlayRenderer, MainRenderer.GetActiveCamera());
+            _orientationLabels = new OrientationLabelBehavior(OverlayRenderer);
             RequestRender();
         }
     }

@@ -11,7 +11,6 @@ namespace VtkMvvm.Controls.Plugins;
 public sealed class OrientationLabelBehavior : IDisposable
 {
     private readonly vtkRenderer _overlay;
-    private readonly vtkCamera _cam;
 
     private readonly vtkTextActor _lblRight;
     private readonly vtkTextActor _lblLeft;
@@ -30,10 +29,9 @@ public sealed class OrientationLabelBehavior : IDisposable
         ("I", -Vector3.UnitZ)
     ];
 
-    public OrientationLabelBehavior(vtkRenderer overlay, vtkCamera cam)
+    public OrientationLabelBehavior(vtkRenderer overlay)
     {
         _overlay = overlay ?? throw new ArgumentNullException(nameof(overlay));
-        _cam = cam ?? throw new ArgumentNullException(nameof(cam));
 
         (_lblRight, _lblLeft, _lblTop, _lblBottom) = MakeActors();
         UpdateLabels(null, null); // initial placement
@@ -73,7 +71,7 @@ public sealed class OrientationLabelBehavior : IDisposable
     private void UpdateLabels(vtkObject? s, vtkObjectEventArgs? e)
     {
         // 1.  Display coords of the slice centre (focal point)
-        double[] f = _cam.GetFocalPoint();
+        double[] f = _overlay.GetActiveCamera().GetFocalPoint();
         var displayCentre = WorldToDisplay(f);
 
         // 2.  Map each patient axis to screen Δ(x,y)
