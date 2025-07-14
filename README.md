@@ -1,12 +1,15 @@
 # VtkMvvm
 
-A .NET library that facilitates the implementation of the MVVM (Model-View-ViewModel) pattern when working with Activiz.NET and VTK .NET wrapper.
+A .NET library that facilitates the implementation of the MVVM (Model-View-ViewModel) pattern when working with
+Activiz.NET and VTK .NET wrapper.
 
 ## Overview
 
-VtkMvvm is designed to simplify the development of applications using VTK (Visualization Toolkit) through Activiz.NET by providing a structured MVVM architecture. The library includes pre-defined Controls and ViewModels that help implement the MVVM pattern effectively.
+VtkMvvm is designed to simplify the development of applications using VTK (Visualization Toolkit) through Activiz.NET by
+providing a structured MVVM architecture. The library includes pre-defined Controls and ViewModels that help implement
+the MVVM pattern effectively.
 
-## Features
+### Features
 
 - Pre-defined Controls for the View layer
 - Pre-defined ViewModels for the ViewModel layer
@@ -14,37 +17,43 @@ VtkMvvm is designed to simplify the development of applications using VTK (Visua
 - Integration with Activiz.NET
 - Support for .NET 8.0 Windows applications
 
-## Requirements
+### Requirements
 
 - .NET 8.0
 - Windows OS
 - Activiz.NET.x64 package
 
-## Installation
+## Usages
 
 1. Add the package reference to your project:
+
 ```xml
-<PackageReference Include="Activiz.NET.x64" />
+
+<ItemGroup>
+    <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
+    <PackageReference Include="Activiz.NET.x64" Version="5.8.0"/>
+</ItemGroup>
 ```
 
 2. Ensure your project targets .NET 8.0 Windows:
+
 ```xml
 <TargetFramework>net8.0-windows</TargetFramework>
 ```
 
-## Project Structure
+### Project Structure
 
 The library follows the MVVM pattern with the following layers:
 
 - **View Layer**: Contains pre-defined Controls for VTK visualization
 - **ViewModel Layer**: Contains pre-defined ViewModels for handling business logic
-- **Model Layer**: (To be implemented by the consumer) Contains the data models
 
-## Usage
+### Example: Medical Image Visualization with Orthogonal Slices
 
-### Basic Example: Medical Image Visualization with Orthogonal Slices
+The following example demonstrates how to create a medical image visualization application with orthogonal slices 
+(Axial, Coronal, and Sagittal views) using the MVVM pattern.
 
-The following example demonstrates how to create a medical image visualization application with orthogonal slices (Axial, Coronal, and Sagittal views) using the MVVM pattern.
+  <img src="docs/images/fourview-example.png" width="500"/>
 
 #### ViewModel Implementation
 
@@ -59,18 +68,22 @@ public class VtkMvvmTestWindowViewModel : BindableBase
         // Load and process image data
          _background = TestImageLoader.ReadNifti(@"TestData\CT_Abdo.nii.gz");
         
-        // Create pipeline builders for background and label map
-        var backgroundPipelineBuilder = ColoredImagePipelineBuilder
-            .WithImage(_background)
-            .WithOpacity(1.0)
-            .WithLinearInterpolation(true);
+        // Create image pipeline for background and label map
+        var backgroundPipeline = ColoredImagePipelineBuilder
+            .WithSharedImage(_background)
+            .Build();
             
         _labelMap = CreateLabelMap(_background);
         
+        var labelMapPipeline = ColoredImagePipelineBuilder
+            .WithSharedImage(_labelMap)
+            .WithRgbaLookupTable(_labelMapLut)
+            .Build();
+        
         // Create ViewModels for each orthogonal slice
         AxialVms = new[] {
-            new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, backgroundPipelineBuilder.Build()),
-            new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipelineBuilder.Build())
+            new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, backgroundPipeline),
+            new ImageOrthogonalSliceViewModel(SliceOrientation.Axial, labelMapPipeline)
         };
         
         // Similar setup for Coronal and Sagittal views...
@@ -79,48 +92,6 @@ public class VtkMvvmTestWindowViewModel : BindableBase
     public ImageOrthogonalSliceViewModel[] AxialVms { get; }
     public ImageOrthogonalSliceViewModel[] CoronalVms { get; }
     public ImageOrthogonalSliceViewModel[] SagittalVms { get; }
-}
-```
-
-#### View Implementation
-
-```csharp
-public partial class VtkMvvmTestWindow : Window
-{
-    private readonly Dictionary<FreeHandPickInteractorStyle, VtkImageOrthogonalSlicesControl> _irenToControl = new();
-    
-    public VtkMvvmTestWindow()
-    {
-        InitializeComponent();
-        Loaded += Setup_AxialControl;
-    }
-    
-    private void Setup_AxialControl(object sender, RoutedEventArgs e)
-    {
-        // Initialize interactors for each control
-        InitializeFreehandInteractor([AxialControl, CoronalControl, SagittalControl]);
-        
-        if (DataContext is not VtkMvvmTestWindowViewModel vm) 
-            throw new InvalidOperationException("Wrong binding");
-    }
-    
-    private void InitializeFreehandInteractor(IEnumerable<VtkImageOrthogonalSlicesControl> controls)
-    {
-        foreach (var control in controls)
-        {
-            var props = control.MainRenderer.GetViewProps();
-            props.InitTraversal();
-            var first = props.GetNextProp();
-            
-            var renderWindow = control.RenderWindowControl.RenderWindow;
-            var drawIren = new FreeHandPickInteractorStyle(renderWindow, control.MainRenderer, first);
-            
-            control.UpdateInteractStyle(drawIren);
-            _irenToControl[drawIren] = control;
-            
-            drawIren.WorldPositionsCaptured += OnGetWorldCoordinates;
-        }
-    }
 }
 ```
 
@@ -161,11 +132,11 @@ public partial class VtkMvvmTestWindow : Window
 ```
 
 This example demonstrates:
+
 - Setting up orthogonal slice views for medical image visualization
 - Implementing MVVM pattern with pre-defined Controls and ViewModels
 - Handling user interaction through custom interactors
 - Managing multiple views with synchronized data
-
 
 ## License
 
