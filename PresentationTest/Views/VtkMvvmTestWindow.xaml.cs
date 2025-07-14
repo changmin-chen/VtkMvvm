@@ -43,7 +43,7 @@ public partial class VtkMvvmTestWindow : Window, IDisposable
     {
         var style = vtkInteractorStyleImage.New(); // 被attach的event會直接覆蓋
         _interactorStyles.Add(style);
-        vtkRenderWindowInteractor iren = control.Interactor;
+        vtkRenderWindowInteractor iren = control.GetInteractor();
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftMove((x, y) => _vm.OnControlGetBrushPosition(control, x, y))

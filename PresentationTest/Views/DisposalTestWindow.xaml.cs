@@ -38,7 +38,7 @@ public partial class DisposalTestWindow : Window
     private void InitializeInteractorStyle(IVtkSceneControl control)
     {
         var style = vtkInteractorStyleImage.New();
-        vtkRenderWindowInteractor iren = control.Interactor;
+        vtkRenderWindowInteractor iren = control.GetInteractor();
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), KeyModifier.Alt)

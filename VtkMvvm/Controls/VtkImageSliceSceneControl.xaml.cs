@@ -41,7 +41,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
 
     // Customization of camera flip
     public static readonly DependencyProperty FlipCameraHorizontalProperty =
-        DependencyProperty.Register(nameof(FlipCameraHorizontal), 
+        DependencyProperty.Register(nameof(FlipCameraHorizontal),
             typeof(bool),
             typeof(VtkImageSliceSceneControl),
             new PropertyMetadata(false, (_, __) => ((VtkImageSliceSceneControl)_)
@@ -52,7 +52,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
             typeof(bool),
             typeof(VtkImageSliceSceneControl),
             new PropertyMetadata(false, (_, __) => ((VtkImageSliceSceneControl)_)
-                .RequestRender()));  
+                .RequestRender()));
 
 
     public IReadOnlyList<VtkElementViewModel>? SceneObjects
@@ -79,11 +79,10 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
         set => SetValue(FlipCameraVerticalProperty, value);
     }
 
+    public RenderWindowControl RenderWindowControl { get; } = new();
     public vtkRenderer MainRenderer { get; } = vtkRenderer.New();
     public vtkRenderer OverlayRenderer { get; } = vtkRenderer.New();
-    public RenderWindowControl RenderWindowControl { get; } = new();
-    public vtkRenderWindowInteractor Interactor => RenderWindowControl.RenderWindow.GetInteractor();
-
+    public vtkRenderWindowInteractor GetInteractor() => RenderWindowControl.RenderWindow.GetInteractor();
     public void Render() => RenderWindowControl.RenderWindow.Render();
 
     public VtkImageSliceSceneControl()
@@ -105,14 +104,16 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
         var renderWindow = RenderWindowControl.RenderWindow;
         if (renderWindow is null) throw new InvalidOperationException("Render window expects to be non-null at this point.");
 
-        renderWindow.AddRenderer(MainRenderer);
+        // render overlays onto the main renderer
         MainRenderer.SetBackground(0.0, 0.0, 0.0);
         MainRenderer.SetLayer(0);
-        OverlayRenderer.SetLayer(1); // render overlays onto the main renderer
+        OverlayRenderer.SetLayer(1);
         OverlayRenderer.PreserveDepthBufferOff();
         OverlayRenderer.InteractiveOff();
         OverlayRenderer.SetActiveCamera(MainRenderer.GetActiveCamera()); // keep cameras in sync
+
         renderWindow.SetNumberOfLayers(2);
+        renderWindow.AddRenderer(MainRenderer);
         renderWindow.AddRenderer(OverlayRenderer);
 
         _isLoaded = true;
@@ -153,7 +154,7 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
     {
         if (_isLoaded && _orientationLabels == null)
         {
-            _orientationLabels = new OrientationLabelBehavior(OverlayRenderer, MainRenderer.GetActiveCamera());
+            _orientationLabels = new OrientationLabelBehavior(OverlayRenderer);
             RequestRender();
         }
     }
@@ -313,13 +314,13 @@ public sealed partial class VtkImageSliceSceneControl : UserControl, IDisposable
             cx + nDir.X * CamDist,
             cy + nDir.Y * CamDist,
             cz + nDir.Z * CamDist);
-        
-        if (resetViewUp) 
+
+        if (resetViewUp)
             cam.SetViewUp(vDir.X, vDir.Y, vDir.Z);
 
         if (resetParallelScale)
             cam.SetParallelScale(0.5 * Math.Max(width, height));
-        
+
         cam.SetClippingRange(0.1, 5000);
     }
 
