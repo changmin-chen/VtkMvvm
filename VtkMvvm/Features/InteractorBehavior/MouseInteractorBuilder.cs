@@ -33,134 +33,137 @@ public sealed class MouseInteractorBuilder
 {
     private readonly vtkRenderWindowInteractor _iren;
     private readonly BaseForwarder _bus;
-    private readonly CompositeDisposable _d = new();
+    private readonly CompositeDisposable _disposables = new();
 
-    private MouseInteractorBuilder(vtkRenderWindowInteractor iren, vtkInteractorStyle baseStyle)
+    private MouseInteractorBuilder(vtkRenderWindowInteractor interactor, vtkInteractorStyle baseInteractorStyle)
     {
-        _iren = iren;
-        _bus = new BaseForwarder(baseStyle);
-        _d.Add(_bus);
+        _iren = interactor;
+        _bus = new BaseForwarder(baseInteractorStyle);
+        _disposables.Add(_bus);
 
-        iren.SetInteractorStyle(baseStyle);
-        iren.Initialize();
+        interactor.SetInteractorStyle(baseInteractorStyle);
+        interactor.Initialize();
     }
 
-    public static MouseInteractorBuilder Create(vtkRenderWindowInteractor iren, vtkInteractorStyle baseStyle)
-        => new(iren, baseStyle);
+    public static MouseInteractorBuilder Create(vtkRenderWindowInteractor interactor, vtkInteractorStyle baseInteractorStyle)
+        => new(interactor, baseInteractorStyle);
 
     // ────────────────────── Action‑flavour APIs (unchanged) ──────────────────────
 
-    public MouseInteractorBuilder LeftMove(MousePosHandler h, KeyMask k = KeyMask.None, bool swallow = false)
-        => AddMouseAction(TriggerMouseButton.Left, drag: false, h, k, swallow);
+    public MouseInteractorBuilder LeftMove(MousePosHandler handler, KeyModifier key = KeyModifier.None, bool swallowEvent = false)
+        => AddMouseAction(TriggerMouseButton.Left, isDrag: false, handler, key, swallowEvent);
 
-    public MouseInteractorBuilder LeftDrag(MousePosHandler h, KeyMask k = KeyMask.None, bool swallow = false)
-        => AddMouseAction(TriggerMouseButton.Left, drag: true, h, k, swallow);
+    public MouseInteractorBuilder LeftDrag(MousePosHandler handler, KeyModifier key = KeyModifier.None, bool swallowEvent = false)
+        => AddMouseAction(TriggerMouseButton.Left, isDrag: true, handler, key, swallowEvent);
 
-    public MouseInteractorBuilder RightMove(MousePosHandler h, KeyMask k = KeyMask.None, bool swallow = false)
-        => AddMouseAction(TriggerMouseButton.Right, drag: false, h, k, swallow);
+    public MouseInteractorBuilder RightMove(MousePosHandler handler, KeyModifier key = KeyModifier.None, bool swallowEvent = false)
+        => AddMouseAction(TriggerMouseButton.Right, isDrag: false, handler, key, swallowEvent);
 
-    public MouseInteractorBuilder RightDrag(MousePosHandler h, KeyMask k = KeyMask.None, bool swallow = false)
-        => AddMouseAction(TriggerMouseButton.Right, drag: true, h, k, swallow);
+    public MouseInteractorBuilder RightDrag(MousePosHandler handler, KeyModifier key = KeyModifier.None, bool swallowEvent = false)
+        => AddMouseAction(TriggerMouseButton.Right, isDrag: true, handler, key, swallowEvent);
 
-    public MouseInteractorBuilder MiddleMove(MousePosHandler h, KeyMask k = KeyMask.None, bool swallow = false)
-        => AddMouseAction(TriggerMouseButton.Middle, drag: false, h, k, swallow);
+    public MouseInteractorBuilder MiddleMove(MousePosHandler handler, KeyModifier key = KeyModifier.None, bool swallowEvent = false)
+        => AddMouseAction(TriggerMouseButton.Middle, isDrag: false, handler, key, swallowEvent);
 
-    public MouseInteractorBuilder MiddleDrag(MousePosHandler h, KeyMask k = KeyMask.None, bool swallow = false)
-        => AddMouseAction(TriggerMouseButton.Middle, drag: true, h, k, swallow);
+    public MouseInteractorBuilder MiddleDrag(MousePosHandler handler, KeyModifier key = KeyModifier.None, bool swallowEvent = false)
+        => AddMouseAction(TriggerMouseButton.Middle, isDrag: true, handler, key, swallowEvent);
 
-    public MouseInteractorBuilder Scroll(Action<bool> h, KeyMask k = KeyMask.None, bool swallow = true)
-        => ScrollRx(obs => obs.Subscribe(h), k, swallow);
+    public MouseInteractorBuilder Scroll(Action<bool> handler, KeyModifier key = KeyModifier.None, bool swallowEvent = true)
+        => ScrollRx(observable => observable.Subscribe(handler), key, swallowEvent);
 
     // ─────────────────────────── Rx‑flavour APIs ────────────────────────────
 
-    public MouseInteractorBuilder LeftMoveRx(Func<IObservable<(int x, int y)>, IDisposable> sub,
-        KeyMask k = KeyMask.None,
-        bool swallow = false)
-        => AddMouseRx(TriggerMouseButton.Left, drag: false, sub, k, swallow);
+    public MouseInteractorBuilder LeftMoveRx(Func<IObservable<(int x, int y)>, IDisposable> subscriptionFactory,
+        KeyModifier key = KeyModifier.None,
+        bool swallowEvent = false)
+        => AddMouseRx(TriggerMouseButton.Left, isDrag: false, subscriptionFactory, key, swallowEvent);
 
-    public MouseInteractorBuilder LeftDragRx(Func<IObservable<(int x, int y)>, IDisposable> sub,
-        KeyMask k = KeyMask.None,
-        bool swallow = false)
-        => AddMouseRx(TriggerMouseButton.Left, drag: true, sub, k, swallow);
+    public MouseInteractorBuilder LeftDragRx(Func<IObservable<(int x, int y)>, IDisposable> subscriptionFactory,
+        KeyModifier key = KeyModifier.None,
+        bool swallowEvent = false)
+        => AddMouseRx(TriggerMouseButton.Left, isDrag: true, subscriptionFactory, key, swallowEvent);
 
-    public MouseInteractorBuilder RightMoveRx(Func<IObservable<(int x, int y)>, IDisposable> sub,
-        KeyMask k = KeyMask.None,
-        bool swallow = false)
-        => AddMouseRx(TriggerMouseButton.Right, drag: false, sub, k, swallow);
+    public MouseInteractorBuilder RightMoveRx(Func<IObservable<(int x, int y)>, IDisposable> subscriptionFactory,
+        KeyModifier key = KeyModifier.None,
+        bool swallowEvent = false)
+        => AddMouseRx(TriggerMouseButton.Right, isDrag: false, subscriptionFactory, key, swallowEvent);
 
-    public MouseInteractorBuilder RightDragRx(Func<IObservable<(int x, int y)>, IDisposable> sub,
-        KeyMask k = KeyMask.None,
-        bool swallow = false)
-        => AddMouseRx(TriggerMouseButton.Right, drag: true, sub, k, swallow);
+    public MouseInteractorBuilder RightDragRx(Func<IObservable<(int x, int y)>, IDisposable> subscriptionFactory,
+        KeyModifier key = KeyModifier.None,
+        bool swallowEvent = false)
+        => AddMouseRx(TriggerMouseButton.Right, isDrag: true, subscriptionFactory, key, swallowEvent);
 
-    public MouseInteractorBuilder MiddleMoveRx(Func<IObservable<(int x, int y)>, IDisposable> sub,
-        KeyMask k = KeyMask.None,
-        bool swallow = false)
-        => AddMouseRx(TriggerMouseButton.Middle, drag: false, sub, k, swallow);
+    public MouseInteractorBuilder MiddleMoveRx(Func<IObservable<(int x, int y)>, IDisposable> subscriptionFactory,
+        KeyModifier key = KeyModifier.None,
+        bool swallowEvent = false)
+        => AddMouseRx(TriggerMouseButton.Middle, isDrag: false, subscriptionFactory, key, swallowEvent);
 
-    public MouseInteractorBuilder MiddleDragRx(Func<IObservable<(int x, int y)>, IDisposable> sub,
-        KeyMask k = KeyMask.None,
-        bool swallow = false)
-        => AddMouseRx(TriggerMouseButton.Middle, drag: true, sub, k, swallow);
+    public MouseInteractorBuilder MiddleDragRx(Func<IObservable<(int x, int y)>, IDisposable> subscriptionFactory,
+        KeyModifier key = KeyModifier.None,
+        bool swallowEvent = false)
+        => AddMouseRx(TriggerMouseButton.Middle, isDrag: true, subscriptionFactory, key, swallowEvent);
 
-    public MouseInteractorBuilder ScrollRx(Func<IObservable<bool>, IDisposable> sub,
-        KeyMask k = KeyMask.None,
-        bool swallow = true)
+    public MouseInteractorBuilder ScrollRx(Func<IObservable<bool>, IDisposable> subscriptionFactory,
+        KeyModifier key = KeyModifier.None,
+        bool swallowEvent = true)
     {
-        if (swallow)
+        if (swallowEvent)
         {
             _bus.AddSwallow(VtkEventId.WheelForward);
             _bus.AddSwallow(VtkEventId.WheelBackward);
         }
         var beh = new ScrollInteractorBehavior(_bus);
-        _d.Add(beh);
-        _d.Add(sub(beh.Scrolls.Where(_ => k.IsSatisfied(_iren))));
+        _disposables.Add(beh);
+        _disposables.Add(subscriptionFactory(beh.Scrolls.Where(_ => key.IsSatisfied(_iren))));
         return this;
     }
 
     // ─────────────────────────────── Build ────────────────────────────────
 
-    public IDisposable Build() => _d;
+    public IDisposable Build() => _disposables;
 
     // ────────────────────────── Internal helpers ──────────────────────────
 
-    private MouseInteractorBuilder AddMouseAction(TriggerMouseButton btn,
-        bool drag,
-        MousePosHandler h,
-        KeyMask k,
-        bool swallow)
-        => AddMouseRx(btn, drag, obs => obs.Subscribe(p => h(p.x, p.y)), k, swallow);
+    private MouseInteractorBuilder AddMouseAction(TriggerMouseButton mouseButton,
+        bool isDrag,
+        MousePosHandler handler,
+        KeyModifier key,
+        bool swallowEvent)
+        => AddMouseRx(mouseButton, isDrag, observable => observable.Subscribe(p => handler(p.x, p.y)), key, swallowEvent);
 
-    private MouseInteractorBuilder AddMouseRx(TriggerMouseButton btn,
-        bool drag,
-        Func<IObservable<(int x, int y)>, IDisposable> sub,
-        KeyMask k,
-        bool swallow)
+    private MouseInteractorBuilder AddMouseRx(TriggerMouseButton mouseButton,
+        bool isDrag,
+        Func<IObservable<(int x, int y)>, IDisposable> subscriptionFactory,
+        KeyModifier key,
+        bool swallowEvent)
     {
-        if (swallow)
+        if (swallowEvent)
         {
             _bus.AddSwallow(VtkEventId.MouseMove);
-            _bus.AddSwallow(btn switch
+            _bus.AddSwallow(mouseButton switch
             {
                 TriggerMouseButton.Left => VtkEventId.LeftDown,
                 TriggerMouseButton.Right => VtkEventId.RightDown,
                 TriggerMouseButton.Middle => VtkEventId.MiddleDown,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException(nameof(mouseButton), mouseButton, null)
             });
-            _bus.AddSwallow(btn switch
+            _bus.AddSwallow(mouseButton switch
             {
                 TriggerMouseButton.Left => VtkEventId.LeftUp,
                 TriggerMouseButton.Right => VtkEventId.RightUp,
                 TriggerMouseButton.Middle => VtkEventId.MiddleUp,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException(nameof(mouseButton), mouseButton, null)
             });
         }
 
-        var beh = new MouseInteractorBehavior(_bus, btn);
-        _d.Add(beh);
-        IObservable<(int x, int y)> stream = beh.Moves.Where(_ => k.IsSatisfied(_iren));
-        if (drag) stream = stream.Where(_ => beh.IsPressing);
-        _d.Add(sub(stream));
+        var beh = new MouseInteractorBehavior(_bus, mouseButton);
+        _disposables.Add(beh);
+        
+        // Filter the stream by pressing checks and keymask
+        IObservable<(int x, int y)> stream = beh.Moves.Where(_ => key.IsSatisfied(_iren));
+        if (isDrag) stream = stream.Where(_ => beh.IsPressing);
+        
+        _disposables.Add(subscriptionFactory(stream));
         return this;
     }
 }

@@ -47,8 +47,8 @@ public partial class VtkMvvmTestWindow : Window, IDisposable
 
         MouseInteractorBuilder.Create(iren, style)
             .LeftMove((x, y) => _vm.OnControlGetBrushPosition(control, x, y))
-            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), k: KeyMask.Alt)
-            .LeftDrag((x, y) => _vm.OnControlGetMousePaintPosition(control, x, y), k: KeyMask.None)
+            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), KeyModifier.Alt)
+            .LeftDrag((x, y) => _vm.OnControlGetMousePaintPosition(control, x, y), KeyModifier.None)
             .LeftDragRx(obs => obs
                 .Sample(TimeSpan.FromMilliseconds(33))
                 .ObserveOn(RxApp.MainThreadScheduler /*always render on UI thread*/)

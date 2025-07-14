@@ -11,6 +11,7 @@ public partial class DisposalTestWindow : Window
 {
     private readonly CompositeDisposable _disposables = new();
     private DisposalTestWindowViewModel _vm;
+
     public DisposalTestWindow()
     {
         InitializeComponent();
@@ -25,12 +26,12 @@ public partial class DisposalTestWindow : Window
             _vm = vm;
         }
 
-        foreach (var control in new [] {AxialControl, CoronalControl})
+        foreach (var control in new[] { AxialControl, CoronalControl })
         {
             InitializeInteractorStyle(control);
         }
     }
-    
+
     /// <summary>
     /// Each controls has their own instance of freehand interactor
     /// </summary>
@@ -40,7 +41,7 @@ public partial class DisposalTestWindow : Window
         vtkRenderWindowInteractor iren = control.Interactor;
 
         MouseInteractorBuilder.Create(iren, style)
-            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), k: KeyMask.Alt)
+            .LeftDrag((x, y) => _vm.OnControlGetMouseDisplayPosition(control, x, y), KeyModifier.Alt)
             .Scroll(forward =>
             {
                 int increment = forward ? 1 : -1;

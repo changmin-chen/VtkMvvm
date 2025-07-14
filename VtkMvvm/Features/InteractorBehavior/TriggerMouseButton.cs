@@ -3,7 +3,7 @@
 /// <summary>Which mouse button triggers a <see cref="MouseInteractorBehavior"/>.</summary>
 public enum TriggerMouseButton
 {
-    Left,
-    Right,
-    Middle
+    Left = 1,
+    Right = 2,
+    Middle = 3
 }

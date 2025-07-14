@@ -9,13 +9,13 @@ namespace VtkMvvm.Features.InteractorBehavior;
 
 /// <summary>
 ///  Make a single “event bus” (BaseForwarder) that owns the VTK hooks.
-///  Let <see cref="IInteractorBehavior"/> subscribe to the bus instead of VTK directly
+///  Let <see cref="IInteractorBehavior"/> subscribe to the bus instead of VTK interactor events directly
 /// </summary>
 internal sealed class BaseForwarder : IObservable<VtkEvent>, IDisposable
 {
     private readonly vtkInteractorStyle _style;
     private readonly Subject<VtkEvent> _bus = new();
-    private readonly HashSet<VtkEventId> _swallow = new();
+    private readonly HashSet<VtkEventId> _swallowedEvents = new();
 
     // Keep strong refs so we can detach on Dispose
     private readonly vtkObject.vtkObjectEventHandler _mouseMove;
@@ -33,15 +33,15 @@ internal sealed class BaseForwarder : IObservable<VtkEvent>, IDisposable
         _style = style ?? throw new ArgumentNullException(nameof(style));
 
         // Build handlers once, attach, remember for detach
-        _mouseMove = (_, _) => Publish(VtkEventId.MouseMove, () => style.OnMouseMove());
-        _leftDown = (_, _) => Publish(VtkEventId.LeftDown, () => style.OnLeftButtonDown());
-        _leftUp = (_, _) => Publish(VtkEventId.LeftUp, () => style.OnLeftButtonUp());
-        _rightDown = (_, _) => Publish(VtkEventId.RightDown, () => style.OnRightButtonDown());
-        _rightUp = (_, _) => Publish(VtkEventId.RightUp, () => style.OnRightButtonUp());
-        _middleDown = (_, _) => Publish(VtkEventId.MiddleDown, () => style.OnMiddleButtonDown());
-        _middleUp = (_, _) => Publish(VtkEventId.MiddleUp, () => style.OnMiddleButtonUp());
-        _wheelFwd = (_, _) => Publish(VtkEventId.WheelForward, () => style.OnMouseWheelForward());
-        _wheelBack = (_, _) => Publish(VtkEventId.WheelBackward, () => style.OnMouseWheelBackward());
+        _mouseMove = (_, _) => Publish(VtkEventId.MouseMove, style.OnMouseMove);
+        _leftDown = (_, _) => Publish(VtkEventId.LeftDown, style.OnLeftButtonDown);
+        _leftUp = (_, _) => Publish(VtkEventId.LeftUp, style.OnLeftButtonUp);
+        _rightDown = (_, _) => Publish(VtkEventId.RightDown, style.OnRightButtonDown);
+        _rightUp = (_, _) => Publish(VtkEventId.RightUp, style.OnRightButtonUp);
+        _middleDown = (_, _) => Publish(VtkEventId.MiddleDown, style.OnMiddleButtonDown);
+        _middleUp = (_, _) => Publish(VtkEventId.MiddleUp, style.OnMiddleButtonUp);
+        _wheelFwd = (_, _) => Publish(VtkEventId.WheelForward, style.OnMouseWheelForward);
+        _wheelBack = (_, _) => Publish(VtkEventId.WheelBackward, style.OnMouseWheelBackward);
 
         style.MouseMoveEvt += _mouseMove;
         style.LeftButtonPressEvt += _leftDown;
@@ -56,13 +56,18 @@ internal sealed class BaseForwarder : IObservable<VtkEvent>, IDisposable
 
     public IDisposable Subscribe(IObserver<VtkEvent> o) => _bus.Subscribe(o);
 
-    public void AddSwallow(VtkEventId id) => _swallow.Add(id);
+    /// <summary>
+    /// Adds a specific VTK event ID to the set of swallowed events.
+    /// Swallowed events are ignored by the interactor system.
+    /// </summary>
+    /// <param name="id">The <see cref="VtkEventId"/> to be added to the swallowed events set.</param>
+    public void AddSwallow(VtkEventId id) => _swallowedEvents.Add(id);
 
     private void Publish(VtkEventId id, Action forwardOnce)
     {
         var iren = _style.GetInteractor();
         _bus.OnNext(new VtkEvent(id, iren));
-        if (!_swallow.Contains(id)) forwardOnce();
+        if (!_swallowedEvents.Contains(id)) forwardOnce();
     }
 
     public void Dispose()
