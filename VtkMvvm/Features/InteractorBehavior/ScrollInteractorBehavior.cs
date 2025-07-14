@@ -23,5 +23,9 @@ public sealed class ScrollInteractorBehavior : IDisposable
             .Subscribe(_scrolls);
     }
 
-    public void Dispose() => _d.Dispose();
+    public void Dispose()
+    {
+        _d.Dispose();
+        _scrolls.Dispose();
+    }
 }

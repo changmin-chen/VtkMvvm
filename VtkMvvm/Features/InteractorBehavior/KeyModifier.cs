@@ -15,7 +15,7 @@ public enum KeyModifier
     Shift = 4,
 }
 
-internal static class KeyMaskExtensions
+internal static class KeyModifierExtensions
 {
     public static bool IsSatisfied(this KeyModifier key, vtkRenderWindowInteractor iren)
     {

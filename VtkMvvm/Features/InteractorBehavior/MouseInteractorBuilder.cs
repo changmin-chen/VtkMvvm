@@ -159,7 +159,7 @@ public sealed class MouseInteractorBuilder
         var beh = new MouseInteractorBehavior(_bus, mouseButton);
         _disposables.Add(beh);
         
-        // Filter the stream by pressing checks and keymask
+        // Filter the stream by checking whether the mouse button is pressing and keymask
         IObservable<(int x, int y)> stream = beh.Moves.Where(_ => key.IsSatisfied(_iren));
         if (isDrag) stream = stream.Where(_ => beh.IsPressing);
         
