@@ -16,7 +16,7 @@
         <Authors>ChangMin</Authors>
         <Title>VtkMvvm</Title>
         <Description>
-            VtkMvvm is designed to simplify the development of applications using
+            VtkMvvm is designed to simplify the development of WPF applications using
             VTK (Visualization Toolkit) through ActiViz.NET by providing a
             structured MVVM architecture.
         </Description>
