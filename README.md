@@ -113,20 +113,20 @@ public class VtkMvvmTestWindowViewModel : BindableBase
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         
-        <controls:VtkImageSceneControl 
+        <controls:VtkOrthoImageSceneControl 
             x:Name="AxialControl"
             Grid.Row="0" Grid.Column="0"
-            ViewModels="{Binding AxialVms}"/>
+            SceneObjects="{Binding AxialVms}"/>
             
-        <controls:VtkImageSceneControl 
+        <controls:VtkOrthoImageSceneControl 
             x:Name="CoronalControl"
             Grid.Row="0" Grid.Column="1"
-            ViewModels="{Binding CoronalVms}"/>
+            SceneObjects="{Binding CoronalVms}"/>
             
-        <controls:VtkImageSceneControl 
+        <controls:VtkOrthoImageSceneControl 
             x:Name="SagittalControl"
             Grid.Row="1" Grid.Column="0"
-            ViewModels="{Binding SagittalVms}"/>
+            SceneObjects="{Binding SagittalVms}"/>
     </Grid>
 </Window>
 ```
