@@ -4,40 +4,39 @@
         <TargetFramework>net8.0-windows</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="coverlet.collector" Version="6.0.0"/>
+        <PackageReference Include="coverlet.collector" Version="6.0.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
-        <PackageReference Include="xunit" Version="2.5.3"/>
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
         <Using Include="Xunit"/>
     </ItemGroup>
 
+    <!-- Reference to library project for testing-->
     <ItemGroup>
         <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
     </ItemGroup>
     
-    <!-- Copy Native DLLs based on Platform -->
-    <Target Name="CopyNativeDLLs" AfterTargets="Build">
-        <PropertyGroup>
-            <PlatformFolder Condition="'$(Platform)' == 'x64' or '$(Platform)' == 'x86'">$(Platform)</PlatformFolder>
-            <WinArch Condition="'$(Platform)' == 'x64'">win64</WinArch>
-            <WinArch Condition="'$(Platform)' == 'x86'">win32</WinArch>
-            <NativeDllPath>$(OutputPath)</NativeDllPath>
-        </PropertyGroup>
 
-        <ItemGroup Condition="'$(PlatformFolder)' != ''">
-            <NativeVtkDlls Include="$(NuGetPackageRoot)activiz.net.$(PlatformFolder)\5.8.0\lib\net20\*.dll"/>
-            <NativeVtkDlls Include="$(NuGetPackageRoot)simpleitk-win64-csharp-x64\1.0.0.1\lib\SimpleITKCSharpNative.dll"/>
-        </ItemGroup>
-        <Copy SourceFiles="@(NativeVtkDlls)" DestinationFolder="$(NativeDllPath)" SkipUnchangedFiles="true"/>
+    <!-- Copy Native DLLs for x64, should adjust to *YOUR PATH* -->
+    <ItemGroup>
+        <NativeDlls Include="$(NuGetPackageRoot)activiz.net.x64\5.8.0\lib\net20\*.dll"/>
+    </ItemGroup>
+    <Target Name="CopyNativeDLLs" AfterTargets="Build">
+        <Copy SourceFiles="@(NativeDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"/>
     </Target>
 
 
