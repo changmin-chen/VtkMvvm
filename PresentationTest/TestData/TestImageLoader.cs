@@ -1,6 +1,6 @@
 using itk.simple;
 using Kitware.VTK;
-using Image = itk.simple.Image;
+using Image=itk.simple.Image;
 
 namespace PresentationTest.TestData;
 
@@ -17,18 +17,18 @@ public static class TestImageLoader
     public static vtkImageData ReadNifti(string path)
     {
         Image itkImage = SimpleITK.ReadImage(path);
-        itkImage = SimpleITK.DICOMOrient(itkImage, "LPS");   // RAS -> LPS
-        var vtkImage = itkImage.ToVtkIgnoreDirection();
-        
+        var vtkImage = itkImage.ToOrientedVtk();
+
         itkImage.Dispose();
         return vtkImage;
     }
 
-    private static vtkImageData ToVtkIgnoreDirection(this Image itkImage)
+    private static vtkImageData ToOrientedVtk(this Image itkImage)
     {
         VectorDouble? spacing = itkImage.GetSpacing();
         VectorDouble? origin = itkImage.GetOrigin();
         VectorUInt32? sizes = itkImage.GetSize();
+        double[] orientation = itkImage.GetDirection().ToArray();
 
         // Initialize vtk image
         vtkImageData? vtkImage = vtkImageData.New();
@@ -37,7 +37,6 @@ public static class TestImageLoader
         vtkImage.SetExtent(0, (int)sizes[0] - 1, 0, (int)sizes[1] - 1, 0, (int)sizes[2] - 1);
         vtkImage.SetWholeExtent(0, (int)sizes[0] - 1, 0, (int)sizes[1] - 1, 0, (int)sizes[2] - 1);
         vtkImage.SetNumberOfScalarComponents((int)itkImage.GetNumberOfComponentsPerPixel());
-
 
         // Copy memory
         int bytesAlloc = itkImage.GetTotalBytesAlloc();
@@ -50,9 +49,50 @@ public static class TestImageLoader
             void* dest = vtkImage.GetScalarPointer().ToPointer();
             Buffer.MemoryCopy(src, dest, bytesAlloc, bytesAlloc);
         }
-
         vtkImage.Update();
-        return vtkImage;
+
+        var orientedImage = vtkImage.ResliceByImageOrientation(orientation);
+        return orientedImage;
+    }
+
+    private static vtkImageData ResliceByImageOrientation(this vtkImageData inputImage, ReadOnlySpan<double> orientation9)
+    {
+        if (orientation9.Length != 9)
+            throw new ArgumentException("orientation from SimpleItk should have length of 9");
+
+        // Construct transformation matrix
+        using var orientationMatrix = vtkMatrix4x4.New();
+        orientationMatrix.Identity();
+
+        for (var rr = 0; rr < 3; rr++)
+        for (var cc = 0; cc < 3; cc++)
+            orientationMatrix.SetElement(rr, cc, orientation9[rr * 3 + cc]);
+
+        var origin = inputImage.GetOrigin();
+        var spacing = inputImage.GetSpacing();
+        var dimensions = inputImage.GetDimensions();
+        var extent = inputImage.GetExtent();
+
+        // Performs image reslice
+        using var resliceFilter = vtkImageReslice.New();
+        resliceFilter.SetInput(inputImage);
+        resliceFilter.SetResliceAxes(orientationMatrix);
+
+        // 旋轉中心應在影像中心
+        var center = new double[3]; // 注意:vtkImageData.GetCenter()拿的是bounding box的中心，這裡需要的是座標中心
+        for (var i = 0; i < 3; i++) center[i] = origin[i] + spacing[i] * dimensions[i] / 2;
+
+        resliceFilter.SetResliceAxesOrigin(center[0], center[1], center[2]);
+
+        // 維持原影像的 slicing grid 
+        resliceFilter.SetOutputSpacing(spacing[0], spacing[1], spacing[2]);
+        resliceFilter.SetOutputExtent(extent[0], extent[1], extent[2], extent[3], extent[4], extent[5]);
+
+        resliceFilter.SetInterpolationModeToLinear();
+        resliceFilter.Update();
+        var reorientedImage = resliceFilter.GetOutput();
+
+        return reorientedImage;
     }
 
     private static int GetBytesPerPixel(this Image itkImage)
