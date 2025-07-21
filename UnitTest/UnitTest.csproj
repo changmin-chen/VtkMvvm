@@ -6,8 +6,6 @@
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
-        <!-- To add reference to SimpleITK 2.5.0 DLL, should set 'SITK_LOCAL_DIR' env variable to *YOUR PATH* -->
-        <SitkLocalDir>$(SITK_LOCAL_DIR)</SitkLocalDir>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,18 +29,11 @@
     <ItemGroup>
         <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
     </ItemGroup>
-
-    <!-- Add reference to managed SimpleITK DLL, should adjust to *YOUR PATH* -->
-    <ItemGroup>
-        <Reference Include="SimpleITKCSharpManaged">
-            <HintPath>$(SITK_LOCAL_DIR)\2.5.0\SimpleITKCSharpManaged.dll</HintPath>
-        </Reference>
-    </ItemGroup>
+    
 
     <!-- Copy Native DLLs for x64, should adjust to *YOUR PATH* -->
     <ItemGroup>
         <NativeDlls Include="$(NuGetPackageRoot)activiz.net.x64\5.8.0\lib\net20\*.dll"/>
-        <NativeDlls Include="$(SITK_LOCAL_DIR)\2.5.0\SimpleITKCSharpNative.dll" Condition=" '$(SITK_LOCAL_DIR)' != '' "/>
     </ItemGroup>
     <Target Name="CopyNativeDLLs" AfterTargets="Build">
         <Copy SourceFiles="@(NativeDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"/>

@@ -1,0 +1,60 @@
+﻿name: CI
+
+on:
+    push:
+        branches: [ main, develop ]
+    pull_request:
+        branches: [ main, develop ]
+
+jobs:
+    build-test:
+        runs-on: windows-latest            # ActiViz/VTK works best on Windows
+        timeout-minutes: 25
+        defaults:
+            run:
+                shell: pwsh                    # Use PowerShell Core explicitly
+        
+        steps:
+            # 0️⃣  Check out the repository
+            -   uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0               # (Optional) full history for versioning
+            
+            # 1️⃣  Install .NET 8 SDK
+            -   uses: actions/setup-dotnet@v4
+                with:
+                    dotnet-version: 8.0.x
+            
+            #📦 (Optional) Cache NuGet packages to speed up restores
+            -   name: 📦 Cache NuGet
+                uses: actions/cache@v4
+                with:
+                    path: ~/.nuget/packages
+                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+                    restore-keys: |
+                        ${{ runner.os }}-nuget-
+            
+            # 2️⃣  Restore NuGet packages
+            -   name: 🔄 Restore
+                run: dotnet restore VtkMvvm.sln
+            
+            # 3️⃣  Build in Release mode
+            -   name: 🏗️ Build
+                run: dotnet build VtkMvvm.sln --configuration Release --no-restore
+            
+            # 4️⃣  Run unit tests and generate a TRX report
+            -   name: ✅ Test
+                run: >
+                    dotnet test VtkMvvm.sln
+                    --configuration Release
+                    --no-build
+                    --logger "trx;LogFileName=tests.trx"
+                    --results-directory TestResults
+            
+            # 5️⃣  Always upload the test results for diagnosis
+            -   name: 📤 Publish Test Results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: test-results
+                    path: TestResults
