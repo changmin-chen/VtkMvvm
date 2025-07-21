@@ -29,4 +29,5 @@ What actually happened instead?
 |--------------------------|----------------|
 | OS / Distro             | e.g. Windows 11 (22H2) |
 | .NET / Runtime / Node   | e.g. .NET 8.0.2 |
+| VtkMvvm version  | e.g. v.1.2.7 |
 | GPU / Graphics Driver   | (if relevant) |
