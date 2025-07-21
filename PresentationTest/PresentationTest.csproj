@@ -10,6 +10,8 @@
         <PlatformTarget>x64</PlatformTarget>
         <Platforms>x64</Platforms>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <!-- To add reference to SimpleITK 2.5.0 DLL, should set 'SITK_LOCAL_DIR' env variable to *YOUR PATH* -->
+        <SitkLocalDir>$(SITK_LOCAL_DIR)</SitkLocalDir>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -25,7 +27,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    
+
     <ItemGroup>
         <Page Update="Views\VtkMvvmTestWindow.xaml">
             <Generator>MSBuild:Compile</Generator>
@@ -33,7 +35,7 @@
             <SubType>Designer</SubType>
         </Page>
     </ItemGroup>
-    
+
     <ItemGroup>
         <PackageReference Include="Prism.DryIoc" Version="9.0.537"/>
         <PackageReference Include="ReactiveUI.Fody" Version="19.5.41"/>
@@ -45,21 +47,20 @@
         <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
     </ItemGroup>
 
-    <!-- Add reference to managed SimpleITK dll, should adjust to *YOUR PATH* -->
+    <!-- Add reference to managed SimpleITK DLL, should adjust to *YOUR PATH* -->
     <ItemGroup>
         <Reference Include="SimpleITKCSharpManaged">
-            <HintPath>C:\Libs\CSharp\simpleitk-win64-csharp-x64\2.5.0\SimpleITKCSharpManaged.dll</HintPath>
+            <HintPath>$(SITK_LOCAL_DIR)\2.5.0\SimpleITKCSharpManaged.dll</HintPath>
         </Reference>
     </ItemGroup>
-    
+
     <!-- Copy Native DLLs for x64, should adjust to *YOUR PATH* -->
+    <ItemGroup>
+        <NativeDlls Include="$(NuGetPackageRoot)activiz.net.x64\5.8.0\lib\net20\*.dll"/>
+        <NativeDlls Include="$(SITK_LOCAL_DIR)\2.5.0\SimpleITKCSharpNative.dll" Condition=" '$(SITK_LOCAL_DIR)' != '' "/>
+    </ItemGroup>
     <Target Name="CopyNativeDLLs" AfterTargets="Build">
-        <ItemGroup>
-            <NativeVtkDlls Include="$(NuGetPackageRoot)activiz.net.x64\5.8.0\lib\net20\*.dll"/>
-            <NativeVtkDlls Include="C:\Libs\CSharp\simpleitk-win64-csharp-x64\2.5.0\SimpleITKCSharpNative.dll"/>
-        </ItemGroup>
-        <Copy SourceFiles="@(NativeVtkDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="@(NativeDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"/>
     </Target>
-
-
+    
 </Project>
