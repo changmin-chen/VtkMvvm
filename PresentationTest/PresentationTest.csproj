@@ -10,8 +10,6 @@
         <PlatformTarget>x64</PlatformTarget>
         <Platforms>x64</Platforms>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <!-- To add reference to SimpleITK 2.5.0 DLL, should set 'SITK_LOCAL_DIR' env variable to *YOUR PATH* -->
-        <SitkLocalDir>$(SITK_LOCAL_DIR)</SitkLocalDir>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -40,24 +38,18 @@
         <PackageReference Include="Prism.DryIoc" Version="9.0.537"/>
         <PackageReference Include="ReactiveUI.Fody" Version="19.5.41"/>
         <PackageReference Include="ReactiveUI.WPF" Version="20.4.1"/>
+        <PackageReference Include="SimpleITK-win64-CSharp-x64" Version="1.0.0.1" />
     </ItemGroup>
 
     <!-- Reference to library project for testing-->
     <ItemGroup>
         <ProjectReference Include="..\VtkMvvm\VtkMvvm.csproj"/>
     </ItemGroup>
-
-    <!-- Add reference to managed SimpleITK DLL, should adjust to *YOUR PATH* -->
-    <ItemGroup>
-        <Reference Include="SimpleITKCSharpManaged">
-            <HintPath>$(SITK_LOCAL_DIR)\2.5.0\SimpleITKCSharpManaged.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
+    
     <!-- Copy Native DLLs for x64, should adjust to *YOUR PATH* -->
     <ItemGroup>
         <NativeDlls Include="$(NuGetPackageRoot)activiz.net.x64\5.8.0\lib\net20\*.dll"/>
-        <NativeDlls Include="$(SITK_LOCAL_DIR)\2.5.0\SimpleITKCSharpNative.dll" Condition=" '$(SITK_LOCAL_DIR)' != '' "/>
+        <NativeDlls Include="$(NuGetPackageRoot)simpleitk-win64-csharp-x64\1.0.0.1\lib\SimpleITKCSharpNative.dll"/>
     </ItemGroup>
     <Target Name="CopyNativeDLLs" AfterTargets="Build">
         <Copy SourceFiles="@(NativeDlls)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"/>
