@@ -39,8 +39,10 @@ jobs:
                 run: dotnet restore VtkMvvm.sln
             
             # 3️⃣  Build in Release mode
-            -   name: 🏗️ Build
-                run: dotnet build VtkMvvm.sln --configuration Release --no-restore
+            -   name: 🏗️ Build VtkMvvm
+                run: dotnet build VtkMvvm/VtkMvvm.csproj --configuration Release --no-restore
+            -   name: 🏗️ Build UnitTest
+                run: dotnet build UnitTest/UnitTest.csproj --configuration Release --no-restore
             
             # 4️⃣  Run unit tests and generate a TRX report
             -   name: ✅ Test
